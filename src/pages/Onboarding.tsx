@@ -151,7 +151,7 @@ const Onboarding = () => {
           {step === 5 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-400">
               <div className="space-y-2">
-                <h2 className="text-2xl font-bold">Quelles matières te stressent le plus ?</h2>
+                <h2 className="text-2xl font-bold">Quelles matières veux-tu booster en priorité ?</h2>
                 <p className="text-muted-foreground">Sélectionne toutes celles qui s'appliquent</p>
               </div>
               <div className="flex flex-wrap gap-3">
@@ -183,7 +183,7 @@ const Onboarding = () => {
                 onClick={step === TOTAL_STEPS ? handleFinish : () => setStep(s => s + 1)}
               >
                 {step === TOTAL_STEPS ? (
-                  <>Créer mon sprint <Sparkles className="ml-2 w-5 h-5" /></>
+                  <>Lancer mon sprint <Sparkles className="ml-2 w-5 h-5" /></>
                 ) : (
                   <>Suivant <ArrowRight className="ml-2 w-4 h-4" /></>
                 )}
