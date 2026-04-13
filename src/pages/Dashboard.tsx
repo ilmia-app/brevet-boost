@@ -87,18 +87,7 @@ const Dashboard = () => {
     fetchBlocs();
   }, []);
 
-  // Fetch feedback message
-  useEffect(() => {
-    const fetchFeedback = async () => {
-      const { data } = await supabase
-        .from("messages_feedback")
-        .select("message, ton, phase")
-        .eq("phase", currentPhase)
-        .limit(1);
-      if (data && data.length > 0) setFeedback(data[0]);
-    };
-    if (profile) fetchFeedback();
-  }, [profile]);
+  // Feedback fetch moved below currentPhase
 
   // Computed values
   const daysUntilExam = useMemo(() => {
