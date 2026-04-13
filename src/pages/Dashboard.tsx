@@ -214,9 +214,9 @@ const Dashboard = () => {
                     <Badge className={SUBJECT_COLORS[bloc!.matiere] || "bg-muted text-foreground"}>
                       {bloc!.matiere}
                     </Badge>
-                    <span className={`text-xs font-semibold ${TASK_LABEL_COLORS[weight]}`}>
-                      {TASK_LABELS[weight]}
-                    </span>
+                    <Badge variant="outline" className={`text-xs font-semibold border ${TASK_LABEL_COLORS[weight]}`}>
+                      {TASK_ICONS[weight]} {TASK_LABELS[weight]}
+                    </Badge>
                   </div>
                   <p
                     className={`font-medium text-sm leading-snug ${
