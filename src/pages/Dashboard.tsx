@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Play, Clock, MessageCircle } from "lucide-react";
+import { Play, Clock, MessageCircle, Loader2 } from "lucide-react";
 
 interface ProfileData {
   id: string;
