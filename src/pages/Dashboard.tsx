@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Play, Clock, MessageCircle } from "lucide-react";
 
 interface ProfileData {
+  id: string;
   name: string;
   examDate: string;
   rhythm: string;
