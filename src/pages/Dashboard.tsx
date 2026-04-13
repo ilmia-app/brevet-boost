@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Play, Clock, MessageCircle } from "lucide-react";
+import { Play, Clock, MessageCircle, Loader2 } from "lucide-react";
 
 interface ProfileData {
   id: string;
@@ -70,6 +70,7 @@ const Dashboard = () => {
   const [blocs, setBlocs] = useState<BlocExamen[]>([]);
   const [feedback, setFeedback] = useState<MessageFeedback | null>(null);
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
 
   // Load profile from Supabase
   useEffect(() => {
@@ -97,6 +98,7 @@ const Dashboard = () => {
         level: data.retard_initial || "",
         subjects: data.matieres_faibles || [],
       });
+      setLoading(false);
     };
     fetchProfile();
   }, [navigate]);
@@ -205,7 +207,14 @@ const Dashboard = () => {
     });
   };
 
-  if (!profile) return null;
+  if (!profile || loading) return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-center space-y-3">
+        <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+        <p className="text-muted-foreground text-sm">Chargement de ton planning...</p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background pb-8">
@@ -230,21 +239,21 @@ const Dashboard = () => {
           <h2 className="text-lg font-semibold">Ton programme d'aujourd'hui</h2>
           {dailyTasks.map(({ bloc, weight }) => (
             <Card
-              key={bloc!.id}
+              key={bloc.id}
               className={`transition-all ${
-                completedTasks.has(bloc!.id) ? "opacity-60" : ""
+                completedTasks.has(bloc.id) ? "opacity-60" : ""
               }`}
             >
               <CardContent className="p-4 flex items-start gap-3">
                 <Checkbox
-                  checked={completedTasks.has(bloc!.id)}
-                  onCheckedChange={() => toggleTask(bloc!.id)}
+                  checked={completedTasks.has(bloc.id)}
+                  onCheckedChange={() => toggleTask(bloc.id)}
                   className="mt-1"
                 />
                 <div className="flex-1 min-w-0 space-y-2">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Badge className={SUBJECT_COLORS[bloc!.matiere] || "bg-muted text-foreground"}>
-                      {bloc!.matiere}
+                    <Badge className={SUBJECT_COLORS[bloc.matiere] || "bg-muted text-foreground"}>
+                      {bloc.matiere}
                     </Badge>
                     <Badge variant="outline" className={`text-xs font-semibold border ${TASK_LABEL_COLORS[weight]}`}>
                       {TASK_ICONS[weight]} {TASK_LABELS[weight]}
@@ -252,19 +261,19 @@ const Dashboard = () => {
                   </div>
                   <p
                     className={`font-medium text-sm leading-snug ${
-                      completedTasks.has(bloc!.id) ? "line-through" : ""
+                      completedTasks.has(bloc.id) ? "line-through" : ""
                     }`}
                   >
-                    {bloc!.titre}
+                    {bloc.titre}
                   </p>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> {bloc!.duree_min} min
+                      <Clock className="w-3 h-3" /> {bloc.duree_min} min
                     </span>
                     <Button
                       size="sm"
                       className="h-7 text-xs rounded-lg sprint-gradient text-primary-foreground"
-                      onClick={() => navigate(`/work?bloc=${bloc!.id}&slot=${weight}`)}
+                      onClick={() => navigate(`/work?bloc=${bloc.id}&slot=${weight}`)}
                     >
                       <Play className="w-3 h-3 mr-1" /> Commencer
                     </Button>
