@@ -190,26 +190,6 @@ const Dashboard = () => {
       slots.push({ bloc, weight });
     }
 
-    return slots;
-    };
-
-    // Défi du jour: longest bloc (45+)
-    const heavy = pickBloc(45, Infinity);
-    if (heavy) { usedIds.add(heavy.id); usedSubjects.add(heavy.matiere); }
-
-    // Entraînement: 30-44 min, prefer different subject
-    const medium = pickBloc(30, 44);
-    if (medium) { usedIds.add(medium.id); usedSubjects.add(medium.matiere); }
-
-    // Sprint final: 15-29 min, prefer different subject
-    const light = pickBloc(15, 29);
-    if (light) { usedIds.add(light.id); usedSubjects.add(light.matiere); }
-
-    return [
-      { bloc: heavy, weight: "heavy" as const },
-      { bloc: medium, weight: "medium" as const },
-      { bloc: light, weight: "light" as const },
-    ].filter((t) => t.bloc !== null);
   }, [blocs, profile]);
 
   const todayDayIndex = new Date().getDay(); // 0=Sun
