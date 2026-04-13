@@ -71,14 +71,33 @@ const Dashboard = () => {
   const [feedback, setFeedback] = useState<MessageFeedback | null>(null);
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
 
-  // Load profile from localStorage
+  // Load profile from Supabase
   useEffect(() => {
-    const raw = localStorage.getItem("sprint_dnb_profile");
-    if (!raw) {
+    const userId = localStorage.getItem("sprint_dnb_user_id");
+    if (!userId) {
       navigate("/");
       return;
     }
-    setProfile(JSON.parse(raw));
+    const fetchProfile = async () => {
+      const { data } = await supabase
+        .from("users")
+        .select("id, prenom, date_examen, volume_quotidien, retard_initial, matieres_faibles")
+        .eq("id", userId)
+        .single();
+      if (!data) {
+        navigate("/");
+        return;
+      }
+      setProfile({
+        id: data.id,
+        name: data.prenom || "",
+        examDate: data.date_examen || "",
+        rhythm: data.volume_quotidien || "",
+        level: data.retard_initial || "",
+        subjects: data.matieres_faibles || [],
+      });
+    };
+    fetchProfile();
   }, [navigate]);
 
   // Fetch blocs_examen
