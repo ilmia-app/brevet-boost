@@ -159,30 +159,38 @@ const Dashboard = () => {
 
   const dailyTasks = useMemo(() => {
     const userSubjects = profile?.subjects || [];
-    const relevant = blocs
-      .filter((b) => userSubjects.length === 0 || userSubjects.includes(b.matiere))
-      .sort((a, b) => (b.duree_min || 0) - (a.duree_min || 0));
+    console.log("Subjects pour le planning:", userSubjects);
 
     const usedIds = new Set<string>();
-    const usedSubjects = new Set<string>();
+    const slots: Array<{ bloc: BlocExamen; weight: "heavy" | "medium" | "light" }> = [];
+    const weights: Array<"heavy" | "medium" | "light"> = ["heavy", "medium", "light"];
 
-    const pickBloc = (minDur: number, maxDur: number): BlocExamen | null => {
-      // First try to pick from an unused subject for diversity
-      const fromNewSubject = relevant.find(
-        (b) =>
-          !usedIds.has(b.id) &&
-          !usedSubjects.has(b.matiere) &&
-          (b.duree_min || 0) >= minDur &&
-          (b.duree_min || 0) <= maxDur
+    // Case-insensitive match helper
+    const matchesSubject = (blocMatiere: string, subject: string) =>
+      blocMatiere.toLowerCase() === subject.toLowerCase();
+
+    // Step 1: For each subject in matieres_faibles, pick a bloc (one per subject)
+    for (let i = 0; i < Math.min(userSubjects.length, 3); i++) {
+      const subject = userSubjects[i];
+      const bloc = blocs.find(
+        (b) => !usedIds.has(b.id) && matchesSubject(b.matiere, subject)
       );
-      if (fromNewSubject) return fromNewSubject;
-      // Fallback: any matching bloc
-      return relevant.find(
-        (b) =>
-          !usedIds.has(b.id) &&
-          (b.duree_min || 0) >= minDur &&
-          (b.duree_min || 0) <= maxDur
-      ) || null;
+      if (bloc) {
+        usedIds.add(bloc.id);
+        slots.push({ bloc, weight: weights[i] });
+      }
+    }
+
+    // Step 2: Fill remaining slots (up to 3) with any priorite=1 bloc not yet used
+    while (slots.length < 3) {
+      const weight = weights[slots.length];
+      const bloc = blocs.find((b) => !usedIds.has(b.id));
+      if (!bloc) break;
+      usedIds.add(bloc.id);
+      slots.push({ bloc, weight });
+    }
+
+    return slots;
     };
 
     // Défi du jour: longest bloc (45+)
