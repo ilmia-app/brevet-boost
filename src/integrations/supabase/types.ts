@@ -135,18 +135,27 @@ export type Database = {
         Row: {
           description: string | null
           parametre: string
+          slot_legere: string | null
+          slot_lourde: string | null
+          slot_moyenne: string | null
           unite: string | null
           valeur: string
         }
         Insert: {
           description?: string | null
           parametre: string
+          slot_legere?: string | null
+          slot_lourde?: string | null
+          slot_moyenne?: string | null
           unite?: string | null
           valeur: string
         }
         Update: {
           description?: string | null
           parametre?: string
+          slot_legere?: string | null
+          slot_lourde?: string | null
+          slot_moyenne?: string | null
           unite?: string | null
           valeur?: string
         }

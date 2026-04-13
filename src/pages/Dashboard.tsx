@@ -229,7 +229,11 @@ const Dashboard = () => {
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
                       <Clock className="w-3 h-3" /> {bloc!.duree_min} min
                     </span>
-                    <Button size="sm" className="h-7 text-xs rounded-lg sprint-gradient text-primary-foreground">
+                    <Button
+                      size="sm"
+                      className="h-7 text-xs rounded-lg sprint-gradient text-primary-foreground"
+                      onClick={() => navigate(`/work?bloc=${bloc!.id}&slot=${weight}`)}
+                    >
                       <Play className="w-3 h-3 mr-1" /> Commencer
                     </Button>
                   </div>
