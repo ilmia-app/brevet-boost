@@ -98,6 +98,7 @@ const Dashboard = () => {
         level: data.retard_initial || "",
         subjects: data.matieres_faibles || [],
       });
+      setLoading(false);
     };
     fetchProfile();
   }, [navigate]);
