@@ -44,15 +44,21 @@ const SUBJECT_COLORS: Record<string, string> = {
 };
 
 const TASK_LABELS: Record<string, string> = {
-  heavy: "LOURDE",
-  medium: "MOYENNE",
-  light: "LÉGÈRE",
+  heavy: "Défi du jour",
+  medium: "Entraînement",
+  light: "Sprint final",
+};
+
+const TASK_ICONS: Record<string, string> = {
+  heavy: "🎯",
+  medium: "⚡",
+  light: "🚀",
 };
 
 const TASK_LABEL_COLORS: Record<string, string> = {
-  heavy: "text-red-500",
-  medium: "text-yellow-600",
-  light: "text-emerald-500",
+  heavy: "bg-red-100 text-red-700 border-red-200",
+  medium: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  light: "bg-emerald-100 text-emerald-700 border-emerald-200",
 };
 
 const DAYS = ["L", "M", "M", "J", "V", "S", "D"];
