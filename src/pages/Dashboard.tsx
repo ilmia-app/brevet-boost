@@ -88,6 +88,7 @@ const Dashboard = () => {
         navigate("/");
         return;
       }
+      console.log("matieres_faibles brut depuis Supabase:", data.matieres_faibles);
       setProfile({
         id: data.id,
         name: data.prenom || "",
