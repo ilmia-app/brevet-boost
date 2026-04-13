@@ -70,6 +70,7 @@ const Dashboard = () => {
   const [blocs, setBlocs] = useState<BlocExamen[]>([]);
   const [feedback, setFeedback] = useState<MessageFeedback | null>(null);
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
 
   // Load profile from Supabase
   useEffect(() => {
