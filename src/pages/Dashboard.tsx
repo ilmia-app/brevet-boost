@@ -88,6 +88,7 @@ const Dashboard = () => {
         navigate("/");
         return;
       }
+      console.log("matieres_faibles brut depuis Supabase:", data.matieres_faibles);
       setProfile({
         id: data.id,
         name: data.prenom || "",
@@ -158,49 +159,38 @@ const Dashboard = () => {
 
   const dailyTasks = useMemo(() => {
     const userSubjects = profile?.subjects || [];
-    const relevant = blocs
-      .filter((b) => userSubjects.length === 0 || userSubjects.includes(b.matiere))
-      .sort((a, b) => (b.duree_min || 0) - (a.duree_min || 0));
+    console.log("Subjects pour le planning:", userSubjects);
 
     const usedIds = new Set<string>();
-    const usedSubjects = new Set<string>();
+    const slots: Array<{ bloc: BlocExamen; weight: "heavy" | "medium" | "light" }> = [];
+    const weights: Array<"heavy" | "medium" | "light"> = ["heavy", "medium", "light"];
 
-    const pickBloc = (minDur: number, maxDur: number): BlocExamen | null => {
-      // First try to pick from an unused subject for diversity
-      const fromNewSubject = relevant.find(
-        (b) =>
-          !usedIds.has(b.id) &&
-          !usedSubjects.has(b.matiere) &&
-          (b.duree_min || 0) >= minDur &&
-          (b.duree_min || 0) <= maxDur
+    // Case-insensitive match helper
+    const matchesSubject = (blocMatiere: string, subject: string) =>
+      blocMatiere.toLowerCase() === subject.toLowerCase();
+
+    // Step 1: For each subject in matieres_faibles, pick a bloc (one per subject)
+    for (let i = 0; i < Math.min(userSubjects.length, 3); i++) {
+      const subject = userSubjects[i];
+      const bloc = blocs.find(
+        (b) => !usedIds.has(b.id) && matchesSubject(b.matiere, subject)
       );
-      if (fromNewSubject) return fromNewSubject;
-      // Fallback: any matching bloc
-      return relevant.find(
-        (b) =>
-          !usedIds.has(b.id) &&
-          (b.duree_min || 0) >= minDur &&
-          (b.duree_min || 0) <= maxDur
-      ) || null;
-    };
+      if (bloc) {
+        usedIds.add(bloc.id);
+        slots.push({ bloc, weight: weights[i] });
+      }
+    }
 
-    // Défi du jour: longest bloc (45+)
-    const heavy = pickBloc(45, Infinity);
-    if (heavy) { usedIds.add(heavy.id); usedSubjects.add(heavy.matiere); }
+    // Step 2: Fill remaining slots (up to 3) with any priorite=1 bloc not yet used
+    while (slots.length < 3) {
+      const weight = weights[slots.length];
+      const bloc = blocs.find((b) => !usedIds.has(b.id));
+      if (!bloc) break;
+      usedIds.add(bloc.id);
+      slots.push({ bloc, weight });
+    }
 
-    // Entraînement: 30-44 min, prefer different subject
-    const medium = pickBloc(30, 44);
-    if (medium) { usedIds.add(medium.id); usedSubjects.add(medium.matiere); }
-
-    // Sprint final: 15-29 min, prefer different subject
-    const light = pickBloc(15, 29);
-    if (light) { usedIds.add(light.id); usedSubjects.add(light.matiere); }
-
-    return [
-      { bloc: heavy, weight: "heavy" as const },
-      { bloc: medium, weight: "medium" as const },
-      { bloc: light, weight: "light" as const },
-    ].filter((t) => t.bloc !== null);
+    return slots;
   }, [blocs, profile]);
 
   const todayDayIndex = new Date().getDay(); // 0=Sun
