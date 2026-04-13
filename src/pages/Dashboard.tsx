@@ -116,7 +116,20 @@ const Dashboard = () => {
     return Math.min(100, Math.round((elapsed / totalSprintDays) * 100));
   }, [totalSprintDays, daysUntilExam]);
 
-  // Pick 3 tasks: heavy (45-60min), medium (30-44min), light (15-29min)
+  // Fetch feedback message
+  useEffect(() => {
+    const fetchFeedback = async () => {
+      const { data } = await supabase
+        .from("messages_feedback")
+        .select("message, ton, phase")
+        .eq("phase", currentPhase)
+        .limit(1);
+      if (data && data.length > 0) setFeedback(data[0]);
+    };
+    if (profile) fetchFeedback();
+  }, [profile, currentPhase]);
+
+
   const dailyTasks = useMemo(() => {
     const userSubjects = profile?.subjects || [];
     const relevant = blocs.filter(
