@@ -214,8 +214,8 @@ const Dashboard = () => {
                     <Badge className={SUBJECT_COLORS[bloc!.matiere] || "bg-muted text-foreground"}>
                       {bloc!.matiere}
                     </Badge>
-                    <span className={`text-xs font-semibold ${TASK_LABEL_COLORS[weight]}`}>
-                      {TASK_LABELS[weight]}
+                    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${TASK_LABEL_COLORS[weight]}`}>
+                      {TASK_ICONS[weight]} {TASK_LABELS[weight]}
                     </span>
                   </div>
                   <p
