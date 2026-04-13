@@ -185,6 +185,60 @@ export type Database = {
         }
         Relationships: []
       }
+      users: {
+        Row: {
+          created_at: string | null
+          date_examen: string | null
+          derniere_activite: string | null
+          email: string | null
+          id: string
+          jours_travailles: number[] | null
+          matieres_faibles: string[] | null
+          matieres_fortes: string[] | null
+          mode_actuel: string | null
+          niveau: string | null
+          phase_actuelle: number | null
+          prenom: string | null
+          retard_cumule_min: number | null
+          retard_initial: string | null
+          volume_quotidien: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date_examen?: string | null
+          derniere_activite?: string | null
+          email?: string | null
+          id?: string
+          jours_travailles?: number[] | null
+          matieres_faibles?: string[] | null
+          matieres_fortes?: string[] | null
+          mode_actuel?: string | null
+          niveau?: string | null
+          phase_actuelle?: number | null
+          prenom?: string | null
+          retard_cumule_min?: number | null
+          retard_initial?: string | null
+          volume_quotidien?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date_examen?: string | null
+          derniere_activite?: string | null
+          email?: string | null
+          id?: string
+          jours_travailles?: number[] | null
+          matieres_faibles?: string[] | null
+          matieres_fortes?: string[] | null
+          mode_actuel?: string | null
+          niveau?: string | null
+          phase_actuelle?: number | null
+          prenom?: string | null
+          retard_cumule_min?: number | null
+          retard_initial?: string | null
+          volume_quotidien?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

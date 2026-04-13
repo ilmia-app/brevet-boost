@@ -6,6 +6,8 @@ import ProgressBar from "@/components/onboarding/ProgressBar";
 import SelectableCard from "@/components/onboarding/SelectableCard";
 import SubjectChip from "@/components/onboarding/SubjectChip";
 import { Rocket, ArrowRight, ArrowLeft, Sparkles } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 const TOTAL_STEPS = 5;
 const SUBJECTS = ["Maths", "Français", "Histoire", "Géographie", "EMC", "Physique", "SVT", "Techno"];
@@ -34,9 +36,35 @@ const Onboarding = () => {
     }
   };
 
-  const handleFinish = () => {
-    const profileData = { name, examDate, rhythm, level, subjects };
-    localStorage.setItem("sprint_dnb_profile", JSON.stringify(profileData));
+  const handleFinish = async () => {
+    // Map rhythm to volume_quotidien values
+    const volumeMap: Record<string, string> = {
+      "1h30": "leger",
+      "2h30": "moyen",
+      "3h30": "intensif",
+    };
+    // Map level to retard_initial values
+    const retardMap: Record<string, string> = {
+      on_track: "aucun",
+      slightly_behind: "modere",
+      behind: "important",
+    };
+
+    const { data, error } = await supabase.from("users").insert({
+      prenom: name,
+      date_examen: examDate,
+      volume_quotidien: volumeMap[rhythm] || rhythm,
+      retard_initial: retardMap[level] || level,
+      matieres_faibles: subjects,
+    }).select("id").single();
+
+    if (error) {
+      toast({ title: "Erreur", description: "Impossible de sauvegarder ton profil.", variant: "destructive" });
+      return;
+    }
+
+    // Store user ID for dashboard
+    localStorage.setItem("sprint_dnb_user_id", data.id);
     navigate("/dashboard");
   };
 
