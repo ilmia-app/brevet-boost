@@ -6,6 +6,8 @@ import ProgressBar from "@/components/onboarding/ProgressBar";
 import SelectableCard from "@/components/onboarding/SelectableCard";
 import SubjectChip from "@/components/onboarding/SubjectChip";
 import { Rocket, ArrowRight, ArrowLeft, Sparkles } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 const TOTAL_STEPS = 5;
 const SUBJECTS = ["Maths", "Français", "Histoire", "Géographie", "EMC", "Physique", "SVT", "Techno"];
