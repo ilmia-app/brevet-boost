@@ -138,26 +138,48 @@ const Dashboard = () => {
 
   const dailyTasks = useMemo(() => {
     const userSubjects = profile?.subjects || [];
-    const relevant = blocs.filter(
-      (b) => userSubjects.length === 0 || userSubjects.includes(b.matiere)
-    );
+    const relevant = blocs
+      .filter((b) => userSubjects.length === 0 || userSubjects.includes(b.matiere))
+      .sort((a, b) => (b.duree_min || 0) - (a.duree_min || 0));
 
-    const heavy = relevant.find((b) => (b.duree_min || 0) >= 45);
-    const medium = relevant.find(
-      (b) => (b.duree_min || 0) >= 30 && (b.duree_min || 0) < 45 && b.id !== heavy?.id
-    );
-    const light = relevant.find(
-      (b) =>
-        (b.duree_min || 0) >= 15 &&
-        (b.duree_min || 0) < 30 &&
-        b.id !== heavy?.id &&
-        b.id !== medium?.id
-    );
+    const usedIds = new Set<string>();
+    const usedSubjects = new Set<string>();
+
+    const pickBloc = (minDur: number, maxDur: number): BlocExamen | null => {
+      // First try to pick from an unused subject for diversity
+      const fromNewSubject = relevant.find(
+        (b) =>
+          !usedIds.has(b.id) &&
+          !usedSubjects.has(b.matiere) &&
+          (b.duree_min || 0) >= minDur &&
+          (b.duree_min || 0) <= maxDur
+      );
+      if (fromNewSubject) return fromNewSubject;
+      // Fallback: any matching bloc
+      return relevant.find(
+        (b) =>
+          !usedIds.has(b.id) &&
+          (b.duree_min || 0) >= minDur &&
+          (b.duree_min || 0) <= maxDur
+      ) || null;
+    };
+
+    // Défi du jour: longest bloc (45+)
+    const heavy = pickBloc(45, Infinity);
+    if (heavy) { usedIds.add(heavy.id); usedSubjects.add(heavy.matiere); }
+
+    // Entraînement: 30-44 min, prefer different subject
+    const medium = pickBloc(30, 44);
+    if (medium) { usedIds.add(medium.id); usedSubjects.add(medium.matiere); }
+
+    // Sprint final: 15-29 min, prefer different subject
+    const light = pickBloc(15, 29);
+    if (light) { usedIds.add(light.id); usedSubjects.add(light.matiere); }
 
     return [
-      { bloc: heavy || null, weight: "heavy" as const },
-      { bloc: medium || null, weight: "medium" as const },
-      { bloc: light || null, weight: "light" as const },
+      { bloc: heavy, weight: "heavy" as const },
+      { bloc: medium, weight: "medium" as const },
+      { bloc: light, weight: "light" as const },
     ].filter((t) => t.bloc !== null);
   }, [blocs, profile]);
 
