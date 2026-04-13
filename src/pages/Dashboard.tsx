@@ -190,6 +190,7 @@ const Dashboard = () => {
       slots.push({ bloc, weight });
     }
 
+    return slots;
   }, [blocs, profile]);
 
   const todayDayIndex = new Date().getDay(); // 0=Sun
