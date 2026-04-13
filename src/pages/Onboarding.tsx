@@ -35,8 +35,8 @@ const Onboarding = () => {
   };
 
   const handleFinish = () => {
-    // TODO: Save to Supabase when Cloud is enabled
-    console.log({ name, examDate, rhythm, level, subjects });
+    const profileData = { name, examDate, rhythm, level, subjects };
+    localStorage.setItem("sprint_dnb_profile", JSON.stringify(profileData));
     navigate("/dashboard");
   };
 

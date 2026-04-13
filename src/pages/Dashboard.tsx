@@ -1,14 +1,282 @@
-import { Rocket } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
+import { Play, Clock, MessageCircle } from "lucide-react";
+
+interface ProfileData {
+  name: string;
+  examDate: string;
+  rhythm: string;
+  level: string;
+  subjects: string[];
+}
+
+interface BlocExamen {
+  id: string;
+  matiere: string;
+  titre: string;
+  duree_min: number | null;
+  priorite: number | null;
+  phase_min: number | null;
+  type: string | null;
+}
+
+interface MessageFeedback {
+  message: string | null;
+  ton: string | null;
+  phase: number | null;
+}
+
+const SUBJECT_COLORS: Record<string, string> = {
+  Maths: "bg-blue-500 text-white",
+  Français: "bg-purple-500 text-white",
+  Histoire: "bg-orange-500 text-white",
+  Géographie: "bg-emerald-500 text-white",
+  EMC: "bg-yellow-500 text-white",
+  Physique: "bg-red-500 text-white",
+  SVT: "bg-green-700 text-white",
+  Techno: "bg-gray-500 text-white",
+};
+
+const TASK_LABELS: Record<string, string> = {
+  heavy: "LOURDE",
+  medium: "MOYENNE",
+  light: "LÉGÈRE",
+};
+
+const TASK_LABEL_COLORS: Record<string, string> = {
+  heavy: "text-red-500",
+  medium: "text-yellow-600",
+  light: "text-emerald-500",
+};
+
+const DAYS = ["L", "M", "M", "J", "V", "S", "D"];
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [blocs, setBlocs] = useState<BlocExamen[]>([]);
+  const [feedback, setFeedback] = useState<MessageFeedback | null>(null);
+  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
+
+  // Load profile from localStorage
+  useEffect(() => {
+    const raw = localStorage.getItem("sprint_dnb_profile");
+    if (!raw) {
+      navigate("/");
+      return;
+    }
+    setProfile(JSON.parse(raw));
+  }, [navigate]);
+
+  // Fetch blocs_examen
+  useEffect(() => {
+    const fetchBlocs = async () => {
+      const { data } = await supabase
+        .from("blocs_examen")
+        .select("id, matiere, titre, duree_min, priorite, phase_min, type")
+        .eq("priorite", 1)
+        .order("duree_min", { ascending: false });
+      if (data) setBlocs(data);
+    };
+    fetchBlocs();
+  }, []);
+
+  // Feedback fetch moved below currentPhase
+
+  // Computed values
+  const daysUntilExam = useMemo(() => {
+    if (!profile?.examDate) return 0;
+    const diff = new Date(profile.examDate).getTime() - new Date().getTime();
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  }, [profile]);
+
+  const totalSprintDays = useMemo(() => {
+    return Math.max(daysUntilExam, 1);
+  }, [daysUntilExam]);
+
+  const currentPhase = useMemo(() => {
+    if (daysUntilExam > 21) return 1;
+    if (daysUntilExam > 7) return 2;
+    return 3;
+  }, [daysUntilExam]);
+
+  const currentWeek = useMemo(() => {
+    const elapsed = totalSprintDays - daysUntilExam;
+    return Math.max(1, Math.ceil(elapsed / 7));
+  }, [totalSprintDays, daysUntilExam]);
+
+  const progressPercent = useMemo(() => {
+    const elapsed = totalSprintDays - daysUntilExam;
+    return Math.min(100, Math.round((elapsed / totalSprintDays) * 100));
+  }, [totalSprintDays, daysUntilExam]);
+
+  // Fetch feedback message
+  useEffect(() => {
+    const fetchFeedback = async () => {
+      const { data } = await supabase
+        .from("messages_feedback")
+        .select("message, ton, phase")
+        .eq("phase", currentPhase)
+        .limit(1);
+      if (data && data.length > 0) setFeedback(data[0]);
+    };
+    if (profile) fetchFeedback();
+  }, [profile, currentPhase]);
+
+
+  const dailyTasks = useMemo(() => {
+    const userSubjects = profile?.subjects || [];
+    const relevant = blocs.filter(
+      (b) => userSubjects.length === 0 || userSubjects.includes(b.matiere)
+    );
+
+    const heavy = relevant.find((b) => (b.duree_min || 0) >= 45);
+    const medium = relevant.find(
+      (b) => (b.duree_min || 0) >= 30 && (b.duree_min || 0) < 45 && b.id !== heavy?.id
+    );
+    const light = relevant.find(
+      (b) =>
+        (b.duree_min || 0) >= 15 &&
+        (b.duree_min || 0) < 30 &&
+        b.id !== heavy?.id &&
+        b.id !== medium?.id
+    );
+
+    return [
+      { bloc: heavy || null, weight: "heavy" as const },
+      { bloc: medium || null, weight: "medium" as const },
+      { bloc: light || null, weight: "light" as const },
+    ].filter((t) => t.bloc !== null);
+  }, [blocs, profile]);
+
+  const todayDayIndex = new Date().getDay(); // 0=Sun
+  const dayIndexMondayBased = todayDayIndex === 0 ? 6 : todayDayIndex - 1;
+
+  const toggleTask = (id: string) => {
+    setCompletedTasks((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  if (!profile) return null;
+
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="text-center space-y-4">
-        <div className="w-16 h-16 rounded-2xl sprint-gradient mx-auto flex items-center justify-center">
-          <Rocket className="w-8 h-8 text-primary-foreground" />
-        </div>
-        <h1 className="text-2xl font-bold">Ton sprint est prêt ! 🚀</h1>
-        <p className="text-muted-foreground">Le tableau de bord arrive bientôt.</p>
+    <div className="min-h-screen bg-background pb-8">
+      <div className="max-w-lg mx-auto px-4 pt-6 space-y-6">
+        {/* SECTION 1 — Header */}
+        <section className="space-y-3">
+          <h1 className="text-2xl font-bold">Bonjour {profile.name} 👋</h1>
+          <p className="text-muted-foreground text-sm">
+            J-{daysUntilExam} · Phase {currentPhase} · Semaine {currentWeek} du sprint
+          </p>
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Progression du sprint</span>
+              <span>{progressPercent}%</span>
+            </div>
+            <Progress value={progressPercent} className="h-2.5 rounded-full" />
+          </div>
+        </section>
+
+        {/* SECTION 2 — Planning du jour */}
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">Ton programme d'aujourd'hui</h2>
+          {dailyTasks.map(({ bloc, weight }) => (
+            <Card
+              key={bloc!.id}
+              className={`transition-all ${
+                completedTasks.has(bloc!.id) ? "opacity-60" : ""
+              }`}
+            >
+              <CardContent className="p-4 flex items-start gap-3">
+                <Checkbox
+                  checked={completedTasks.has(bloc!.id)}
+                  onCheckedChange={() => toggleTask(bloc!.id)}
+                  className="mt-1"
+                />
+                <div className="flex-1 min-w-0 space-y-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge className={SUBJECT_COLORS[bloc!.matiere] || "bg-muted text-foreground"}>
+                      {bloc!.matiere}
+                    </Badge>
+                    <span className={`text-xs font-semibold ${TASK_LABEL_COLORS[weight]}`}>
+                      {TASK_LABELS[weight]}
+                    </span>
+                  </div>
+                  <p
+                    className={`font-medium text-sm leading-snug ${
+                      completedTasks.has(bloc!.id) ? "line-through" : ""
+                    }`}
+                  >
+                    {bloc!.titre}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> {bloc!.duree_min} min
+                    </span>
+                    <Button size="sm" className="h-7 text-xs rounded-lg sprint-gradient text-primary-foreground">
+                      <Play className="w-3 h-3 mr-1" /> Commencer
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+          {dailyTasks.length === 0 && (
+            <p className="text-muted-foreground text-sm text-center py-4">
+              Aucune tâche disponible pour tes matières.
+            </p>
+          )}
+        </section>
+
+        {/* SECTION 3 — Progression semaine */}
+        <section className="space-y-2">
+          <h2 className="text-lg font-semibold">Progression de la semaine</h2>
+          <div className="flex justify-between px-2">
+            {DAYS.map((day, i) => {
+              const isPast = i < dayIndexMondayBased;
+              const isToday = i === dayIndexMondayBased;
+              return (
+                <div key={i} className="flex flex-col items-center gap-1">
+                  <div
+                    className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold transition-all ${
+                      isPast
+                        ? "sprint-gradient text-primary-foreground"
+                        : isToday
+                        ? "border-2 border-primary text-primary bg-transparent"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {day}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* SECTION 4 — Feedback */}
+        {feedback?.message && (
+          <section>
+            <Card className="border-primary/20 bg-accent/30">
+              <CardContent className="p-4 flex items-start gap-3">
+                <MessageCircle className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                <p className="text-sm text-foreground/80 leading-relaxed">
+                  {feedback.message}
+                </p>
+              </CardContent>
+            </Card>
+          </section>
+        )}
       </div>
     </div>
   );
