@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Play, Clock, MessageCircle, Loader2, LogOut, CheckCircle2 } from "lucide-react";
+import { Play, Clock, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import EndOfDayModal from "@/components/dashboard/EndOfDayModal";
 
@@ -366,7 +366,12 @@ const Dashboard = () => {
       <div className="max-w-lg mx-auto px-4 pt-6 space-y-6">
         {/* SECTION 1 — Header */}
         <section className="space-y-3">
-          <h1 className="text-2xl font-bold">Bonjour {profile.name} 👋</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold">Bonjour {profile.name} 👋</h1>
+            <Button variant="ghost" size="icon" onClick={() => navigate("/progress")}>
+              <BarChart3 className="w-5 h-5 text-primary" />
+            </Button>
+          </div>
           <p className="text-muted-foreground text-sm">
             J-{daysUntilExam} · Phase {currentPhase} · Semaine {currentWeek} du sprint
           </p>
