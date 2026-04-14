@@ -378,12 +378,8 @@ const WorkSession = () => {
             )}
             {generatedExercise && !isGenerating && (
               <>
-                <Card className={`border-l-4 ${
-                  SUBJECT_COLORS[bloc.matiere]
-                    ? `border-l-${SUBJECT_COLORS[bloc.matiere].split(" ")[0].replace("bg-", "")}`
-                    : "border-l-primary"
-                }`}>
-                  <CardContent className="p-4">
+                <Card className="border-l-4 border-l-primary">
+                  <CardContent className="p-4 bg-accent/30 rounded-r-lg">
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">{generatedExercise}</p>
                   </CardContent>
                 </Card>
