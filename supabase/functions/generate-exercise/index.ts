@@ -14,27 +14,28 @@ serve(async (req) => {
   try {
     const { matiere, titre, objectifs_pedagogiques, duree_examen_min, tags } = await req.json();
 
-    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
-    if (!ANTHROPIC_API_KEY) {
-      return new Response(JSON.stringify({ error: "ANTHROPIC_API_KEY not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      return new Response(
+        JSON.stringify({ error: "API key not configured", fallback: true }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1000,
-        system:
-          "Tu es un générateur d'exercices pour le Brevet des Collèges français, spécialisé pour les élèves CNED. Tu génères UN SEUL exercice court, calibré niveau 3ème, dans le style exact des sujets officiels du brevet. Tu réponds UNIQUEMENT avec l'énoncé de l'exercice, sans correction, sans commentaire, sans introduction. Maximum 150 mots.",
+        model: "google/gemini-3-flash-preview",
         messages: [
+          {
+            role: "system",
+            content:
+              "Tu es un générateur d'exercices pour le Brevet des Collèges français, spécialisé pour les élèves CNED. Tu génères UN SEUL exercice court, calibré niveau 3ème, dans le style exact des sujets officiels du brevet. Tu réponds UNIQUEMENT avec l'énoncé de l'exercice, sans correction, sans commentaire, sans introduction. Maximum 150 mots.",
+          },
           {
             role: "user",
             content: `Génère un exercice de type : ${titre || "exercice"}. Matière : ${matiere || "inconnue"}. Objectifs : ${objectifs_pedagogiques || "aucun"}. Durée cible : ${duree_examen_min || 15} minutes. Tags : ${tags || "aucun"}.`,
@@ -45,24 +46,38 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error("Anthropic API error:", response.status, errText);
-      return new Response(JSON.stringify({ error: "Erreur API Anthropic" }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.error("AI gateway error:", response.status, errText);
+
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: "Trop de requêtes, réessaie dans quelques instants.", fallback: true }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: "Crédits IA épuisés.", fallback: true }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ error: "Génération temporairement indisponible.", fallback: true }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const data = await response.json();
-    const exercise = data?.content?.[0]?.text || "";
+    const exercise = data?.choices?.[0]?.message?.content || "";
 
     return new Response(JSON.stringify({ exercise }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("generate-exercise error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "Erreur inattendue.", fallback: true }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 });
