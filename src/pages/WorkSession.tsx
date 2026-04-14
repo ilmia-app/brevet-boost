@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Play, Pause, CheckCircle2, ChevronRight, Target, Zap, Rocket, Clock } from "lucide-react";
+import { ArrowLeft, Play, Pause, CheckCircle2, ChevronRight, Target, Zap, Rocket, Clock, Sparkles, RefreshCw, Printer, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -67,6 +67,8 @@ const WorkSession = () => {
   const [showNotEnough, setShowNotEnough] = useState(false);
   const [showTimeUp, setShowTimeUp] = useState(false);
   const [remainingMinutes, setRemainingMinutes] = useState(0);
+  const [generatedExercise, setGeneratedExercise] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Timer: always counts UP (elapsed seconds)
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -173,6 +175,30 @@ const WorkSession = () => {
   }, [isPhase3, elapsedSeconds, countdownTotalSec, timerRunning]);
 
   const toggleTimer = () => setTimerRunning((r) => !r);
+
+  const handleGenerateExercise = useCallback(async () => {
+    if (!bloc) return;
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-exercise", {
+        body: {
+          bloc_id: bloc.id,
+          matiere: bloc.matiere,
+          titre: bloc.titre,
+          objectifs_pedagogiques: bloc.objectifs_pedagogiques,
+          duree_examen_min: bloc.duree_examen_min,
+          tags: null,
+        },
+      });
+      if (error) throw error;
+      setGeneratedExercise(data?.exercise || "Impossible de générer l'exercice.");
+    } catch (e) {
+      console.error("Exercise generation error:", e);
+      setGeneratedExercise("Erreur lors de la génération. Réessaie plus tard.");
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [bloc]);
 
   // Display values
   const displaySeconds = isPhase3
@@ -327,6 +353,58 @@ const WorkSession = () => {
             )}
           </div>
         </section>
+
+        {/* AI Exercise Section — Phase 1 & 2 only */}
+        {!isPhase3 && (
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" /> Ton exercice du jour
+            </h2>
+            {!generatedExercise && !isGenerating && (
+              <Button
+                onClick={handleGenerateExercise}
+                variant="outline"
+                className="w-full gap-2"
+              >
+                <Sparkles className="w-4 h-4" /> Générer un exercice
+              </Button>
+            )}
+            {isGenerating && (
+              <Card>
+                <CardContent className="p-4 flex items-center justify-center gap-2 text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Génération de ton exercice…
+                </CardContent>
+              </Card>
+            )}
+            {generatedExercise && !isGenerating && (
+              <>
+                <Card className="border-l-4 border-l-primary">
+                  <CardContent className="p-4 bg-accent/30 rounded-r-lg">
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{generatedExercise}</p>
+                  </CardContent>
+                </Card>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleGenerateExercise}
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 flex-1"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" /> Autre exercice
+                  </Button>
+                  <Button
+                    onClick={() => window.print()}
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 flex-1"
+                  >
+                    <Printer className="w-3.5 h-3.5" /> Imprimer
+                  </Button>
+                </div>
+              </>
+            )}
+          </section>
+        )}
 
         {/* SECTION 2 — Méthode pas-à-pas */}
         {methodeSteps.length > 0 && (
