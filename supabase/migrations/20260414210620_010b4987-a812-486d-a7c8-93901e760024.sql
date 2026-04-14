@@ -1,0 +1,1 @@
+DELETE FROM public.completions WHERE date_completion = CURRENT_DATE;
