@@ -102,7 +102,7 @@ const Dashboard = () => {
       setLoading(false);
     };
     fetchProfile();
-  }, [navigate]);
+  }, [user, navigate]);
 
   // Fetch blocs_examen
   useEffect(() => {
@@ -329,6 +329,17 @@ const Dashboard = () => {
             </Card>
           </section>
         )}
+
+        {/* Déconnexion */}
+        <section className="pt-4">
+          <Button
+            variant="ghost"
+            className="w-full text-muted-foreground text-sm hover:text-destructive"
+            onClick={async () => { await signOut(); navigate("/login"); }}
+          >
+            <LogOut className="w-4 h-4 mr-2" /> Se déconnecter
+          </Button>
+        </section>
       </div>
     </div>
   );
