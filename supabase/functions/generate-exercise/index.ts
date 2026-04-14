@@ -40,21 +40,22 @@ serve(async (req) => {
             content:
               `Tu es un générateur d'exercices pour le Brevet des Collèges français, spécialisé pour les élèves CNED.
 
-RÈGLE ABSOLUE : l'exercice doit porter UNIQUEMENT sur la notion exacte décrite dans le titre et les objectifs fournis. Ne jamais mélanger plusieurs notions.
+Génère UN énoncé court, style brevet officiel, niveau 3ème.
 
-L'exercice doit être résolvable étape par étape en suivant exactement la méthode fournie.
+RÈGLES STRICTES :
+- Commence directement par l'énoncé (ex: 'Un rectangle...', 'Soit...')
+- Aucun titre, aucune durée, aucune introduction
+- Aucune indication de méthode ou d'étapes dans l'énoncé
+- Aucune mise en forme markdown (pas de ** ni de *)
+- Expressions mathématiques en texte simple : x², (a+b)², 3/5
+- Maximum 80 mots
+- Un seul exercice, une seule notion
 
-Calibré niveau 3ème, style officiel brevet.
-
-Réponds UNIQUEMENT avec l'énoncé, sans correction, sans commentaire, sans introduction.
-
-Écris les expressions mathématiques en texte simple sans LaTeX (ex: écris 'x²' pas '$x^2$', écris '3/5' pas '\\frac{3}{5}').
-
-Maximum 120 mots.`,
+La méthode ci-dessous est fournie UNIQUEMENT pour que l'exercice soit cohérent avec elle. Ne JAMAIS l'inclure dans l'énoncé.`,
           },
           {
             role: "user",
-            content: `Génère un exercice de type : ${titre || "exercice"}. Matière : ${matiere || "inconnue"}. Objectifs : ${objectifs_pedagogiques || "aucun"}. Durée cible : ${duree_examen_min || 15} minutes. Tags : ${tags || "aucun"}.\n\n${methodeText}`,
+            content: `Génère un exercice de type : ${titre || "exercice"}. Matière : ${matiere || "inconnue"}. Objectifs : ${objectifs_pedagogiques || "aucun"}. Durée cible : ${duree_examen_min || 15} minutes. Tags : ${tags || "aucun"}.\n\nMéthode de résolution (contexte uniquement, NE PAS inclure dans l'énoncé) :\n${methodeText}`,
           },
         ],
       }),
