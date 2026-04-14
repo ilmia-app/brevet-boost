@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import katex from "katex";
+import "katex/dist/katex.min.css";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -176,10 +178,25 @@ const WorkSession = () => {
 
   const toggleTimer = () => setTimerRunning((r) => !r);
 
+  const renderMathText = useCallback((text: string) => {
+    // Replace $...$ with KaTeX rendered HTML
+    return text.replace(/\$([^$]+)\$/g, (_, math) => {
+      try {
+        return katex.renderToString(math, { throwOnError: false });
+      } catch {
+        return math;
+      }
+    });
+  }, []);
+
   const handleGenerateExercise = useCallback(async () => {
     if (!bloc) return;
     setIsGenerating(true);
     try {
+      const methodeText = methodeSteps.length > 0
+        ? methodeSteps.map((s, i) => `${i + 1}. ${s}`).join("\n")
+        : null;
+
       const { data, error } = await supabase.functions.invoke("generate-exercise", {
         body: {
           bloc_id: bloc.id,
@@ -188,6 +205,7 @@ const WorkSession = () => {
           objectifs_pedagogiques: bloc.objectifs_pedagogiques,
           duree_examen_min: bloc.duree_examen_min,
           tags: null,
+          methode_etapes: methodeText,
         },
       });
       if (error) throw error;
@@ -202,7 +220,7 @@ const WorkSession = () => {
     } finally {
       setIsGenerating(false);
     }
-  }, [bloc]);
+  }, [bloc, methodeSteps]);
 
   // Display values
   const displaySeconds = isPhase3
@@ -384,7 +402,10 @@ const WorkSession = () => {
               <>
                 <Card className="border-l-4 border-l-primary">
                   <CardContent className="p-4 bg-accent/30 rounded-r-lg">
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{generatedExercise}</p>
+                    <div
+                      className="text-sm leading-relaxed whitespace-pre-wrap"
+                      dangerouslySetInnerHTML={{ __html: renderMathText(generatedExercise) }}
+                    />
                   </CardContent>
                 </Card>
                 <div className="flex gap-2">
