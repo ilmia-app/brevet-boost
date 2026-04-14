@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Play, Clock, MessageCircle, Loader2, LogOut } from "lucide-react";
+import { Play, Clock, MessageCircle, Loader2, LogOut, CheckCircle2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import EndOfDayModal from "@/components/dashboard/EndOfDayModal";
 
 interface ProfileData {
   id: string;
@@ -16,6 +18,8 @@ interface ProfileData {
   rhythm: string;
   level: string;
   subjects: string[];
+  modeActuel: string;
+  phaseActuelle: number;
 }
 
 interface BlocExamen {
@@ -73,6 +77,12 @@ const Dashboard = () => {
   const [feedback, setFeedback] = useState<MessageFeedback | null>(null);
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [endOfDayOpen, setEndOfDayOpen] = useState(false);
+  const [endOfDayMessage, setEndOfDayMessage] = useState("");
+  const [endOfDayTaux, setEndOfDayTaux] = useState(0);
+  const [endOfDayMode, setEndOfDayMode] = useState("normal");
+  const [endingDay, setEndingDay] = useState(false);
+  const [yesterdayBlocIds, setYesterdayBlocIds] = useState<Set<string>>(new Set());
 
   // Load profile from Supabase
   useEffect(() => {
@@ -83,14 +93,15 @@ const Dashboard = () => {
     const fetchProfile = async () => {
       const { data } = await supabase
         .from("users")
-        .select("id, prenom, date_examen, volume_quotidien, retard_initial, matieres_faibles")
+        .select("id, prenom, date_examen, volume_quotidien, retard_initial, matieres_faibles, mode_actuel, phase_actuelle")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
       if (!data) {
         navigate("/onboarding");
         return;
       }
       console.log("matieres_faibles brut depuis Supabase:", data.matieres_faibles);
+      console.log("mode_actuel:", data.mode_actuel);
       setProfile({
         id: data.id,
         name: data.prenom || "",
@@ -98,11 +109,50 @@ const Dashboard = () => {
         rhythm: data.volume_quotidien || "",
         level: data.retard_initial || "",
         subjects: data.matieres_faibles || [],
+        modeActuel: data.mode_actuel || "normal",
+        phaseActuelle: data.phase_actuelle || 1,
       });
       setLoading(false);
     };
     fetchProfile();
   }, [user, navigate]);
+
+  // Load today's completions from Supabase
+  useEffect(() => {
+    if (!user) return;
+    const loadCompletions = async () => {
+      const today = new Date().toISOString().split("T")[0];
+      const { data } = await supabase
+        .from("completions")
+        .select("bloc_id")
+        .eq("user_id", user.id)
+        .eq("date_completion", today)
+        .eq("completed", true);
+      if (data) {
+        setCompletedTasks(new Set(data.map((c) => c.bloc_id)));
+      }
+    };
+    loadCompletions();
+  }, [user]);
+
+  // Load yesterday's completions for "maintien" mode
+  useEffect(() => {
+    if (!user) return;
+    const loadYesterday = async () => {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yStr = yesterday.toISOString().split("T")[0];
+      const { data } = await supabase
+        .from("completions")
+        .select("bloc_id")
+        .eq("user_id", user.id)
+        .eq("date_completion", yStr);
+      if (data) {
+        setYesterdayBlocIds(new Set(data.map((c) => c.bloc_id)));
+      }
+    };
+    loadYesterday();
+  }, [user]);
 
   // Fetch blocs_examen
   useEffect(() => {
@@ -117,8 +167,6 @@ const Dashboard = () => {
     fetchBlocs();
   }, []);
 
-  // Feedback fetch moved below currentPhase
-
   // Computed values
   const daysUntilExam = useMemo(() => {
     if (!profile?.examDate) return 0;
@@ -126,9 +174,7 @@ const Dashboard = () => {
     return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
   }, [profile]);
 
-  const totalSprintDays = useMemo(() => {
-    return Math.max(daysUntilExam, 1);
-  }, [daysUntilExam]);
+  const totalSprintDays = useMemo(() => Math.max(daysUntilExam, 1), [daysUntilExam]);
 
   const currentPhase = useMemo(() => {
     if (daysUntilExam > 21) return 1;
@@ -159,23 +205,45 @@ const Dashboard = () => {
     if (profile) fetchFeedback();
   }, [profile, currentPhase]);
 
-
+  // Generate daily tasks based on mode_actuel
   const dailyTasks = useMemo(() => {
+    const mode = profile?.modeActuel || "normal";
     const userSubjects = profile?.subjects || [];
-    console.log("Subjects pour le planning:", userSubjects);
+    console.log("Subjects pour le planning:", userSubjects, "Mode:", mode);
 
     const usedIds = new Set<string>();
     const slots: Array<{ bloc: BlocExamen; weight: "heavy" | "medium" | "light" }> = [];
     const weights: Array<"heavy" | "medium" | "light"> = ["heavy", "medium", "light"];
 
-    // Case-insensitive match helper
     const matchesSubject = (blocMatiere: string, subject: string) =>
       blocMatiere.toLowerCase() === subject.toLowerCase();
 
-    // Step 1: For each subject in matieres_faibles, pick a bloc (one per subject)
-    for (let i = 0; i < Math.min(userSubjects.length, 3); i++) {
+    // Filter blocs based on mode
+    let availableBlocs = [...blocs];
+    if (mode === "maintien") {
+      availableBlocs = availableBlocs.filter((b) => !yesterdayBlocIds.has(b.id));
+    }
+
+    // Determine max slots based on mode
+    let maxSlots = 3;
+    if (mode === "allegement") maxSlots = 2;
+    if (mode === "reset_doux") maxSlots = 1;
+
+    if (mode === "reset_doux") {
+      // Pick the shortest available bloc
+      const shortest = [...availableBlocs].sort(
+        (a, b) => (a.duree_min || 0) - (b.duree_min || 0)
+      )[0];
+      if (shortest) {
+        slots.push({ bloc: shortest, weight: "light" });
+      }
+      return slots;
+    }
+
+    // Step 1: For each subject in matieres_faibles, pick a bloc
+    for (let i = 0; i < Math.min(userSubjects.length, maxSlots); i++) {
       const subject = userSubjects[i];
-      const bloc = blocs.find(
+      const bloc = availableBlocs.find(
         (b) => !usedIds.has(b.id) && matchesSubject(b.matiere, subject)
       );
       if (bloc) {
@@ -184,38 +252,143 @@ const Dashboard = () => {
       }
     }
 
-    // Step 2: Fill remaining slots (up to 3) with any priorite=1 bloc not yet used
-    while (slots.length < 3) {
+    // Step 2: Fill remaining slots
+    while (slots.length < maxSlots) {
       const weight = weights[slots.length];
-      const bloc = blocs.find((b) => !usedIds.has(b.id));
+      const bloc = availableBlocs.find((b) => !usedIds.has(b.id));
       if (!bloc) break;
       usedIds.add(bloc.id);
       slots.push({ bloc, weight });
     }
 
     return slots;
-  }, [blocs, profile]);
+  }, [blocs, profile, yesterdayBlocIds]);
 
-  const todayDayIndex = new Date().getDay(); // 0=Sun
+  const todayDayIndex = new Date().getDay();
   const dayIndexMondayBased = todayDayIndex === 0 ? 6 : todayDayIndex - 1;
 
-  const toggleTask = (id: string) => {
-    setCompletedTasks((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
+  // Toggle task completion and persist to Supabase
+  const toggleTask = useCallback(
+    async (blocId: string) => {
+      if (!user) return;
+      const today = new Date().toISOString().split("T")[0];
+      const isCompleting = !completedTasks.has(blocId);
 
-  if (!profile || loading) return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="text-center space-y-3">
-        <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
-        <p className="text-muted-foreground text-sm">Chargement de ton planning...</p>
-      </div>
-    </div>
+      // Optimistic UI update
+      setCompletedTasks((prev) => {
+        const next = new Set(prev);
+        if (next.has(blocId)) next.delete(blocId);
+        else next.add(blocId);
+        return next;
+      });
+
+      if (isCompleting) {
+        await supabase.from("completions").upsert(
+          { user_id: user.id, bloc_id: blocId, date_completion: today, completed: true },
+          { onConflict: "user_id,bloc_id,date_completion" }
+        );
+      } else {
+        // Unchecking — update to completed=false
+        await supabase
+          .from("completions")
+          .update({ completed: false })
+          .eq("user_id", user.id)
+          .eq("bloc_id", blocId)
+          .eq("date_completion", today);
+      }
+    },
+    [user, completedTasks]
   );
+
+  // End of day logic
+  const handleEndDay = useCallback(async () => {
+    if (!user || !profile) return;
+    setEndingDay(true);
+
+    const total = dailyTasks.length;
+    const completed = dailyTasks.filter((t) => completedTasks.has(t.bloc.id)).length;
+    const taux = total > 0 ? completed / total : 0;
+
+    // Check last 3 days for consecutive low performance
+    let newMode = "normal";
+    if (taux >= 0.8) {
+      newMode = "normal";
+    } else if (taux >= 0.6) {
+      newMode = "maintien";
+    } else {
+      // Check consecutive days < 0.6
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      const { data: recentCompletions } = await supabase
+        .from("completions")
+        .select("date_completion, completed")
+        .eq("user_id", user.id)
+        .gte("date_completion", threeDaysAgo.toISOString().split("T")[0])
+        .order("date_completion", { ascending: true });
+
+      // Group by day and compute taux per day
+      const dayMap = new Map<string, { total: number; done: number }>();
+      if (recentCompletions) {
+        for (const c of recentCompletions) {
+          const d = c.date_completion;
+          if (!dayMap.has(d)) dayMap.set(d, { total: 0, done: 0 });
+          const entry = dayMap.get(d)!;
+          entry.total++;
+          if (c.completed) entry.done++;
+        }
+      }
+
+      const days = Array.from(dayMap.values());
+      const consecutiveLow = days.filter((d) => d.total > 0 && d.done / d.total < 0.6).length;
+
+      newMode = consecutiveLow >= 3 ? "reset_doux" : "allegement";
+    }
+
+    // Update user mode
+    await supabase
+      .from("users")
+      .update({ mode_actuel: newMode })
+      .eq("id", user.id);
+
+    // Fetch feedback message
+    const niveauTaux = taux >= 0.8 ? "validation" : taux >= 0.6 ? "encouragement" : "alerte";
+    const { data: fbData } = await supabase
+      .from("messages_feedback")
+      .select("message")
+      .eq("phase", profile.phaseActuelle || currentPhase)
+      .eq("niveau_taux", niveauTaux)
+      .limit(1);
+
+    const msg =
+      fbData && fbData.length > 0 && fbData[0].message
+        ? fbData[0].message
+        : taux >= 0.8
+        ? "Excellente journée ! Continue comme ça 💪"
+        : taux >= 0.6
+        ? "Pas mal ! Encore un petit effort demain 🔥"
+        : "C'est pas grave, on reprend doucement demain 🌱";
+
+    setEndOfDayTaux(taux);
+    setEndOfDayMode(newMode);
+    setEndOfDayMessage(msg);
+    setEndOfDayOpen(true);
+    setEndingDay(false);
+
+    // Update local profile
+    setProfile((prev) => (prev ? { ...prev, modeActuel: newMode } : prev));
+  }, [user, profile, dailyTasks, completedTasks, currentPhase]);
+
+  if (!profile || loading)
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+          <p className="text-muted-foreground text-sm">Chargement de ton planning...</p>
+        </div>
+      </div>
+    );
+
+  const allDone = dailyTasks.length > 0 && dailyTasks.every((t) => completedTasks.has(t.bloc.id));
 
   return (
     <div className="min-h-screen bg-background pb-8">
@@ -241,9 +414,7 @@ const Dashboard = () => {
           {dailyTasks.map(({ bloc, weight }) => (
             <Card
               key={bloc.id}
-              className={`transition-all ${
-                completedTasks.has(bloc.id) ? "opacity-60" : ""
-              }`}
+              className={`transition-all ${completedTasks.has(bloc.id) ? "opacity-60" : ""}`}
             >
               <CardContent className="p-4 flex items-start gap-3">
                 <Checkbox
@@ -256,7 +427,10 @@ const Dashboard = () => {
                     <Badge className={SUBJECT_COLORS[bloc.matiere] || "bg-muted text-foreground"}>
                       {bloc.matiere}
                     </Badge>
-                    <Badge variant="outline" className={`text-xs font-semibold border ${TASK_LABEL_COLORS[weight]}`}>
+                    <Badge
+                      variant="outline"
+                      className={`text-xs font-semibold border ${TASK_LABEL_COLORS[weight]}`}
+                    >
                       {TASK_ICONS[weight]} {TASK_LABELS[weight]}
                     </Badge>
                   </div>
@@ -290,6 +464,28 @@ const Dashboard = () => {
           )}
         </section>
 
+        {/* Bouton Terminer ma journée */}
+        {dailyTasks.length > 0 && (
+          <section>
+            <Button
+              onClick={handleEndDay}
+              disabled={endingDay}
+              className={`w-full rounded-xl h-12 text-base font-semibold ${
+                allDone
+                  ? "sprint-gradient text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
+            >
+              {endingDay ? (
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+              ) : (
+                <CheckCircle2 className="w-5 h-5 mr-2" />
+              )}
+              Terminer ma journée
+            </Button>
+          </section>
+        )}
+
         {/* SECTION 3 — Progression semaine */}
         <section className="space-y-2">
           <h2 className="text-lg font-semibold">Progression de la semaine</h2>
@@ -322,9 +518,7 @@ const Dashboard = () => {
             <Card className="border-primary/20 bg-accent/30">
               <CardContent className="p-4 flex items-start gap-3">
                 <MessageCircle className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                <p className="text-sm text-foreground/80 leading-relaxed">
-                  {feedback.message}
-                </p>
+                <p className="text-sm text-foreground/80 leading-relaxed">{feedback.message}</p>
               </CardContent>
             </Card>
           </section>
@@ -335,12 +529,24 @@ const Dashboard = () => {
           <Button
             variant="ghost"
             className="w-full text-muted-foreground text-sm hover:text-destructive"
-            onClick={async () => { await signOut(); navigate("/login"); }}
+            onClick={async () => {
+              await signOut();
+              navigate("/login");
+            }}
           >
             <LogOut className="w-4 h-4 mr-2" /> Se déconnecter
           </Button>
         </section>
       </div>
+
+      {/* End of day modal */}
+      <EndOfDayModal
+        open={endOfDayOpen}
+        onClose={() => setEndOfDayOpen(false)}
+        message={endOfDayMessage}
+        taux={endOfDayTaux}
+        mode={endOfDayMode}
+      />
     </div>
   );
 };
