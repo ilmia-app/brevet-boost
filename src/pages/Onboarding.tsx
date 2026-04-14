@@ -7,6 +7,7 @@ import SelectableCard from "@/components/onboarding/SelectableCard";
 import SubjectChip from "@/components/onboarding/SubjectChip";
 import { Rocket, ArrowRight, ArrowLeft, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
 const TOTAL_STEPS = 5;
@@ -14,6 +15,7 @@ const SUBJECTS = ["Maths", "Français", "Histoire", "Géographie", "EMC", "Physi
 
 const Onboarding = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [examDate, setExamDate] = useState("");
