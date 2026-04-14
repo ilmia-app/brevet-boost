@@ -191,7 +191,11 @@ const WorkSession = () => {
         },
       });
       if (error) throw error;
-      setGeneratedExercise(data?.exercise || "Impossible de générer l'exercice.");
+      if (data?.fallback) {
+        setGeneratedExercise(data.error || "Génération temporairement indisponible.");
+      } else {
+        setGeneratedExercise(data?.exercise || "Impossible de générer l'exercice.");
+      }
     } catch (e) {
       console.error("Exercise generation error:", e);
       setGeneratedExercise("Erreur lors de la génération. Réessaie plus tard.");
