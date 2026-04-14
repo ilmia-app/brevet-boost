@@ -354,6 +354,62 @@ const WorkSession = () => {
           </div>
         </section>
 
+        {/* AI Exercise Section — Phase 1 & 2 only */}
+        {!isPhase3 && (
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" /> Ton exercice du jour
+            </h2>
+            {!generatedExercise && !isGenerating && (
+              <Button
+                onClick={handleGenerateExercise}
+                variant="outline"
+                className="w-full gap-2"
+              >
+                <Sparkles className="w-4 h-4" /> Générer un exercice
+              </Button>
+            )}
+            {isGenerating && (
+              <Card>
+                <CardContent className="p-4 flex items-center justify-center gap-2 text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Génération de ton exercice…
+                </CardContent>
+              </Card>
+            )}
+            {generatedExercise && !isGenerating && (
+              <>
+                <Card className={`border-l-4 ${
+                  SUBJECT_COLORS[bloc.matiere]
+                    ? `border-l-${SUBJECT_COLORS[bloc.matiere].split(" ")[0].replace("bg-", "")}`
+                    : "border-l-primary"
+                }`}>
+                  <CardContent className="p-4">
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{generatedExercise}</p>
+                  </CardContent>
+                </Card>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleGenerateExercise}
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 flex-1"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" /> Autre exercice
+                  </Button>
+                  <Button
+                    onClick={() => window.print()}
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 flex-1"
+                  >
+                    <Printer className="w-3.5 h-3.5" /> Imprimer
+                  </Button>
+                </div>
+              </>
+            )}
+          </section>
+        )}
+
         {/* SECTION 2 — Méthode pas-à-pas */}
         {methodeSteps.length > 0 && (
           <section className="space-y-3">
