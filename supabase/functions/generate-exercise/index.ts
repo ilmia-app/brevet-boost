@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { matiere, titre, objectifs_pedagogiques, duree_examen_min, tags } = await req.json();
+    const { matiere, titre, objectifs_pedagogiques, duree_examen_min, tags, methode_etapes } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -21,6 +21,10 @@ serve(async (req) => {
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    const methodeText = methode_etapes
+      ? `Méthode à suivre étape par étape :\n${methode_etapes}`
+      : "Aucune méthode spécifique.";
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -34,11 +38,23 @@ serve(async (req) => {
           {
             role: "system",
             content:
-              "Tu es un générateur d'exercices pour le Brevet des Collèges français, spécialisé pour les élèves CNED. Tu génères UN SEUL exercice court, calibré niveau 3ème, dans le style exact des sujets officiels du brevet. Tu réponds UNIQUEMENT avec l'énoncé de l'exercice, sans correction, sans commentaire, sans introduction. Maximum 150 mots.",
+              `Tu es un générateur d'exercices pour le Brevet des Collèges français, spécialisé pour les élèves CNED.
+
+RÈGLE ABSOLUE : l'exercice doit porter UNIQUEMENT sur la notion exacte décrite dans le titre et les objectifs fournis. Ne jamais mélanger plusieurs notions.
+
+L'exercice doit être résolvable étape par étape en suivant exactement la méthode fournie.
+
+Calibré niveau 3ème, style officiel brevet.
+
+Réponds UNIQUEMENT avec l'énoncé, sans correction, sans commentaire, sans introduction.
+
+Écris les expressions mathématiques en texte simple sans LaTeX (ex: écris 'x²' pas '$x^2$', écris '3/5' pas '\\frac{3}{5}').
+
+Maximum 120 mots.`,
           },
           {
             role: "user",
-            content: `Génère un exercice de type : ${titre || "exercice"}. Matière : ${matiere || "inconnue"}. Objectifs : ${objectifs_pedagogiques || "aucun"}. Durée cible : ${duree_examen_min || 15} minutes. Tags : ${tags || "aucun"}.`,
+            content: `Génère un exercice de type : ${titre || "exercice"}. Matière : ${matiere || "inconnue"}. Objectifs : ${objectifs_pedagogiques || "aucun"}. Durée cible : ${duree_examen_min || 15} minutes. Tags : ${tags || "aucun"}.\n\n${methodeText}`,
           },
         ],
       }),
