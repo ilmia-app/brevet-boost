@@ -1,12 +1,22 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Play, Pause, CheckCircle2, ChevronRight, Target, Zap, Rocket } from "lucide-react";
+import { ArrowLeft, Play, Pause, CheckCircle2, ChevronRight, Target, Zap, Rocket, Clock } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 const SUBJECT_COLORS: Record<string, string> = {
   Maths: "bg-blue-500 text-white",
@@ -35,8 +45,14 @@ interface BlocData {
   methode_id: string | null;
 }
 
+const getTimerKey = (blocId: string) => {
+  const today = new Date().toISOString().split("T")[0];
+  return `timer_${blocId}_${today}`;
+};
+
 const WorkSession = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const blocId = searchParams.get("bloc");
   const slotType = searchParams.get("slot") || "medium";
@@ -46,17 +62,31 @@ const WorkSession = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [notes, setNotes] = useState("");
   const [completed, setCompleted] = useState(false);
+  const [showNotEnough, setShowNotEnough] = useState(false);
+  const [remainingMinutes, setRemainingMinutes] = useState(0);
 
-  // Timer state
+  // Timer: count UP (elapsed seconds)
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
-  const [secondsLeft, setSecondsLeft] = useState(0);
-  const totalSeconds = useRef(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const totalDurationSec = useRef(0);
+
+  // Load saved elapsed time from localStorage
+  useEffect(() => {
+    if (!blocId) return;
+    const saved = localStorage.getItem(getTimerKey(blocId));
+    if (saved) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed) && parsed > 0) {
+        setElapsedSeconds(parsed);
+      }
+    }
+  }, [blocId]);
 
   // Fetch bloc
   useEffect(() => {
     if (!blocId) return;
-    const fetch = async () => {
+    const fetchBloc = async () => {
       const { data } = await supabase
         .from("blocs_examen")
         .select("id, matiere, titre, duree_min, consigne_eleve, objectifs_pedagogiques, methode_id")
@@ -64,18 +94,16 @@ const WorkSession = () => {
         .limit(1);
       if (data && data.length > 0) {
         setBloc(data[0]);
-        const dur = (data[0].duree_min || 30) * 60;
-        setSecondsLeft(dur);
-        totalSeconds.current = dur;
+        totalDurationSec.current = (data[0].duree_min || 30) * 60;
       }
     };
-    fetch();
+    fetchBloc();
   }, [blocId]);
 
   // Fetch methode
   useEffect(() => {
     if (!bloc?.methode_id) return;
-    const fetch = async () => {
+    const fetchMethode = async () => {
       const { data } = await supabase
         .from("methodes")
         .select("etapes")
@@ -91,33 +119,36 @@ const WorkSession = () => {
         }
       }
     };
-    fetch();
+    fetchMethode();
   }, [bloc?.methode_id]);
 
-  // Timer logic
+  // Timer tick — counts UP
   useEffect(() => {
-    if (timerRunning && secondsLeft > 0) {
+    if (timerRunning) {
       intervalRef.current = setInterval(() => {
-        setSecondsLeft((s) => {
-          if (s <= 1) {
-            clearInterval(intervalRef.current!);
-            setTimerRunning(false);
-            return 0;
+        setElapsedSeconds((prev) => {
+          const next = prev + 1;
+          // Save to localStorage every second
+          if (blocId) {
+            localStorage.setItem(getTimerKey(blocId), String(next));
           }
-          return s - 1;
+          return next;
         });
       }, 1000);
     }
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [timerRunning]);
+  }, [timerRunning, blocId]);
 
   const toggleTimer = () => setTimerRunning((r) => !r);
 
+  // Display as countdown
+  const secondsLeft = Math.max(0, totalDurationSec.current - elapsedSeconds);
+
   const timerPercent = useMemo(() => {
-    if (totalSeconds.current === 0) return 100;
-    return Math.round((secondsLeft / totalSeconds.current) * 100);
+    if (totalDurationSec.current === 0) return 100;
+    return Math.round((secondsLeft / totalDurationSec.current) * 100);
   }, [secondsLeft]);
 
   const formatTime = (s: number) => {
@@ -126,18 +157,31 @@ const WorkSession = () => {
     return `${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
   };
 
-  const handleComplete = () => {
-    setCompleted(true);
+  const handleComplete = useCallback(async () => {
+    if (!bloc || !user || !blocId) return;
+
+    const requiredSeconds = (bloc.duree_min || 30) * 0.5 * 60;
+
+    if (elapsedSeconds < requiredSeconds) {
+      const remaining = Math.ceil((requiredSeconds - elapsedSeconds) / 60);
+      setRemainingMinutes(remaining);
+      setShowNotEnough(true);
+      return;
+    }
+
+    // Mark completed in Supabase
     setTimerRunning(false);
     if (intervalRef.current) clearInterval(intervalRef.current);
-    // Save completion to localStorage
-    const done = JSON.parse(localStorage.getItem("sprint_dnb_completed") || "[]");
-    if (!done.includes(blocId)) {
-      done.push(blocId);
-      localStorage.setItem("sprint_dnb_completed", JSON.stringify(done));
-    }
-    setTimeout(() => navigate("/dashboard"), 2000);
-  };
+
+    const today = new Date().toISOString().split("T")[0];
+    await supabase.from("completions").upsert(
+      { user_id: user.id, bloc_id: blocId, date_completion: today, completed: true },
+      { onConflict: "user_id,bloc_id,date_completion" }
+    );
+
+    setCompleted(true);
+    setTimeout(() => navigate(`/dashboard?task_completed=${blocId}`), 2000);
+  }, [bloc, user, blocId, elapsedSeconds, navigate]);
 
   const slot = SLOT_CONFIG[slotType] || SLOT_CONFIG.medium;
 
@@ -215,6 +259,11 @@ const WorkSession = () => {
               {timerRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               {timerRunning ? "Pause" : "Démarrer"}
             </Button>
+            {elapsedSeconds > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Temps travaillé : {formatTime(elapsedSeconds)}
+              </p>
+            )}
           </div>
         </section>
 
@@ -297,6 +346,33 @@ const WorkSession = () => {
           </Button>
         </section>
       </div>
+
+      {/* Not enough time modal */}
+      <AlertDialog open={showNotEnough} onOpenChange={setShowNotEnough}>
+        <AlertDialogContent className="max-w-sm mx-auto">
+          <AlertDialogHeader className="text-center space-y-3">
+            <div className="mx-auto w-12 h-12 rounded-full bg-accent flex items-center justify-center">
+              <Clock className="w-6 h-6 text-primary" />
+            </div>
+            <AlertDialogTitle>Tu y es presque !</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm leading-relaxed">
+              Continue encore <span className="font-semibold text-foreground">{remainingMinutes} minute{remainingMinutes > 1 ? "s" : ""}</span> pour valider cet exercice.
+              Le travail régulier fait toute la différence. 💪
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-center">
+            <AlertDialogAction
+              onClick={() => {
+                setShowNotEnough(false);
+                setTimerRunning(true);
+              }}
+              className="sprint-gradient text-primary-foreground rounded-xl px-8"
+            >
+              Continuer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
