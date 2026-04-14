@@ -40,6 +40,7 @@ interface BlocData {
   matiere: string;
   titre: string;
   duree_min: number | null;
+  duree_examen_min: number | null;
   consigne_eleve: string | null;
   objectifs_pedagogiques: string | null;
   methode_id: string | null;
@@ -58,18 +59,20 @@ const WorkSession = () => {
   const slotType = searchParams.get("slot") || "medium";
 
   const [bloc, setBloc] = useState<BlocData | null>(null);
+  const [phase, setPhase] = useState<number>(1);
   const [methodeSteps, setMethodeSteps] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [notes, setNotes] = useState("");
   const [completed, setCompleted] = useState(false);
   const [showNotEnough, setShowNotEnough] = useState(false);
+  const [showTimeUp, setShowTimeUp] = useState(false);
   const [remainingMinutes, setRemainingMinutes] = useState(0);
 
-  // Timer: count UP (elapsed seconds)
+  // Timer: always counts UP (elapsed seconds)
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const totalDurationSec = useRef(0);
+  const timeUpShownRef = useRef(false);
 
   // Load saved elapsed time from localStorage
   useEffect(() => {
@@ -83,22 +86,35 @@ const WorkSession = () => {
     }
   }, [blocId]);
 
-  // Fetch bloc
+  // Fetch bloc + user phase in parallel
   useEffect(() => {
-    if (!blocId) return;
+    if (!blocId || !user) return;
+
     const fetchBloc = async () => {
       const { data } = await supabase
         .from("blocs_examen")
-        .select("id, matiere, titre, duree_min, consigne_eleve, objectifs_pedagogiques, methode_id")
+        .select("id, matiere, titre, duree_min, duree_examen_min, consigne_eleve, objectifs_pedagogiques, methode_id")
         .eq("id", blocId)
         .limit(1);
       if (data && data.length > 0) {
         setBloc(data[0]);
-        totalDurationSec.current = (data[0].duree_min || 30) * 60;
       }
     };
+
+    const fetchPhase = async () => {
+      const { data } = await supabase
+        .from("users")
+        .select("phase_actuelle")
+        .eq("id", user.id)
+        .limit(1);
+      if (data && data.length > 0 && data[0].phase_actuelle) {
+        setPhase(data[0].phase_actuelle);
+      }
+    };
+
     fetchBloc();
-  }, [blocId]);
+    fetchPhase();
+  }, [blocId, user]);
 
   // Fetch methode
   useEffect(() => {
@@ -122,13 +138,18 @@ const WorkSession = () => {
     fetchMethode();
   }, [bloc?.methode_id]);
 
-  // Timer tick — counts UP
+  // Derived values
+  const isPhase3 = phase >= 3;
+  const dureeRevision = bloc?.duree_min || 30;
+  const dureeExamen = bloc?.duree_examen_min || dureeRevision;
+  const countdownTotalSec = dureeExamen * 60;
+
+  // Timer tick — always counts UP
   useEffect(() => {
     if (timerRunning) {
       intervalRef.current = setInterval(() => {
         setElapsedSeconds((prev) => {
           const next = prev + 1;
-          // Save to localStorage every second
           if (blocId) {
             localStorage.setItem(getTimerKey(blocId), String(next));
           }
@@ -141,15 +162,33 @@ const WorkSession = () => {
     };
   }, [timerRunning, blocId]);
 
+  // Phase 3: detect time up
+  useEffect(() => {
+    if (isPhase3 && elapsedSeconds >= countdownTotalSec && !timeUpShownRef.current && timerRunning) {
+      timeUpShownRef.current = true;
+      setTimerRunning(false);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      setShowTimeUp(true);
+    }
+  }, [isPhase3, elapsedSeconds, countdownTotalSec, timerRunning]);
+
   const toggleTimer = () => setTimerRunning((r) => !r);
 
-  // Display as countdown
-  const secondsLeft = Math.max(0, totalDurationSec.current - elapsedSeconds);
+  // Display values
+  const displaySeconds = isPhase3
+    ? Math.max(0, countdownTotalSec - elapsedSeconds)
+    : elapsedSeconds;
 
   const timerPercent = useMemo(() => {
-    if (totalDurationSec.current === 0) return 100;
-    return Math.round((secondsLeft / totalDurationSec.current) * 100);
-  }, [secondsLeft]);
+    if (isPhase3) {
+      if (countdownTotalSec === 0) return 0;
+      return Math.round((Math.max(0, countdownTotalSec - elapsedSeconds) / countdownTotalSec) * 100);
+    }
+    // Phase 1-2: fill up based on duree_min
+    const totalSec = dureeRevision * 60;
+    if (totalSec === 0) return 100;
+    return Math.min(100, Math.round((elapsedSeconds / totalSec) * 100));
+  }, [isPhase3, elapsedSeconds, countdownTotalSec, dureeRevision]);
 
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);
@@ -157,19 +196,23 @@ const WorkSession = () => {
     return `${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
   };
 
+  const canComplete = isPhase3
+    ? true
+    : elapsedSeconds >= dureeRevision * 0.5 * 60;
+
   const handleComplete = useCallback(async () => {
     if (!bloc || !user || !blocId) return;
 
-    const requiredSeconds = (bloc.duree_min || 30) * 0.5 * 60;
-
-    if (elapsedSeconds < requiredSeconds) {
-      const remaining = Math.ceil((requiredSeconds - elapsedSeconds) / 60);
-      setRemainingMinutes(remaining);
-      setShowNotEnough(true);
-      return;
+    if (!isPhase3) {
+      const requiredSeconds = dureeRevision * 0.5 * 60;
+      if (elapsedSeconds < requiredSeconds) {
+        const remaining = Math.ceil((requiredSeconds - elapsedSeconds) / 60);
+        setRemainingMinutes(remaining);
+        setShowNotEnough(true);
+        return;
+      }
     }
 
-    // Mark completed in Supabase
     setTimerRunning(false);
     if (intervalRef.current) clearInterval(intervalRef.current);
 
@@ -181,7 +224,7 @@ const WorkSession = () => {
 
     setCompleted(true);
     setTimeout(() => navigate(`/dashboard?task_completed=${blocId}`), 2000);
-  }, [bloc, user, blocId, elapsedSeconds, navigate]);
+  }, [bloc, user, blocId, elapsedSeconds, navigate, isPhase3, dureeRevision]);
 
   const slot = SLOT_CONFIG[slotType] || SLOT_CONFIG.medium;
 
@@ -212,6 +255,17 @@ const WorkSession = () => {
         <button onClick={() => navigate("/dashboard")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="w-4 h-4" /> Retour
         </button>
+
+        {/* Phase badge */}
+        {isPhase3 ? (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 border border-red-200 w-fit text-sm font-medium text-red-700">
+            🎯 Conditions brevet — {dureeExamen} min
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent border border-border w-fit text-sm font-medium text-muted-foreground">
+            ⏱ Temps examen : {dureeExamen} min
+          </div>
+        )}
 
         {/* SECTION 1 — Header */}
         <section className="space-y-4">
@@ -247,8 +301,10 @@ const WorkSession = () => {
                 </defs>
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-2xl font-bold tabular-nums">{formatTime(secondsLeft)}</span>
-                <span className="text-xs text-muted-foreground">{bloc.duree_min} min</span>
+                <span className="text-2xl font-bold tabular-nums">{formatTime(displaySeconds)}</span>
+                <span className="text-xs text-muted-foreground">
+                  {isPhase3 ? `${dureeExamen} min` : `${dureeRevision} min`}
+                </span>
               </div>
             </div>
             <Button
@@ -262,6 +318,11 @@ const WorkSession = () => {
             {elapsedSeconds > 0 && (
               <p className="text-xs text-muted-foreground">
                 Temps travaillé : {formatTime(elapsedSeconds)}
+              </p>
+            )}
+            {!isPhase3 && (
+              <p className="text-xs text-muted-foreground text-center max-w-[280px]">
+                Prends le temps qu'il te faut — en phase finale tu travailleras en conditions réelles
               </p>
             )}
           </div>
@@ -340,14 +401,20 @@ const WorkSession = () => {
         <section className="pb-4">
           <Button
             onClick={handleComplete}
-            className="w-full h-12 text-base font-semibold sprint-gradient text-primary-foreground rounded-xl gap-2"
+            disabled={!canComplete}
+            className="w-full h-12 text-base font-semibold sprint-gradient text-primary-foreground rounded-xl gap-2 disabled:opacity-50"
           >
             <CheckCircle2 className="w-5 h-5" /> J'ai terminé cet exercice ✓
           </Button>
+          {!canComplete && !isPhase3 && (
+            <p className="text-xs text-muted-foreground text-center mt-2">
+              Disponible après {Math.ceil(dureeRevision * 0.5)} min de travail
+            </p>
+          )}
         </section>
       </div>
 
-      {/* Not enough time modal */}
+      {/* Not enough time modal (Phase 1-2) */}
       <AlertDialog open={showNotEnough} onOpenChange={setShowNotEnough}>
         <AlertDialogContent className="max-w-sm mx-auto">
           <AlertDialogHeader className="text-center space-y-3">
@@ -370,6 +437,42 @@ const WorkSession = () => {
             >
               Continuer
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Time's up modal (Phase 3) */}
+      <AlertDialog open={showTimeUp} onOpenChange={setShowTimeUp}>
+        <AlertDialogContent className="max-w-sm mx-auto">
+          <AlertDialogHeader className="text-center space-y-3">
+            <div className="mx-auto w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+              <Clock className="w-6 h-6 text-red-600" />
+            </div>
+            <AlertDialogTitle>Temps écoulé !</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm leading-relaxed">
+              Au brevet tu devrais t'arrêter ici. Tu peux continuer ou valider ce que tu as fait.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex flex-col gap-2 sm:flex-col">
+            <Button
+              onClick={() => {
+                setShowTimeUp(false);
+                setTimerRunning(true);
+              }}
+              variant="outline"
+              className="w-full"
+            >
+              Continuer quand même
+            </Button>
+            <Button
+              onClick={() => {
+                setShowTimeUp(false);
+                handleComplete();
+              }}
+              className="w-full sprint-gradient text-primary-foreground"
+            >
+              Valider et passer à la suite
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
