@@ -267,38 +267,7 @@ const Dashboard = () => {
   const todayDayIndex = new Date().getDay();
   const dayIndexMondayBased = todayDayIndex === 0 ? 6 : todayDayIndex - 1;
 
-  // Toggle task completion and persist to Supabase
-  const toggleTask = useCallback(
-    async (blocId: string) => {
-      if (!user) return;
-      const today = new Date().toISOString().split("T")[0];
-      const isCompleting = !completedTasks.has(blocId);
-
-      // Optimistic UI update
-      setCompletedTasks((prev) => {
-        const next = new Set(prev);
-        if (next.has(blocId)) next.delete(blocId);
-        else next.add(blocId);
-        return next;
-      });
-
-      if (isCompleting) {
-        await supabase.from("completions").upsert(
-          { user_id: user.id, bloc_id: blocId, date_completion: today, completed: true },
-          { onConflict: "user_id,bloc_id,date_completion" }
-        );
-      } else {
-        // Unchecking — update to completed=false
-        await supabase
-          .from("completions")
-          .update({ completed: false })
-          .eq("user_id", user.id)
-          .eq("bloc_id", blocId)
-          .eq("date_completion", today);
-      }
-    },
-    [user, completedTasks]
-  );
+  // Checkboxes are read-only on dashboard — completion is driven by WorkSession
 
   // End of day logic
   const handleEndDay = useCallback(async () => {
@@ -419,7 +388,7 @@ const Dashboard = () => {
               <CardContent className="p-4 flex items-start gap-3">
                 <Checkbox
                   checked={completedTasks.has(bloc.id)}
-                  onCheckedChange={() => toggleTask(bloc.id)}
+                  disabled
                   className="mt-1"
                 />
                 <div className="flex-1 min-w-0 space-y-2">
@@ -445,14 +414,21 @@ const Dashboard = () => {
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
                       <Clock className="w-3 h-3" /> {bloc.duree_min} min
                     </span>
-                    <Button
-                      size="sm"
-                      className="h-7 text-xs rounded-lg sprint-gradient text-primary-foreground"
-                      onClick={() => navigate(`/work?bloc=${bloc.id}&slot=${weight}`)}
-                    >
-                      <Play className="w-3 h-3 mr-1" /> Commencer
-                    </Button>
+                    {!completedTasks.has(bloc.id) && (
+                      <Button
+                        size="sm"
+                        className="h-7 text-xs rounded-lg sprint-gradient text-primary-foreground"
+                        onClick={() => navigate(`/work?bloc=${bloc.id}&slot=${weight}`)}
+                      >
+                        <Play className="w-3 h-3 mr-1" /> Commencer
+                      </Button>
+                    )}
                   </div>
+                  {!completedTasks.has(bloc.id) && (
+                    <p className="text-xs text-muted-foreground italic">
+                      Démarre l'exercice pour valider
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
