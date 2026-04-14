@@ -82,6 +82,7 @@ const Dashboard = () => {
   const [endOfDayTaux, setEndOfDayTaux] = useState(0);
   const [endOfDayMode, setEndOfDayMode] = useState("normal");
   const [endingDay, setEndingDay] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const [yesterdayBlocIds, setYesterdayBlocIds] = useState<Set<string>>(new Set());
 
   // Load profile from Supabase
@@ -341,6 +342,7 @@ const Dashboard = () => {
     setEndOfDayMode(newMode);
     setEndOfDayMessage(msg);
     setEndOfDayOpen(true);
+    setShowFeedback(true);
     setEndingDay(false);
 
     // Update local profile
@@ -489,7 +491,7 @@ const Dashboard = () => {
         </section>
 
         {/* SECTION 4 — Feedback */}
-        {feedback?.message && (
+        {showFeedback && feedback?.message && (
           <section>
             <Card className="border-primary/20 bg-accent/30">
               <CardContent className="p-4 flex items-start gap-3">
