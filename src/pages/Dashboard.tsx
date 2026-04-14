@@ -414,14 +414,21 @@ const Dashboard = () => {
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
                       <Clock className="w-3 h-3" /> {bloc.duree_min} min
                     </span>
-                    <Button
-                      size="sm"
-                      className="h-7 text-xs rounded-lg sprint-gradient text-primary-foreground"
-                      onClick={() => navigate(`/work?bloc=${bloc.id}&slot=${weight}`)}
-                    >
-                      <Play className="w-3 h-3 mr-1" /> Commencer
-                    </Button>
+                    {!completedTasks.has(bloc.id) && (
+                      <Button
+                        size="sm"
+                        className="h-7 text-xs rounded-lg sprint-gradient text-primary-foreground"
+                        onClick={() => navigate(`/work?bloc=${bloc.id}&slot=${weight}`)}
+                      >
+                        <Play className="w-3 h-3 mr-1" /> Commencer
+                      </Button>
+                    )}
                   </div>
+                  {!completedTasks.has(bloc.id) && (
+                    <p className="text-xs text-muted-foreground italic">
+                      Démarre l'exercice pour valider
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
