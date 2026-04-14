@@ -7,6 +7,7 @@ import SelectableCard from "@/components/onboarding/SelectableCard";
 import SubjectChip from "@/components/onboarding/SubjectChip";
 import { Rocket, ArrowRight, ArrowLeft, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
 const TOTAL_STEPS = 5;
@@ -14,6 +15,7 @@ const SUBJECTS = ["Maths", "Français", "Histoire", "Géographie", "EMC", "Physi
 
 const Onboarding = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [examDate, setExamDate] = useState("");
@@ -50,21 +52,25 @@ const Onboarding = () => {
       behind: "important",
     };
 
-    const { data, error } = await supabase.from("users").insert({
+    if (!user) {
+      toast({ title: "Erreur", description: "Tu dois être connecté.", variant: "destructive" });
+      return;
+    }
+
+    const { error } = await supabase.from("users").insert({
+      id: user.id,
       prenom: name,
       date_examen: examDate,
       volume_quotidien: volumeMap[rhythm] || rhythm,
       retard_initial: retardMap[level] || level,
       matieres_faibles: subjects,
-    }).select("id").single();
+    });
 
     if (error) {
       toast({ title: "Erreur", description: "Impossible de sauvegarder ton profil.", variant: "destructive" });
       return;
     }
 
-    // Store user ID for dashboard
-    localStorage.setItem("sprint_dnb_user_id", data.id);
     navigate("/dashboard");
   };
 
