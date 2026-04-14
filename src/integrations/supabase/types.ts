@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           bareme_points_estimes: string | null
           consigne_eleve: string | null
+          duree_examen_min: number | null
           duree_min: number | null
           id: string
           iterations_recommandees: number | null
@@ -36,6 +37,7 @@ export type Database = {
         Insert: {
           bareme_points_estimes?: string | null
           consigne_eleve?: string | null
+          duree_examen_min?: number | null
           duree_min?: number | null
           id: string
           iterations_recommandees?: number | null
@@ -54,6 +56,7 @@ export type Database = {
         Update: {
           bareme_points_estimes?: string | null
           consigne_eleve?: string | null
+          duree_examen_min?: number | null
           duree_min?: number | null
           id?: string
           iterations_recommandees?: number | null
