@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Play, Pause, CheckCircle2, ChevronRight, Target, Zap, Rocket, Clock } from "lucide-react";
+import { ArrowLeft, Play, Pause, CheckCircle2, ChevronRight, Target, Zap, Rocket, Clock, Sparkles, RefreshCw, Printer, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -67,6 +67,8 @@ const WorkSession = () => {
   const [showNotEnough, setShowNotEnough] = useState(false);
   const [showTimeUp, setShowTimeUp] = useState(false);
   const [remainingMinutes, setRemainingMinutes] = useState(0);
+  const [generatedExercise, setGeneratedExercise] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Timer: always counts UP (elapsed seconds)
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
