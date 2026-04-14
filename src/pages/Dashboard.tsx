@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Play, Clock, MessageCircle, Loader2 } from "lucide-react";
+import { Play, Clock, MessageCircle, Loader2, LogOut } from "lucide-react";
 
 interface ProfileData {
   id: string;
@@ -66,6 +67,7 @@ const DAYS = ["L", "M", "M", "J", "V", "S", "D"];
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [blocs, setBlocs] = useState<BlocExamen[]>([]);
   const [feedback, setFeedback] = useState<MessageFeedback | null>(null);
@@ -74,19 +76,18 @@ const Dashboard = () => {
 
   // Load profile from Supabase
   useEffect(() => {
-    const userId = localStorage.getItem("sprint_dnb_user_id");
-    if (!userId) {
-      navigate("/");
+    if (!user) {
+      navigate("/login");
       return;
     }
     const fetchProfile = async () => {
       const { data } = await supabase
         .from("users")
         .select("id, prenom, date_examen, volume_quotidien, retard_initial, matieres_faibles")
-        .eq("id", userId)
+        .eq("id", user.id)
         .single();
       if (!data) {
-        navigate("/");
+        navigate("/onboarding");
         return;
       }
       console.log("matieres_faibles brut depuis Supabase:", data.matieres_faibles);
