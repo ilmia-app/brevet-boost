@@ -342,6 +342,7 @@ const Dashboard = () => {
     setEndOfDayMode(newMode);
     setEndOfDayMessage(msg);
     setEndOfDayOpen(true);
+    setShowFeedback(true);
     setEndingDay(false);
 
     // Update local profile
@@ -490,7 +491,7 @@ const Dashboard = () => {
         </section>
 
         {/* SECTION 4 — Feedback */}
-        {feedback?.message && (
+        {showFeedback && feedback?.message && (
           <section>
             <Card className="border-primary/20 bg-accent/30">
               <CardContent className="p-4 flex items-start gap-3">
