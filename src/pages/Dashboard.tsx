@@ -82,6 +82,7 @@ const Dashboard = () => {
   const [endOfDayTaux, setEndOfDayTaux] = useState(0);
   const [endOfDayMode, setEndOfDayMode] = useState("normal");
   const [endingDay, setEndingDay] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const [yesterdayBlocIds, setYesterdayBlocIds] = useState<Set<string>>(new Set());
 
   // Load profile from Supabase
