@@ -407,7 +407,7 @@ const Dashboard = () => {
                   </div>
                   <p
                     className={`font-medium text-sm leading-snug ${
-                      completedTasks.has(bloc.id) ? "line-through" : ""
+                      completedTasks.has(bloc.id) ? "line-through text-muted-foreground" : ""
                     }`}
                   >
                     {bloc.titre}
