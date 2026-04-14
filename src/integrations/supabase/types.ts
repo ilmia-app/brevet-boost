@@ -71,6 +71,48 @@ export type Database = {
         }
         Relationships: []
       }
+      completions: {
+        Row: {
+          bloc_id: string
+          completed: boolean
+          created_at: string
+          date_completion: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          bloc_id: string
+          completed?: boolean
+          created_at?: string
+          date_completion?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          bloc_id?: string
+          completed?: boolean
+          created_at?: string
+          date_completion?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "completions_bloc_id_fkey"
+            columns: ["bloc_id"]
+            isOneToOne: false
+            referencedRelation: "blocs_examen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "completions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages_feedback: {
         Row: {
           action_associee: string | null
