@@ -198,13 +198,13 @@ const WorkSession = () => {
 
   const canComplete = isPhase3
     ? true
-    : elapsedSeconds >= dureeRevision * 0.5 * 60;
+    : elapsedSeconds >= dureeRevision * 0.3 * 60;
 
   const handleComplete = useCallback(async () => {
     if (!bloc || !user || !blocId) return;
 
     if (!isPhase3) {
-      const requiredSeconds = dureeRevision * 0.5 * 60;
+      const requiredSeconds = dureeRevision * 0.3 * 60;
       if (elapsedSeconds < requiredSeconds) {
         const remaining = Math.ceil((requiredSeconds - elapsedSeconds) / 60);
         setRemainingMinutes(remaining);
@@ -408,7 +408,7 @@ const WorkSession = () => {
           </Button>
           {!canComplete && !isPhase3 && (
             <p className="text-xs text-muted-foreground text-center mt-2">
-              Disponible après {Math.ceil(dureeRevision * 0.5)} min de travail
+              Disponible après {Math.ceil(dureeRevision * 0.3)} min de travail
             </p>
           )}
         </section>
