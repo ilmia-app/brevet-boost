@@ -402,7 +402,10 @@ const WorkSession = () => {
               <>
                 <Card className="border-l-4 border-l-primary">
                   <CardContent className="p-4 bg-accent/30 rounded-r-lg">
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{generatedExercise}</p>
+                    <div
+                      className="text-sm leading-relaxed whitespace-pre-wrap"
+                      dangerouslySetInnerHTML={{ __html: renderMathText(generatedExercise) }}
+                    />
                   </CardContent>
                 </Card>
                 <div className="flex gap-2">
