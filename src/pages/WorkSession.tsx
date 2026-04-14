@@ -176,6 +176,30 @@ const WorkSession = () => {
 
   const toggleTimer = () => setTimerRunning((r) => !r);
 
+  const handleGenerateExercise = useCallback(async () => {
+    if (!bloc) return;
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-exercise", {
+        body: {
+          bloc_id: bloc.id,
+          matiere: bloc.matiere,
+          titre: bloc.titre,
+          objectifs_pedagogiques: bloc.objectifs_pedagogiques,
+          duree_examen_min: bloc.duree_examen_min,
+          tags: null,
+        },
+      });
+      if (error) throw error;
+      setGeneratedExercise(data?.exercise || "Impossible de générer l'exercice.");
+    } catch (e) {
+      console.error("Exercise generation error:", e);
+      setGeneratedExercise("Erreur lors de la génération. Réessaie plus tard.");
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [bloc]);
+
   // Display values
   const displaySeconds = isPhase3
     ? Math.max(0, countdownTotalSec - elapsedSeconds)
