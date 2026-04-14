@@ -178,10 +178,25 @@ const WorkSession = () => {
 
   const toggleTimer = () => setTimerRunning((r) => !r);
 
+  const renderMathText = useCallback((text: string) => {
+    // Replace $...$ with KaTeX rendered HTML
+    return text.replace(/\$([^$]+)\$/g, (_, math) => {
+      try {
+        return katex.renderToString(math, { throwOnError: false });
+      } catch {
+        return math;
+      }
+    });
+  }, []);
+
   const handleGenerateExercise = useCallback(async () => {
     if (!bloc) return;
     setIsGenerating(true);
     try {
+      const methodeText = methodeSteps.length > 0
+        ? methodeSteps.map((s, i) => `${i + 1}. ${s}`).join("\n")
+        : null;
+
       const { data, error } = await supabase.functions.invoke("generate-exercise", {
         body: {
           bloc_id: bloc.id,
@@ -190,6 +205,7 @@ const WorkSession = () => {
           objectifs_pedagogiques: bloc.objectifs_pedagogiques,
           duree_examen_min: bloc.duree_examen_min,
           tags: null,
+          methode_etapes: methodeText,
         },
       });
       if (error) throw error;
@@ -204,7 +220,7 @@ const WorkSession = () => {
     } finally {
       setIsGenerating(false);
     }
-  }, [bloc]);
+  }, [bloc, methodeSteps]);
 
   // Display values
   const displaySeconds = isPhase3
