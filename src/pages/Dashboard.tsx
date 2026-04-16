@@ -84,6 +84,7 @@ const Dashboard = () => {
   const [endingDay, setEndingDay] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [yesterdayBlocIds, setYesterdayBlocIds] = useState<Set<string>>(new Set());
+  const [libraryUnlockedNotified, setLibraryUnlockedNotified] = useState(false);
 
   // Load profile from Supabase
   useEffect(() => {
@@ -349,6 +350,24 @@ const Dashboard = () => {
     setProfile((prev) => (prev ? { ...prev, modeActuel: newMode } : prev));
   }, [user, profile, dailyTasks, completedTasks, currentPhase]);
 
+  const completionRate = dailyTasks.length > 0
+    ? dailyTasks.filter((t) => completedTasks.has(t.bloc.id)).length / dailyTasks.length
+    : 0;
+  const allDone = dailyTasks.length > 0 && dailyTasks.every((t) => completedTasks.has(t.bloc.id));
+  const libraryUnlocked = currentPhase === 3 || completionRate >= 0.8;
+  const showLibraryButton = currentPhase >= 2;
+
+  // Notify when library unlocks (phase 2 only, on threshold cross)
+  useEffect(() => {
+    if (currentPhase === 2 && libraryUnlocked && !libraryUnlockedNotified) {
+      toast({
+        title: "Bien joué ! 🎉",
+        description: "La bibliothèque est débloquée pour aujourd'hui",
+      });
+      setLibraryUnlockedNotified(true);
+    }
+  }, [currentPhase, libraryUnlocked, libraryUnlockedNotified]);
+
   if (!profile || loading)
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -359,8 +378,6 @@ const Dashboard = () => {
       </div>
     );
 
-  const allDone = dailyTasks.length > 0 && dailyTasks.every((t) => completedTasks.has(t.bloc.id));
-
   return (
     <div className="min-h-screen bg-background pb-8">
       <div className="max-w-lg mx-auto px-4 pt-6 space-y-6">
@@ -369,9 +386,18 @@ const Dashboard = () => {
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">Bonjour {profile.name} 👋</h1>
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/library")} aria-label="Bibliothèque">
-                <BookOpen className="w-5 h-5 text-primary" />
-              </Button>
+              {showLibraryButton && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => libraryUnlocked && navigate("/library")}
+                  disabled={!libraryUnlocked}
+                  aria-label="Bibliothèque"
+                  title={libraryUnlocked ? "Bibliothèque débloquée" : "Complète 80% de ton planning pour débloquer"}
+                >
+                  <BookOpen className={`w-5 h-5 ${libraryUnlocked ? "text-primary" : "text-muted-foreground/40"}`} />
+                </Button>
+              )}
               <Button variant="ghost" size="icon" onClick={() => navigate("/progress")}>
                 <BarChart3 className="w-5 h-5 text-primary" />
               </Button>
@@ -450,6 +476,11 @@ const Dashboard = () => {
               Aucune tâche disponible pour tes matières.
             </p>
           )}
+          {currentPhase === 3 && (
+            <p className="text-sm text-primary/80 text-center italic pt-2">
+              Tu es en phase finale — tu connais tes lacunes, travaille ce dont tu as besoin 🎯
+            </p>
+          )}
         </section>
 
         {/* Bouton Terminer ma journée */}
@@ -471,6 +502,11 @@ const Dashboard = () => {
               )}
               Terminer ma journée
             </Button>
+            {currentPhase === 1 && (
+              <p className="text-xs text-muted-foreground text-center mt-3 italic">
+                La bibliothèque de notions s'ouvrira quand tu auras complété 80% de ton planning aujourd'hui 📚
+              </p>
+            )}
           </section>
         )}
 
