@@ -386,9 +386,18 @@ const Dashboard = () => {
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">Bonjour {profile.name} 👋</h1>
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/library")} aria-label="Bibliothèque">
-                <BookOpen className="w-5 h-5 text-primary" />
-              </Button>
+              {showLibraryButton && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => libraryUnlocked && navigate("/library")}
+                  disabled={!libraryUnlocked}
+                  aria-label="Bibliothèque"
+                  title={libraryUnlocked ? "Bibliothèque débloquée" : "Complète 80% de ton planning pour débloquer"}
+                >
+                  <BookOpen className={`w-5 h-5 ${libraryUnlocked ? "text-primary" : "text-muted-foreground/40"}`} />
+                </Button>
+              )}
               <Button variant="ghost" size="icon" onClick={() => navigate("/progress")}>
                 <BarChart3 className="w-5 h-5 text-primary" />
               </Button>
