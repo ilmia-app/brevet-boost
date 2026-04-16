@@ -360,7 +360,23 @@ const Dashboard = () => {
       </div>
     );
 
+  const completionRate = dailyTasks.length > 0
+    ? dailyTasks.filter((t) => completedTasks.has(t.bloc.id)).length / dailyTasks.length
+    : 0;
   const allDone = dailyTasks.length > 0 && dailyTasks.every((t) => completedTasks.has(t.bloc.id));
+  const libraryUnlocked = currentPhase === 3 || completionRate >= 0.8;
+  const showLibraryButton = currentPhase >= 2;
+
+  // Notify when library unlocks (phase 2 only, on threshold cross)
+  useEffect(() => {
+    if (currentPhase === 2 && libraryUnlocked && !libraryUnlockedNotified) {
+      toast({
+        title: "Bien joué ! 🎉",
+        description: "La bibliothèque est débloquée pour aujourd'hui",
+      });
+      setLibraryUnlockedNotified(true);
+    }
+  }, [currentPhase, libraryUnlocked, libraryUnlockedNotified]);
 
   return (
     <div className="min-h-screen bg-background pb-8">
