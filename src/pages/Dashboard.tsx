@@ -84,6 +84,7 @@ const Dashboard = () => {
   const [endingDay, setEndingDay] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [yesterdayBlocIds, setYesterdayBlocIds] = useState<Set<string>>(new Set());
+  const [libraryUnlockedNotified, setLibraryUnlockedNotified] = useState(false);
 
   // Load profile from Supabase
   useEffect(() => {
