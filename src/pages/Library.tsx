@@ -112,7 +112,20 @@ const Library = () => {
           <div>
             <h1 className="text-2xl font-bold">Toutes les notions</h1>
             <p className="text-sm text-muted-foreground">Choisis ce que tu veux travailler aujourd'hui</p>
-          </div>
+        </div>
+
+        {/* Bandeau phase */}
+        <div
+          className={`rounded-lg px-4 py-3 text-sm font-medium ${
+            phase === 3
+              ? "bg-red-50 text-red-700 border border-red-200"
+              : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+          }`}
+        >
+          {phase === 3
+            ? "Mode compétition — Cible tes lacunes"
+            : "Mode Libre débloqué ✓ — Tu l'as mérité"}
+        </div>
         </div>
 
         {/* Filtres */}
