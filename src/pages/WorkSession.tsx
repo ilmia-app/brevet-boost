@@ -257,22 +257,8 @@ const WorkSession = () => {
     return `${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
   };
 
-  const canComplete = isPhase3
-    ? true
-    : elapsedSeconds >= dureeExamen * 60;
-
   const handleComplete = useCallback(async () => {
     if (!bloc || !user || !blocId) return;
-
-    if (!isPhase3) {
-      const requiredSeconds = dureeExamen * 60;
-      if (elapsedSeconds < requiredSeconds) {
-        const remaining = Math.ceil((requiredSeconds - elapsedSeconds) / 60);
-        setRemainingMinutes(remaining);
-        setShowNotEnough(true);
-        return;
-      }
-    }
 
     setTimerRunning(false);
     if (intervalRef.current) clearInterval(intervalRef.current);
