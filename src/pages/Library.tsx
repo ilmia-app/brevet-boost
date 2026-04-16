@@ -36,6 +36,7 @@ const Library = () => {
   const [completionsCount, setCompletionsCount] = useState<Record<string, number>>({});
   const [filter, setFilter] = useState("Toutes");
   const [loading, setLoading] = useState(true);
+  const [phase, setPhase] = useState<number>(1);
 
   useEffect(() => {
     const load = async () => {
@@ -46,6 +47,17 @@ const Library = () => {
       if (blocsData) setBlocs(blocsData);
 
       if (user) {
+        const { data: userData } = await supabase
+          .from("users")
+          .select("date_examen")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (userData?.date_examen) {
+          const diff = new Date(userData.date_examen).getTime() - Date.now();
+          const days = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+          setPhase(days > 21 ? 1 : days > 7 ? 2 : 3);
+        }
+
         const { data: comps } = await supabase
           .from("completions")
           .select("bloc_id")
