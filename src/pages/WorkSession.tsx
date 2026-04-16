@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
+import DOMPurify from "dompurify";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -179,13 +180,25 @@ const WorkSession = () => {
   const toggleTimer = () => setTimerRunning((r) => !r);
 
   const renderMathText = useCallback((text: string) => {
-    // Replace $...$ with KaTeX rendered HTML
-    return text.replace(/\$([^$]+)\$/g, (_, math) => {
+    // Escape HTML first to prevent XSS from AI-generated content
+    const escaped = text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+    // Replace $...$ with KaTeX rendered HTML (KaTeX output is safe)
+    const withKatex = escaped.replace(/\$([^$]+)\$/g, (_, math) => {
       try {
         return katex.renderToString(math, { throwOnError: false });
       } catch {
         return math;
       }
+    });
+    // Sanitize final HTML as defense-in-depth
+    return DOMPurify.sanitize(withKatex, {
+      ADD_TAGS: ["math", "semantics", "annotation", "mrow", "mi", "mo", "mn", "msup", "msub", "mfrac", "msqrt"],
+      ADD_ATTR: ["class", "style", "aria-hidden"],
     });
   }, []);
 
