@@ -350,16 +350,6 @@ const Dashboard = () => {
     setProfile((prev) => (prev ? { ...prev, modeActuel: newMode } : prev));
   }, [user, profile, dailyTasks, completedTasks, currentPhase]);
 
-  if (!profile || loading)
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
-          <p className="text-muted-foreground text-sm">Chargement de ton planning...</p>
-        </div>
-      </div>
-    );
-
   const completionRate = dailyTasks.length > 0
     ? dailyTasks.filter((t) => completedTasks.has(t.bloc.id)).length / dailyTasks.length
     : 0;
@@ -377,6 +367,16 @@ const Dashboard = () => {
       setLibraryUnlockedNotified(true);
     }
   }, [currentPhase, libraryUnlocked, libraryUnlockedNotified]);
+
+  if (!profile || loading)
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+          <p className="text-muted-foreground text-sm">Chargement de ton planning...</p>
+        </div>
+      </div>
+    );
 
   return (
     <div className="min-h-screen bg-background pb-8">
