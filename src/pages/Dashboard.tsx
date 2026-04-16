@@ -476,6 +476,11 @@ const Dashboard = () => {
               Aucune tâche disponible pour tes matières.
             </p>
           )}
+          {currentPhase === 3 && (
+            <p className="text-sm text-primary/80 text-center italic pt-2">
+              Tu es en phase finale — tu connais tes lacunes, travaille ce dont tu as besoin 🎯
+            </p>
+          )}
         </section>
 
         {/* Bouton Terminer ma journée */}
