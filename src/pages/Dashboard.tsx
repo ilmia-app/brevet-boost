@@ -502,6 +502,11 @@ const Dashboard = () => {
               )}
               Terminer ma journée
             </Button>
+            {currentPhase === 1 && (
+              <p className="text-xs text-muted-foreground text-center mt-3 italic">
+                La bibliothèque de notions s'ouvrira quand tu auras complété 80% de ton planning aujourd'hui 📚
+              </p>
+            )}
           </section>
         )}
 
