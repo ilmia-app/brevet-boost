@@ -257,22 +257,8 @@ const WorkSession = () => {
     return `${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
   };
 
-  const canComplete = isPhase3
-    ? true
-    : elapsedSeconds >= dureeExamen * 60;
-
   const handleComplete = useCallback(async () => {
     if (!bloc || !user || !blocId) return;
-
-    if (!isPhase3) {
-      const requiredSeconds = dureeExamen * 60;
-      if (elapsedSeconds < requiredSeconds) {
-        const remaining = Math.ceil((requiredSeconds - elapsedSeconds) / 60);
-        setRemainingMinutes(remaining);
-        setShowNotEnough(true);
-        return;
-      }
-    }
 
     setTimerRunning(false);
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -517,16 +503,10 @@ const WorkSession = () => {
         <section className="pb-4">
           <Button
             onClick={handleComplete}
-            disabled={!canComplete}
-            className="w-full h-12 text-base font-semibold sprint-gradient text-primary-foreground rounded-xl gap-2 disabled:opacity-50"
+            className="w-full h-12 text-base font-semibold sprint-gradient text-primary-foreground rounded-xl gap-2"
           >
             <CheckCircle2 className="w-5 h-5" /> J'ai terminé cet exercice ✓
           </Button>
-          {!canComplete && !isPhase3 && (
-            <p className="text-xs text-muted-foreground text-center mt-2">
-              Disponible après {dureeExamen} min de travail
-            </p>
-          )}
         </section>
       </div>
 
