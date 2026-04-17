@@ -422,9 +422,13 @@ const Dashboard = () => {
           </div>
         </section>
 
-        {/* SECTION 2 — Planning du jour */}
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold">Ton programme d'aujourd'hui</h2>
+        {/* SECTION 1 — Ton programme du jour */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Target className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold">Ton programme du jour</h2>
+          </div>
+          
           {dailyTasks.map(({ bloc, weight }) => (
             <Card
               key={bloc.id}
@@ -512,9 +516,9 @@ const Dashboard = () => {
           </section>
         )}
 
-        {/* SECTION 3 — Progression semaine */}
-        <section className="space-y-2">
-          <h2 className="text-lg font-semibold">Progression de la semaine</h2>
+        {/* SECTION — Progression semaine */}
+        <section className="space-y-3">
+          <h3 className="text-sm font-medium text-muted-foreground">Progression de la semaine</h3>
           <div className="flex justify-between px-2">
             {DAYS.map((day, i) => {
               const isPast = i < dayIndexMondayBased;
