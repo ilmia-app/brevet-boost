@@ -60,7 +60,9 @@ const WorkSession = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const blocId = searchParams.get("bloc_id") || searchParams.get("bloc") || "";
-  console.log("[WorkSession] bloc_id reçu:", blocId);
+  const mode = searchParams.get("mode") || "";
+  const isAiMode = mode === "ai";
+  console.log("[WorkSession] bloc_id reçu:", blocId, "mode:", mode);
 
   const [bloc, setBloc] = useState<BlocData | null>(null);
   const [methodeSteps, setMethodeSteps] = useState<string[]>([]);
@@ -68,6 +70,8 @@ const WorkSession = () => {
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const [notes, setNotes] = useState("");
   const [completed, setCompleted] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiCorrigeCache, setAiCorrigeCache] = useState<string>("");
 
   // Timer
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -114,21 +118,49 @@ const WorkSession = () => {
         }
       }
 
-      // 3. Exercice (optionnel)
-      const { data: exData, error: exErr } = await supabase
-        .from("exercices")
-        .select("id, enonce, corrige, annale_source")
-        .eq("bloc_id", blocId)
-        .limit(1);
-      console.log("[WorkSession] exercices trouvés pour", blocId, ":", exData?.length || 0, exErr || "");
-      if (cancelled) return;
-      if (exData && exData.length > 0) setExercise(exData[0]);
+      // 3. Exercice
+      if (isAiMode && blocData) {
+        // Mode IA : générer un exo + corrigé via edge function
+        setAiLoading(true);
+        try {
+          const { data: gen, error: genErr } = await supabase.functions.invoke("generate-exercice", {
+            body: {
+              titre: blocData.titre,
+              matiere: blocData.matiere,
+              objectifs: blocData.objectifs_pedagogiques,
+              etapes: methodeSteps.join("\n"),
+            },
+          });
+          if (genErr) throw genErr;
+          if (cancelled) return;
+          setExercise({
+            id: `ai-${blocData.id}`,
+            enonce: gen?.enonce || "Impossible de générer l'énoncé.",
+            corrige: null,
+            annale_source: "Exercice généré par IA ✨",
+          });
+          setAiCorrigeCache(gen?.corrige || "");
+        } catch (e) {
+          console.error("[WorkSession] erreur génération IA:", e);
+        } finally {
+          if (!cancelled) setAiLoading(false);
+        }
+      } else {
+        const { data: exData, error: exErr } = await supabase
+          .from("exercices")
+          .select("id, enonce, corrige, annale_source")
+          .eq("bloc_id", blocId)
+          .limit(1);
+        console.log("[WorkSession] exercices trouvés pour", blocId, ":", exData?.length || 0, exErr || "");
+        if (cancelled) return;
+        if (exData && exData.length > 0) setExercise(exData[0]);
+      }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [blocId]);
+  }, [blocId, isAiMode]);
 
   // Timer tick
   useEffect(() => {
@@ -175,12 +207,16 @@ const WorkSession = () => {
     // Ouvrir la modale de corrigé
     setCorrigeOpen(true);
 
-    if (exercise?.corrige) {
-      // CAS 1 : corrigé officiel
+    if (isAiMode && aiCorrigeCache) {
+      // Mode IA : corrigé déjà généré avec l'énoncé
+      setCorrigeContent(aiCorrigeCache);
+      setCorrigeIsAI(true);
+    } else if (exercise?.corrige) {
+      // Corrigé officiel
       setCorrigeContent(exercise.corrige);
       setCorrigeIsAI(false);
     } else {
-      // CAS 2 : générer via Lovable AI
+      // Fallback : générer un corrigé générique via l'ancienne function
       setCorrigeIsAI(true);
       setCorrigeLoading(true);
       try {
@@ -201,7 +237,7 @@ const WorkSession = () => {
         setCorrigeLoading(false);
       }
     }
-  }, [user, blocId, exercise, bloc, methodeSteps]);
+  }, [user, blocId, exercise, bloc, methodeSteps, isAiMode, aiCorrigeCache]);
 
   const handleCloseAndReturn = useCallback(() => {
     setCorrigeOpen(false);
@@ -269,27 +305,47 @@ const WorkSession = () => {
         </section>
 
         {/* Exercise section - conditionnel */}
-        {exercise ? (
+        {aiLoading ? (
+          <section className="space-y-3">
+            <Card className="border-l-4 border-l-primary">
+              <CardContent className="p-6 flex flex-col items-center justify-center gap-3">
+                <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                <p className="text-sm text-muted-foreground text-center">
+                  L'IA prépare un exercice personnalisé pour toi…
+                </p>
+              </CardContent>
+            </Card>
+          </section>
+        ) : exercise ? (
           <section className="space-y-3">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" /> Ton exercice
             </h2>
             {exercise.annale_source && (
               <Badge variant="outline" className="text-xs font-medium border-primary/30 text-primary bg-primary/5">
-                📜 {exercise.annale_source}
+                {isAiMode ? "✨" : "📜"} {exercise.annale_source}
               </Badge>
             )}
             {exercise.enonce && (
               <Card className="border-l-4 border-l-primary">
                 <CardContent className="p-4 bg-accent/30 rounded-r-lg">
-                  <div
-                    className="text-sm leading-relaxed whitespace-pre-wrap"
-                    dangerouslySetInnerHTML={{ __html: renderMathText(exercise.enonce) }}
-                  />
+                  <div className="text-sm leading-relaxed prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-foreground prose-strong:text-foreground">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      rehypePlugins={[rehypeRaw]}
+                    >
+                      {exercise.enonce.replace(/\$([^$\n]+)\$/g, (_, math) => {
+                        try {
+                          return katex.renderToString(math, { throwOnError: false });
+                        } catch {
+                          return math;
+                        }
+                      })}
+                    </ReactMarkdown>
+                  </div>
                 </CardContent>
               </Card>
             )}
-            {/* Message d'orientation sous l'exercice officiel */}
             <p className="text-xs text-muted-foreground text-center italic px-2">
               Suis la méthode ci-dessous étape par étape pendant que tu travailles ✨
             </p>

@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Play, Clock, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3, FileText } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { Play, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3, ChevronLeft, Sparkles } from "lucide-react";
 import EndOfDayModal from "@/components/dashboard/EndOfDayModal";
 
 interface ProfileData {
@@ -30,6 +29,7 @@ interface BlocExamen {
   priorite: number | null;
   phase_min: number | null;
   type: string | null;
+  theme: string | null;
 }
 
 interface MessageFeedback {
@@ -49,22 +49,23 @@ const SUBJECT_COLORS: Record<string, string> = {
   Techno: "bg-gray-500 text-white",
 };
 
-const TASK_LABELS: Record<string, string> = {
-  heavy: "Défi du jour",
-  medium: "Entraînement",
-  light: "Sprint final",
+const SUBJECT_BTN: Record<string, string> = {
+  Maths: "border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-900",
+  Français: "border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-900",
+  Histoire: "border-orange-200 bg-orange-50 hover:bg-orange-100 text-orange-900",
+  Géographie: "border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-900",
+  EMC: "border-yellow-200 bg-yellow-50 hover:bg-yellow-100 text-yellow-900",
+  Physique: "border-red-200 bg-red-50 hover:bg-red-100 text-red-900",
+  SVT: "border-green-200 bg-green-50 hover:bg-green-100 text-green-900",
+  Techno: "border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-900",
 };
+
+const ALL_SUBJECTS = ["Maths", "Français", "Histoire", "Géographie", "EMC", "Physique", "SVT", "Techno"];
 
 const TASK_ICONS: Record<string, string> = {
   heavy: "🎯",
   medium: "⚡",
   light: "🚀",
-};
-
-const TASK_LABEL_COLORS: Record<string, string> = {
-  heavy: "bg-red-100 text-red-700 border-red-200",
-  medium: "bg-yellow-100 text-yellow-700 border-yellow-200",
-  light: "bg-emerald-100 text-emerald-700 border-emerald-200",
 };
 
 const DAYS = ["L", "M", "M", "J", "V", "S", "D"];
@@ -84,15 +85,15 @@ const Dashboard = () => {
   const [endingDay, setEndingDay] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [yesterdayBlocIds, setYesterdayBlocIds] = useState<Set<string>>(new Set());
-  
+  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
 
-  // Load profile from Supabase
+  // Profile
   useEffect(() => {
     if (!user) {
       navigate("/login");
       return;
     }
-    const fetchProfile = async () => {
+    (async () => {
       const { data } = await supabase
         .from("users")
         .select("id, prenom, date_examen, volume_quotidien, retard_initial, matieres_faibles, mode_actuel, phase_actuelle")
@@ -102,8 +103,6 @@ const Dashboard = () => {
         navigate("/onboarding");
         return;
       }
-      console.log("matieres_faibles brut depuis Supabase:", data.matieres_faibles);
-      console.log("mode_actuel:", data.mode_actuel);
       setProfile({
         id: data.id,
         name: data.prenom || "",
@@ -115,14 +114,13 @@ const Dashboard = () => {
         phaseActuelle: data.phase_actuelle || 1,
       });
       setLoading(false);
-    };
-    fetchProfile();
+    })();
   }, [user, navigate]);
 
-  // Load today's completions from Supabase
+  // Today's completions
   useEffect(() => {
     if (!user) return;
-    const loadCompletions = async () => {
+    (async () => {
       const today = new Date().toISOString().split("T")[0];
       const { data } = await supabase
         .from("completions")
@@ -130,17 +128,14 @@ const Dashboard = () => {
         .eq("user_id", user.id)
         .eq("date_completion", today)
         .eq("completed", true);
-      if (data) {
-        setCompletedTasks(new Set(data.map((c) => c.bloc_id)));
-      }
-    };
-    loadCompletions();
+      if (data) setCompletedTasks(new Set(data.map((c) => c.bloc_id)));
+    })();
   }, [user]);
 
-  // Load yesterday's completions for "maintien" mode
+  // Yesterday's completions
   useEffect(() => {
     if (!user) return;
-    const loadYesterday = async () => {
+    (async () => {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
       const yStr = yesterday.toISOString().split("T")[0];
@@ -149,27 +144,22 @@ const Dashboard = () => {
         .select("bloc_id")
         .eq("user_id", user.id)
         .eq("date_completion", yStr);
-      if (data) {
-        setYesterdayBlocIds(new Set(data.map((c) => c.bloc_id)));
-      }
-    };
-    loadYesterday();
+      if (data) setYesterdayBlocIds(new Set(data.map((c) => c.bloc_id)));
+    })();
   }, [user]);
 
-  // Fetch blocs_examen
+  // All blocs
   useEffect(() => {
-    const fetchBlocs = async () => {
+    (async () => {
       const { data } = await supabase
         .from("blocs_examen")
-        .select("id, matiere, titre, duree_min, priorite, phase_min, type")
-        .eq("priorite", 1)
+        .select("id, matiere, titre, duree_min, priorite, phase_min, type, theme")
+        .order("priorite", { ascending: true })
         .order("duree_min", { ascending: false });
       if (data) setBlocs(data);
-    };
-    fetchBlocs();
+    })();
   }, []);
 
-  // Computed values
   const daysUntilExam = useMemo(() => {
     if (!profile?.examDate) return 0;
     const diff = new Date(profile.examDate).getTime() - new Date().getTime();
@@ -194,67 +184,49 @@ const Dashboard = () => {
     return Math.min(100, Math.round((elapsed / totalSprintDays) * 100));
   }, [totalSprintDays, daysUntilExam]);
 
-  // Fetch feedback message
   useEffect(() => {
-    const fetchFeedback = async () => {
+    (async () => {
       const { data } = await supabase
         .from("messages_feedback")
         .select("message, ton, phase")
         .eq("phase", currentPhase)
         .limit(1);
       if (data && data.length > 0) setFeedback(data[0]);
-    };
-    if (profile) fetchFeedback();
+    })();
   }, [profile, currentPhase]);
 
-  // Generate daily tasks based on mode_actuel
+  // Daily tasks (priorité=1 uniquement, comme avant)
   const dailyTasks = useMemo(() => {
     const mode = profile?.modeActuel || "normal";
     const userSubjects = profile?.subjects || [];
-    console.log("Subjects pour le planning:", userSubjects, "Mode:", mode);
+    const priorityBlocs = blocs.filter((b) => b.priorite === 1);
 
     const usedIds = new Set<string>();
     const slots: Array<{ bloc: BlocExamen; weight: "heavy" | "medium" | "light" }> = [];
     const weights: Array<"heavy" | "medium" | "light"> = ["heavy", "medium", "light"];
+    const matchesSubject = (bm: string, s: string) => bm.toLowerCase() === s.toLowerCase();
 
-    const matchesSubject = (blocMatiere: string, subject: string) =>
-      blocMatiere.toLowerCase() === subject.toLowerCase();
+    let availableBlocs = [...priorityBlocs];
+    if (mode === "maintien") availableBlocs = availableBlocs.filter((b) => !yesterdayBlocIds.has(b.id));
 
-    // Filter blocs based on mode
-    let availableBlocs = [...blocs];
-    if (mode === "maintien") {
-      availableBlocs = availableBlocs.filter((b) => !yesterdayBlocIds.has(b.id));
-    }
-
-    // Determine max slots based on mode
     let maxSlots = 3;
     if (mode === "allegement") maxSlots = 2;
     if (mode === "reset_doux") maxSlots = 1;
 
     if (mode === "reset_doux") {
-      // Pick the shortest available bloc
-      const shortest = [...availableBlocs].sort(
-        (a, b) => (a.duree_min || 0) - (b.duree_min || 0)
-      )[0];
-      if (shortest) {
-        slots.push({ bloc: shortest, weight: "light" });
-      }
+      const shortest = [...availableBlocs].sort((a, b) => (a.duree_min || 0) - (b.duree_min || 0))[0];
+      if (shortest) slots.push({ bloc: shortest, weight: "light" });
       return slots;
     }
 
-    // Step 1: For each subject in matieres_faibles, pick a bloc
     for (let i = 0; i < Math.min(userSubjects.length, maxSlots); i++) {
       const subject = userSubjects[i];
-      const bloc = availableBlocs.find(
-        (b) => !usedIds.has(b.id) && matchesSubject(b.matiere, subject)
-      );
+      const bloc = availableBlocs.find((b) => !usedIds.has(b.id) && matchesSubject(b.matiere, subject));
       if (bloc) {
         usedIds.add(bloc.id);
         slots.push({ bloc, weight: weights[i] });
       }
     }
-
-    // Step 2: Fill remaining slots
     while (slots.length < maxSlots) {
       const weight = weights[slots.length];
       const bloc = availableBlocs.find((b) => !usedIds.has(b.id));
@@ -262,16 +234,12 @@ const Dashboard = () => {
       usedIds.add(bloc.id);
       slots.push({ bloc, weight });
     }
-
     return slots;
   }, [blocs, profile, yesterdayBlocIds]);
 
   const todayDayIndex = new Date().getDay();
   const dayIndexMondayBased = todayDayIndex === 0 ? 6 : todayDayIndex - 1;
 
-  // Checkboxes are read-only on dashboard — completion is driven by WorkSession
-
-  // End of day logic
   const handleEndDay = useCallback(async () => {
     if (!user || !profile) return;
     setEndingDay(true);
@@ -280,14 +248,10 @@ const Dashboard = () => {
     const completed = dailyTasks.filter((t) => completedTasks.has(t.bloc.id)).length;
     const taux = total > 0 ? completed / total : 0;
 
-    // Check last 3 days for consecutive low performance
     let newMode = "normal";
-    if (taux >= 0.8) {
-      newMode = "normal";
-    } else if (taux >= 0.6) {
-      newMode = "maintien";
-    } else {
-      // Check consecutive days < 0.6
+    if (taux >= 0.8) newMode = "normal";
+    else if (taux >= 0.6) newMode = "maintien";
+    else {
       const threeDaysAgo = new Date();
       threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
       const { data: recentCompletions } = await supabase
@@ -297,7 +261,6 @@ const Dashboard = () => {
         .gte("date_completion", threeDaysAgo.toISOString().split("T")[0])
         .order("date_completion", { ascending: true });
 
-      // Group by day and compute taux per day
       const dayMap = new Map<string, { total: number; done: number }>();
       if (recentCompletions) {
         for (const c of recentCompletions) {
@@ -308,20 +271,13 @@ const Dashboard = () => {
           if (c.completed) entry.done++;
         }
       }
-
       const days = Array.from(dayMap.values());
       const consecutiveLow = days.filter((d) => d.total > 0 && d.done / d.total < 0.6).length;
-
       newMode = consecutiveLow >= 3 ? "reset_doux" : "allegement";
     }
 
-    // Update user mode
-    await supabase
-      .from("users")
-      .update({ mode_actuel: newMode })
-      .eq("id", user.id);
+    await supabase.from("users").update({ mode_actuel: newMode }).eq("id", user.id);
 
-    // Fetch feedback message
     const niveauTaux = taux >= 0.8 ? "validation" : taux >= 0.6 ? "encouragement" : "alerte";
     const { data: fbData } = await supabase
       .from("messages_feedback")
@@ -345,15 +301,16 @@ const Dashboard = () => {
     setEndOfDayOpen(true);
     setShowFeedback(true);
     setEndingDay(false);
-
-    // Update local profile
     setProfile((prev) => (prev ? { ...prev, modeActuel: newMode } : prev));
   }, [user, profile, dailyTasks, completedTasks, currentPhase]);
 
-  const completionRate = dailyTasks.length > 0
-    ? dailyTasks.filter((t) => completedTasks.has(t.bloc.id)).length / dailyTasks.length
-    : 0;
   const allDone = dailyTasks.length > 0 && dailyTasks.every((t) => completedTasks.has(t.bloc.id));
+
+  // Blocs de la matière sélectionnée
+  const subjectBlocs = useMemo(() => {
+    if (!selectedSubject) return [];
+    return blocs.filter((b) => b.matiere.toLowerCase() === selectedSubject.toLowerCase());
+  }, [blocs, selectedSubject]);
 
   if (!profile || loading)
     return (
@@ -366,6 +323,7 @@ const Dashboard = () => {
     );
 
   const firstPendingTask = dailyTasks.find((t) => !completedTasks.has(t.bloc.id)) || dailyTasks[0];
+  const completedCount = dailyTasks.filter((t) => completedTasks.has(t.bloc.id)).length;
 
   return (
     <div className="min-h-screen bg-background pb-8">
@@ -374,11 +332,9 @@ const Dashboard = () => {
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">Bonjour {profile.name} 👋</h1>
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/progress")} aria-label="Progression">
-                <BarChart3 className="w-5 h-5 text-primary" />
-              </Button>
-            </div>
+            <Button variant="ghost" size="icon" onClick={() => navigate("/progress")} aria-label="Progression">
+              <BarChart3 className="w-5 h-5 text-primary" />
+            </Button>
           </div>
           <p className="text-muted-foreground text-sm">
             J-{daysUntilExam} · Phase {currentPhase} · Semaine {currentWeek} du sprint
@@ -392,14 +348,14 @@ const Dashboard = () => {
           </div>
         </section>
 
-        {/* GRILLE 2 COLONNES */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
-          {/* COLONNE GAUCHE — Programme du jour */}
+        {/* 3 CARTES */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+          {/* CARTE 1 — Programme du jour */}
           <Card className="rounded-2xl flex flex-col">
             <CardContent className="p-5 flex flex-col flex-1 space-y-4">
               <div className="flex items-center gap-2">
                 <span className="text-xl">🎯</span>
-                <h2 className="text-base font-semibold">Ton programme du jour</h2>
+                <h2 className="text-base font-semibold">Mon programme du jour</h2>
               </div>
 
               <div className="space-y-2 flex-1">
@@ -428,9 +384,7 @@ const Dashboard = () => {
                   );
                 })}
                 {dailyTasks.length === 0 && (
-                  <p className="text-muted-foreground text-xs text-center py-4">
-                    Aucune tâche disponible.
-                  </p>
+                  <p className="text-muted-foreground text-xs text-center py-4">Aucune tâche disponible.</p>
                 )}
               </div>
 
@@ -443,13 +397,13 @@ const Dashboard = () => {
                     )
                   }
                 >
-                  <Play className="w-4 h-4 mr-1" /> Démarrer mon programme
+                  <Play className="w-4 h-4 mr-1" /> Démarrer
                 </Button>
               )}
 
               {dailyTasks.length > 0 && (
                 <p className="text-xs text-muted-foreground text-center">
-                  {dailyTasks.filter((t) => completedTasks.has(t.bloc.id)).length}/{dailyTasks.length} tâches complétées aujourd'hui
+                  {completedCount}/{dailyTasks.length} tâches complétées
                 </p>
               )}
 
@@ -459,16 +413,11 @@ const Dashboard = () => {
                   disabled={endingDay}
                   className="w-full rounded-xl h-10 text-sm font-medium sprint-gradient text-primary-foreground animate-in fade-in duration-500"
                 >
-                  {endingDay ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                  )}
+                  {endingDay ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
                   Terminer ma journée
                 </Button>
               )}
 
-              {/* Progression semaine */}
               <div className="pt-2 border-t space-y-2">
                 <p className="text-xs font-medium text-muted-foreground">Progression de la semaine</p>
                 <div className="flex justify-between">
@@ -495,14 +444,73 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* COLONNE DROITE — Annales */}
+          {/* CARTE 2 — Choisir un thème (IA) */}
+          <Card className="rounded-2xl flex flex-col">
+            <CardContent className="p-5 flex flex-col flex-1 space-y-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🧠</span>
+                <h2 className="text-base font-semibold">Choisir un thème</h2>
+              </div>
+              <p className="text-xs text-muted-foreground -mt-2 flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-primary" /> L'IA génère un exercice personnalisé
+              </p>
+
+              {!selectedSubject ? (
+                <div className="grid grid-cols-2 gap-2 flex-1 content-start">
+                  {ALL_SUBJECTS.map((subj) => (
+                    <button
+                      key={subj}
+                      onClick={() => setSelectedSubject(subj)}
+                      className={`rounded-lg border-2 p-2.5 text-xs font-semibold transition-colors ${SUBJECT_BTN[subj]}`}
+                    >
+                      {subj}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex-1 flex flex-col space-y-2 min-h-0">
+                  <button
+                    onClick={() => setSelectedSubject(null)}
+                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground self-start"
+                  >
+                    <ChevronLeft className="w-3 h-3" /> Retour aux matières
+                  </button>
+                  <div className="flex items-center gap-2">
+                    <Badge className={SUBJECT_COLORS[selectedSubject] || "bg-muted"}>{selectedSubject}</Badge>
+                    <span className="text-xs text-muted-foreground">{subjectBlocs.length} thèmes</span>
+                  </div>
+                  <div className="flex-1 overflow-y-auto space-y-1.5 max-h-[280px] pr-1">
+                    {subjectBlocs.map((bloc) => (
+                      <button
+                        key={bloc.id}
+                        onClick={() => navigate(`/work?bloc_id=${encodeURIComponent(bloc.id)}&mode=ai`)}
+                        className="w-full text-left rounded-lg border bg-card hover:border-primary hover:bg-accent/30 transition-all p-2.5"
+                      >
+                        <p className="text-xs font-medium leading-snug line-clamp-2">{bloc.titre}</p>
+                        {bloc.theme && (
+                          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{bloc.theme}</p>
+                        )}
+                      </button>
+                    ))}
+                    {subjectBlocs.length === 0 && (
+                      <p className="text-xs text-muted-foreground text-center py-4">
+                        Aucun thème disponible pour cette matière.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* CARTE 3 — Annales */}
           <Card className="rounded-2xl flex flex-col">
             <CardContent className="p-5 flex flex-col flex-1 space-y-4">
               <div className="flex items-center gap-2">
                 <span className="text-xl">📄</span>
                 <h2 className="text-base font-semibold">S'entraîner sur une annale</h2>
               </div>
-              <p className="text-xs text-muted-foreground -mt-2">Simule les conditions du brevet</p>
+              <p className="text-xs text-muted-foreground -mt-2">Travaille un sujet officiel du brevet</p>
 
               <div className="space-y-3 flex-1 flex flex-col justify-center">
                 <button
@@ -512,7 +520,7 @@ const Dashboard = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-semibold text-blue-900">Annales Maths</p>
-                      <p className="text-xs text-blue-700/80 mt-0.5">4 sujets disponibles</p>
+                      <p className="text-xs text-blue-700/80 mt-0.5">Sujets officiels DNB</p>
                     </div>
                     <Badge className="bg-blue-500 text-white">Maths</Badge>
                   </div>
@@ -525,7 +533,7 @@ const Dashboard = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-semibold text-purple-900">Annales Français</p>
-                      <p className="text-xs text-purple-700/80 mt-0.5">4 sujets disponibles</p>
+                      <p className="text-xs text-purple-700/80 mt-0.5">Sujets officiels DNB</p>
                     </div>
                     <Badge className="bg-purple-500 text-white">Français</Badge>
                   </div>
@@ -541,7 +549,7 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* SECTION 4 — Feedback */}
+        {/* Feedback */}
         {showFeedback && feedback?.message && (
           <section>
             <Card className="border-primary/20 bg-accent/30">
@@ -568,7 +576,6 @@ const Dashboard = () => {
         </section>
       </div>
 
-      {/* End of day modal */}
       <EndOfDayModal
         open={endOfDayOpen}
         onClose={() => setEndOfDayOpen(false)}
