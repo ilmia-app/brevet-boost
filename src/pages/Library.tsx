@@ -183,7 +183,7 @@ const Library = () => {
                   <Button
                     size="sm"
                     className="w-full sprint-gradient text-primary-foreground rounded-lg"
-                    onClick={() => navigate(`/work?bloc=${bloc.id}&slot=medium`)}
+                    onClick={() => navigate(`/work?bloc_id=${encodeURIComponent(bloc.id)}&slot=medium`)}
                   >
                     <Play className="w-3.5 h-3.5 mr-1" /> Travailler ce bloc
                   </Button>

@@ -58,7 +58,8 @@ const WorkSession = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
-  const blocId = searchParams.get("bloc_id") || searchParams.get("bloc");
+  const rawBlocId = searchParams.get("bloc_id") || searchParams.get("bloc") || "";
+  const blocId = rawBlocId.trim() ? rawBlocId.trim() : null;
   const slotType = searchParams.get("slot") || "medium";
   console.log("[WorkSession] bloc_id reçu:", blocId);
 
