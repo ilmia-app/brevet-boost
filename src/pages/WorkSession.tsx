@@ -68,8 +68,11 @@ const WorkSession = () => {
   const [notes, setNotes] = useState("");
   const [completed, setCompleted] = useState(false);
   const [showTimeUp, setShowTimeUp] = useState(false);
-  const [generatedExercise, setGeneratedExercise] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [exercise, setExercise] = useState<{ id: string; enonce: string | null; corrige: string | null; annale_source: string | null; annee: number | null; session: string | null } | null>(null);
+  const [exerciseLoading, setExerciseLoading] = useState(false);
+  const [noExercise, setNoExercise] = useState(false);
+  const [showCorrigeButton, setShowCorrigeButton] = useState(false);
+  const [showCorrigeModal, setShowCorrigeModal] = useState(false);
 
   // Timer: always counts UP (elapsed seconds)
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -200,38 +203,42 @@ const WorkSession = () => {
     });
   }, []);
 
-  const handleGenerateExercise = useCallback(async () => {
-    if (!bloc) return;
-    setIsGenerating(true);
+  const fetchRandomExercise = useCallback(async (excludeId?: string) => {
+    if (!blocId) return;
+    setExerciseLoading(true);
+    setNoExercise(false);
     try {
-      const methodeText = methodeSteps.length > 0
-        ? methodeSteps.map((s, i) => `${i + 1}. ${s}`).join("\n")
-        : null;
-
-      const { data, error } = await supabase.functions.invoke("generate-exercise", {
-        body: {
-          bloc_id: bloc.id,
-          matiere: bloc.matiere,
-          titre: bloc.titre,
-          objectifs_pedagogiques: bloc.objectifs_pedagogiques,
-          duree_examen_min: bloc.duree_examen_min,
-          tags: null,
-          methode_etapes: methodeText,
-        },
-      });
+      let query = supabase
+        .from("exercices")
+        .select("id, enonce, corrige, annale_source, annee, session")
+        .eq("bloc_id", blocId);
+      if (excludeId) query = query.neq("id", excludeId);
+      const { data, error } = await query;
       if (error) throw error;
-      if (data?.fallback) {
-        setGeneratedExercise(data.error || "Génération temporairement indisponible.");
+      if (!data || data.length === 0) {
+        if (excludeId) {
+          // No other exercise — keep current one
+          setExerciseLoading(false);
+          return;
+        }
+        setExercise(null);
+        setNoExercise(true);
       } else {
-        setGeneratedExercise(data?.exercise || "Impossible de générer l'exercice.");
+        const random = data[Math.floor(Math.random() * data.length)];
+        setExercise(random);
       }
     } catch (e) {
-      console.error("Exercise generation error:", e);
-      setGeneratedExercise("Erreur lors de la génération. Réessaie plus tard.");
+      console.error("Exercise fetch error:", e);
+      setNoExercise(true);
     } finally {
-      setIsGenerating(false);
+      setExerciseLoading(false);
     }
-  }, [bloc, methodeSteps]);
+  }, [blocId]);
+
+  // Auto-fetch exercise when bloc loads
+  useEffect(() => {
+    if (blocId) fetchRandomExercise();
+  }, [blocId, fetchRandomExercise]);
 
   // Display values
   const displaySeconds = isPhase3
@@ -267,9 +274,15 @@ const WorkSession = () => {
       { onConflict: "user_id,bloc_id,date_completion" }
     );
 
-    setCompleted(true);
-    setTimeout(() => navigate(`/dashboard?task_completed=${blocId}`), 2000);
-  }, [bloc, user, blocId, elapsedSeconds, navigate, isPhase3, dureeRevision]);
+    // If a corrigé is available, reveal the button and let the student review it before navigating
+    if (exercise?.corrige) {
+      setShowCorrigeButton(true);
+      setCompleted(true);
+    } else {
+      setCompleted(true);
+      setTimeout(() => navigate(`/dashboard?task_completed=${blocId}`), 2000);
+    }
+  }, [bloc, user, blocId, navigate, exercise]);
 
   const slot = SLOT_CONFIG[slotType] || SLOT_CONFIG.medium;
 
@@ -281,7 +294,7 @@ const WorkSession = () => {
     );
   }
 
-  if (completed) {
+  if (completed && !showCorrigeButton) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 px-4">
         <div className="w-16 h-16 rounded-full sprint-gradient flex items-center justify-center">
@@ -373,60 +386,72 @@ const WorkSession = () => {
           </div>
         </section>
 
-        {/* AI Exercise Section — Phase 1 & 2 only */}
-        {!isPhase3 && (
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-primary" /> Ton exercice du jour
-            </h2>
-            {!generatedExercise && !isGenerating && (
-              <Button
-                onClick={handleGenerateExercise}
-                variant="outline"
-                className="w-full gap-2"
-              >
-                <Sparkles className="w-4 h-4" /> Générer un exercice
-              </Button>
-            )}
-            {isGenerating && (
-              <Card>
-                <CardContent className="p-4 flex items-center justify-center gap-2 text-muted-foreground">
-                  <Loader2 className="w-4 h-4 animate-spin" /> Génération de ton exercice…
+        {/* Exercise Section — exercices Brevet officiels */}
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-primary" /> Ton exercice du jour
+          </h2>
+          {exerciseLoading && (
+            <Card>
+              <CardContent className="p-4 flex items-center justify-center gap-2 text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" /> Chargement de l'exercice…
+              </CardContent>
+            </Card>
+          )}
+          {!exerciseLoading && noExercise && (
+            <Card className="border-dashed">
+              <CardContent className="p-4">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Exercice disponible prochainement — travaille avec la méthode ci-dessous sur un exercice de ton manuel CNED.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+          {!exerciseLoading && exercise && (
+            <>
+              {exercise.annale_source && (
+                <Badge variant="outline" className="text-xs font-medium border-primary/30 text-primary bg-primary/5">
+                  📜 {exercise.annale_source}
+                </Badge>
+              )}
+              <Card className="border-l-4 border-l-primary">
+                <CardContent className="p-4 bg-accent/30 rounded-r-lg">
+                  <div
+                    className="text-sm leading-relaxed whitespace-pre-wrap"
+                    dangerouslySetInnerHTML={{ __html: renderMathText(exercise.enonce || "") }}
+                  />
                 </CardContent>
               </Card>
-            )}
-            {generatedExercise && !isGenerating && (
-              <>
-                <Card className="border-l-4 border-l-primary">
-                  <CardContent className="p-4 bg-accent/30 rounded-r-lg">
-                    <div
-                      className="text-sm leading-relaxed whitespace-pre-wrap"
-                      dangerouslySetInnerHTML={{ __html: renderMathText(generatedExercise) }}
-                    />
-                  </CardContent>
-                </Card>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handleGenerateExercise}
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5 flex-1"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" /> Autre exercice
-                  </Button>
-                  <Button
-                    onClick={() => window.print()}
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5 flex-1"
-                  >
-                    <Printer className="w-3.5 h-3.5" /> Imprimer
-                  </Button>
-                </div>
-              </>
-            )}
-          </section>
-        )}
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => fetchRandomExercise(exercise.id)}
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 flex-1"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" /> Autre exercice
+                </Button>
+                <Button
+                  onClick={() => window.print()}
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 flex-1"
+                >
+                  <Printer className="w-3.5 h-3.5" /> Imprimer
+                </Button>
+              </div>
+              {showCorrigeButton && exercise.corrige && (
+                <Button
+                  onClick={() => setShowCorrigeModal(true)}
+                  variant="secondary"
+                  className="w-full gap-2"
+                >
+                  <CheckCircle2 className="w-4 h-4" /> Voir le corrigé
+                </Button>
+              )}
+            </>
+          )}
+        </section>
 
         {/* SECTION 2 — Méthode pas-à-pas */}
         {methodeSteps.length > 0 && (
@@ -539,6 +564,41 @@ const WorkSession = () => {
               className="w-full sprint-gradient text-primary-foreground"
             >
               Valider et passer à la suite
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Corrigé modal */}
+      <AlertDialog open={showCorrigeModal} onOpenChange={setShowCorrigeModal}>
+        <AlertDialogContent className="max-w-lg mx-auto max-h-[80vh] overflow-y-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-primary" /> Corrigé
+            </AlertDialogTitle>
+            {exercise?.annale_source && (
+              <AlertDialogDescription className="text-xs">
+                {exercise.annale_source}
+              </AlertDialogDescription>
+            )}
+          </AlertDialogHeader>
+          <div
+            className="text-sm leading-relaxed whitespace-pre-wrap py-2"
+            dangerouslySetInnerHTML={{ __html: renderMathText(exercise?.corrige || "") }}
+          />
+          <AlertDialogFooter className="flex flex-col gap-2 sm:flex-col">
+            <Button
+              onClick={() => setShowCorrigeModal(false)}
+              variant="outline"
+              className="w-full"
+            >
+              Fermer
+            </Button>
+            <Button
+              onClick={() => navigate(`/dashboard?task_completed=${blocId}`)}
+              className="w-full sprint-gradient text-primary-foreground"
+            >
+              Retour au planning
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
