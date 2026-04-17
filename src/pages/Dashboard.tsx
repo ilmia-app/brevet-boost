@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Play, Clock, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3, BookOpen } from "lucide-react";
+import { Play, Clock, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3, BookOpen, FileText } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import EndOfDayModal from "@/components/dashboard/EndOfDayModal";
 
@@ -398,6 +398,9 @@ const Dashboard = () => {
                   <BookOpen className={`w-5 h-5 ${libraryUnlocked ? "text-primary" : "text-muted-foreground/40"}`} />
                 </Button>
               )}
+              <Button variant="ghost" size="icon" onClick={() => navigate("/annales")} aria-label="Annales" title="Annales du brevet">
+                <FileText className="w-5 h-5 text-primary" />
+              </Button>
               <Button variant="ghost" size="icon" onClick={() => navigate("/progress")}>
                 <BarChart3 className="w-5 h-5 text-primary" />
               </Button>
