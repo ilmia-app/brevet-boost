@@ -364,22 +364,39 @@ const Dashboard = () => {
                   return (
                     <div
                       key={bloc.id}
-                      className={`flex items-center gap-2 rounded-lg border bg-card p-3 ${done ? "opacity-60" : ""}`}
+                      className={`rounded-lg border bg-card p-3 space-y-2 ${done ? "opacity-60" : ""}`}
                     >
-                      <Checkbox checked={done} disabled />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                          <Badge className={`${SUBJECT_COLORS[bloc.matiere] || "bg-muted text-foreground"} text-[10px] px-1.5 py-0`}>
-                            {bloc.matiere}
-                          </Badge>
-                          <span className="text-[10px] text-muted-foreground">
-                            {TASK_ICONS[weight]} {bloc.duree_min} min
-                          </span>
+                      <div className="flex items-start gap-2">
+                        <Checkbox checked={done} disabled className="mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                            <Badge className={`${SUBJECT_COLORS[bloc.matiere] || "bg-muted text-foreground"} text-[10px] px-1.5 py-0`}>
+                              {bloc.matiere}
+                            </Badge>
+                            <span className="text-[10px] text-muted-foreground">
+                              {TASK_ICONS[weight]} {bloc.duree_min} min
+                            </span>
+                          </div>
+                          <p className={`text-xs leading-snug ${done ? "line-through text-muted-foreground" : "font-medium"}`}>
+                            {bloc.titre}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground/80 mt-1 flex items-center gap-1">
+                            <Sparkles className="w-2.5 h-2.5 text-primary shrink-0" />
+                            L'IA va générer un exercice sur ce thème
+                          </p>
                         </div>
-                        <p className={`text-xs leading-snug truncate ${done ? "line-through text-muted-foreground" : "font-medium"}`}>
-                          {bloc.titre}
-                        </p>
                       </div>
+                      {!done && (
+                        <Button
+                          size="sm"
+                          onClick={() =>
+                            navigate(`/work?bloc_id=${encodeURIComponent(bloc.id)}&mode=ai`)
+                          }
+                          className="w-full h-8 text-xs rounded-lg sprint-gradient text-primary-foreground"
+                        >
+                          <Play className="w-3 h-3 mr-1" /> Commencer
+                        </Button>
+                      )}
                     </div>
                   );
                 })}
@@ -387,19 +404,6 @@ const Dashboard = () => {
                   <p className="text-muted-foreground text-xs text-center py-4">Aucune tâche disponible.</p>
                 )}
               </div>
-
-              {firstPendingTask && !allDone && (
-                <Button
-                  className="w-full rounded-xl h-11 text-sm font-semibold sprint-gradient text-primary-foreground"
-                  onClick={() =>
-                    navigate(
-                      `/work?bloc_id=${encodeURIComponent(firstPendingTask.bloc.id)}&slot=${firstPendingTask.weight}`,
-                    )
-                  }
-                >
-                  <Play className="w-4 h-4 mr-1" /> Démarrer
-                </Button>
-              )}
 
               {dailyTasks.length > 0 && (
                 <p className="text-xs text-muted-foreground text-center">
