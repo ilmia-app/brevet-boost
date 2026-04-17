@@ -118,21 +118,49 @@ const WorkSession = () => {
         }
       }
 
-      // 3. Exercice (optionnel)
-      const { data: exData, error: exErr } = await supabase
-        .from("exercices")
-        .select("id, enonce, corrige, annale_source")
-        .eq("bloc_id", blocId)
-        .limit(1);
-      console.log("[WorkSession] exercices trouvés pour", blocId, ":", exData?.length || 0, exErr || "");
-      if (cancelled) return;
-      if (exData && exData.length > 0) setExercise(exData[0]);
+      // 3. Exercice
+      if (isAiMode && blocData) {
+        // Mode IA : générer un exo + corrigé via edge function
+        setAiLoading(true);
+        try {
+          const { data: gen, error: genErr } = await supabase.functions.invoke("generate-exercice", {
+            body: {
+              titre: blocData.titre,
+              matiere: blocData.matiere,
+              objectifs: blocData.objectifs_pedagogiques,
+              etapes: methodeSteps.join("\n"),
+            },
+          });
+          if (genErr) throw genErr;
+          if (cancelled) return;
+          setExercise({
+            id: `ai-${blocData.id}`,
+            enonce: gen?.enonce || "Impossible de générer l'énoncé.",
+            corrige: null,
+            annale_source: "Exercice généré par IA ✨",
+          });
+          setAiCorrigeCache(gen?.corrige || "");
+        } catch (e) {
+          console.error("[WorkSession] erreur génération IA:", e);
+        } finally {
+          if (!cancelled) setAiLoading(false);
+        }
+      } else {
+        const { data: exData, error: exErr } = await supabase
+          .from("exercices")
+          .select("id, enonce, corrige, annale_source")
+          .eq("bloc_id", blocId)
+          .limit(1);
+        console.log("[WorkSession] exercices trouvés pour", blocId, ":", exData?.length || 0, exErr || "");
+        if (cancelled) return;
+        if (exData && exData.length > 0) setExercise(exData[0]);
+      }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [blocId]);
+  }, [blocId, isAiMode]);
 
   // Timer tick
   useEffect(() => {
