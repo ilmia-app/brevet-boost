@@ -568,6 +568,41 @@ const WorkSession = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Corrigé modal */}
+      <AlertDialog open={showCorrigeModal} onOpenChange={setShowCorrigeModal}>
+        <AlertDialogContent className="max-w-lg mx-auto max-h-[80vh] overflow-y-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-primary" /> Corrigé
+            </AlertDialogTitle>
+            {exercise?.annale_source && (
+              <AlertDialogDescription className="text-xs">
+                {exercise.annale_source}
+              </AlertDialogDescription>
+            )}
+          </AlertDialogHeader>
+          <div
+            className="text-sm leading-relaxed whitespace-pre-wrap py-2"
+            dangerouslySetInnerHTML={{ __html: renderMathText(exercise?.corrige || "") }}
+          />
+          <AlertDialogFooter className="flex flex-col gap-2 sm:flex-col">
+            <Button
+              onClick={() => setShowCorrigeModal(false)}
+              variant="outline"
+              className="w-full"
+            >
+              Fermer
+            </Button>
+            <Button
+              onClick={() => navigate(`/dashboard?task_completed=${blocId}`)}
+              className="w-full sprint-gradient text-primary-foreground"
+            >
+              Retour au planning
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
