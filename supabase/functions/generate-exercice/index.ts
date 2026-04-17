@@ -67,39 +67,49 @@ FORMAT DE RÉPONSE (JSON STRICT, rien d'autre) :
 
 Le markdown peut utiliser : ### titres, **gras**, listes -, séparateurs ---, et formules $...$.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Génère l'exercice + corrigé pour : ${titre}` },
-        ],
-        response_format: { type: "json_object" },
-      }),
-    });
+    const callModel = async (model: string) =>
+      await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: `Génère l'exercice + corrigé pour : ${titre}` },
+          ],
+          response_format: { type: "json_object" },
+        }),
+      });
 
-    if (response.status === 429) {
+    // Essai principal + 1 retry + fallback vers flash si gateway en panne (5xx)
+    const models = ["google/gemini-2.5-pro", "google/gemini-2.5-pro", "google/gemini-2.5-flash"];
+    let response: Response | null = null;
+    for (const m of models) {
+      response = await callModel(m);
+      if (response.ok || response.status === 429 || response.status === 402) break;
+      const txt = await response.text();
+      console.error(`AI gateway ${m} -> ${response.status}:`, txt.slice(0, 200));
+      await new Promise((r) => setTimeout(r, 800));
+    }
+
+    if (response!.status === 429) {
       return new Response(JSON.stringify({ error: "Trop de requêtes, réessaye dans un instant." }), {
         status: 429,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (response.status === 402) {
+    if (response!.status === 402) {
       return new Response(JSON.stringify({ error: "Crédits IA épuisés." }), {
         status: 402,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error("AI gateway error:", response.status, errText);
-      return new Response(JSON.stringify({ error: "Erreur de génération" }), {
-        status: 500,
+    if (!response!.ok) {
+      return new Response(JSON.stringify({ error: "Le service IA est temporairement indisponible. Réessaye dans un instant." }), {
+        status: 503,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
