@@ -84,7 +84,7 @@ const Dashboard = () => {
   const [endingDay, setEndingDay] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [yesterdayBlocIds, setYesterdayBlocIds] = useState<Set<string>>(new Set());
-  const [libraryUnlockedNotified, setLibraryUnlockedNotified] = useState(false);
+  
 
   // Load profile from Supabase
   useEffect(() => {
@@ -354,19 +354,6 @@ const Dashboard = () => {
     ? dailyTasks.filter((t) => completedTasks.has(t.bloc.id)).length / dailyTasks.length
     : 0;
   const allDone = dailyTasks.length > 0 && dailyTasks.every((t) => completedTasks.has(t.bloc.id));
-  const libraryUnlocked = currentPhase === 3 || completionRate >= 0.8;
-  const showLibraryButton = currentPhase >= 2;
-
-  // Notify when library unlocks (phase 2 only, on threshold cross)
-  useEffect(() => {
-    if (currentPhase === 2 && libraryUnlocked && !libraryUnlockedNotified) {
-      toast({
-        title: "Bien joué ! 🎉",
-        description: "La bibliothèque est débloquée pour aujourd'hui",
-      });
-      setLibraryUnlockedNotified(true);
-    }
-  }, [currentPhase, libraryUnlocked, libraryUnlockedNotified]);
 
   if (!profile || loading)
     return (
@@ -490,11 +477,6 @@ const Dashboard = () => {
               )}
               Terminer ma journée
             </Button>
-            {currentPhase === 1 && (
-              <p className="text-xs text-muted-foreground text-center mt-3 italic">
-                La bibliothèque de notions s'ouvrira quand tu auras complété 80% de ton planning aujourd'hui 📚
-              </p>
-            )}
           </section>
         )}
 
