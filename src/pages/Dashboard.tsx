@@ -368,6 +368,38 @@ const Dashboard = () => {
           </div>
         </section>
 
+        {/* Bandeau hebdomadaire phase 2 (lundi) */}
+        {showWeeklyBanner && (
+          <Card className="border-primary/30 bg-accent/30 rounded-xl">
+            <CardContent className="p-3 flex items-center gap-3 flex-wrap">
+              <p className="text-sm flex-1 min-w-[200px]">
+                Nouvelle semaine — veux-tu ajuster tes priorités ?
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  className="sprint-gradient text-primary-foreground rounded-lg h-8"
+                  onClick={() => navigate("/profile")}
+                >
+                  Oui, ajuster
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="rounded-lg h-8"
+                  onClick={() => {
+                    const key = `weekly-banner-dismissed-${new Date().toISOString().split("T")[0]}`;
+                    localStorage.setItem(key, "1");
+                    setShowWeeklyBanner(false);
+                  }}
+                >
+                  <X className="w-3.5 h-3.5 mr-1" /> Non merci
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* 3 CARTES */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
           {/* CARTE 1 — Programme du jour */}
