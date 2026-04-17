@@ -97,7 +97,7 @@ const Dashboard = () => {
     (async () => {
       const { data } = await supabase
         .from("users")
-        .select("id, prenom, date_examen, volume_quotidien, retard_initial, matieres_faibles, mode_actuel, phase_actuelle")
+        .select("id, prenom, date_examen, volume_quotidien, retard_initial, matieres_faibles, mode_actuel, phase_actuelle, derniere_modif_priorites")
         .eq("id", user.id)
         .maybeSingle();
       if (!data) {
@@ -114,6 +114,21 @@ const Dashboard = () => {
         modeActuel: data.mode_actuel || "normal",
         phaseActuelle: data.phase_actuelle || 1,
       });
+
+      // Bandeau hebdo phase 2 : lundi + non modifié cette semaine + non dismissé aujourd'hui
+      const lastModif = (data as any).derniere_modif_priorites as string | null;
+      const phase = data.phase_actuelle || 1;
+      const today = new Date();
+      const isMonday = today.getDay() === 1;
+      const monday = new Date(today);
+      monday.setHours(0, 0, 0, 0);
+      const modifiedThisWeek = lastModif ? new Date(lastModif) >= monday : false;
+      const dismissedKey = `weekly-banner-dismissed-${today.toISOString().split("T")[0]}`;
+      const dismissed = localStorage.getItem(dismissedKey) === "1";
+      if (phase === 2 && isMonday && !modifiedThisWeek && !dismissed) {
+        setShowWeeklyBanner(true);
+      }
+
       setLoading(false);
     })();
   }, [user, navigate]);
@@ -332,9 +347,14 @@ const Dashboard = () => {
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">Bonjour {profile.name} 👋</h1>
-            <Button variant="ghost" size="icon" onClick={() => navigate("/progress")} aria-label="Progression">
-              <BarChart3 className="w-5 h-5 text-primary" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" onClick={() => navigate("/progress")} aria-label="Progression">
+                <BarChart3 className="w-5 h-5 text-primary" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => navigate("/profile")} aria-label="Profil">
+                <Settings className="w-5 h-5 text-primary" />
+              </Button>
+            </div>
           </div>
           <p className="text-muted-foreground text-sm">
             J-{daysUntilExam} · Phase {currentPhase} · Semaine {currentWeek} du sprint
