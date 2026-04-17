@@ -274,9 +274,15 @@ const WorkSession = () => {
       { onConflict: "user_id,bloc_id,date_completion" }
     );
 
-    setCompleted(true);
-    setTimeout(() => navigate(`/dashboard?task_completed=${blocId}`), 2000);
-  }, [bloc, user, blocId, elapsedSeconds, navigate, isPhase3, dureeRevision]);
+    // If a corrigé is available, reveal the button and let the student review it before navigating
+    if (exercise?.corrige) {
+      setShowCorrigeButton(true);
+      setCompleted(true);
+    } else {
+      setCompleted(true);
+      setTimeout(() => navigate(`/dashboard?task_completed=${blocId}`), 2000);
+    }
+  }, [bloc, user, blocId, navigate, exercise]);
 
   const slot = SLOT_CONFIG[slotType] || SLOT_CONFIG.medium;
 
