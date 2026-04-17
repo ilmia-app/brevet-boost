@@ -204,36 +204,57 @@ const WorkSession = () => {
   }, []);
 
   const fetchRandomExercise = useCallback(async (excludeId?: string) => {
-    if (!blocId) return;
+    if (!blocId || !user) return;
     setExerciseLoading(true);
     setNoExercise(false);
     try {
+      // 1. Fetch all exercises for this bloc
       let query = supabase
         .from("exercices")
         .select("id, enonce, corrige, annale_source, annee, session")
         .eq("bloc_id", blocId);
       if (excludeId) query = query.neq("id", excludeId);
-      const { data, error } = await query;
+      const { data: allExercises, error } = await query;
       if (error) throw error;
-      if (!data || data.length === 0) {
+
+      if (!allExercises || allExercises.length === 0) {
         if (excludeId) {
-          // No other exercise — keep current one
           setExerciseLoading(false);
           return;
         }
         setExercise(null);
         setNoExercise(true);
-      } else {
-        const random = data[Math.floor(Math.random() * data.length)];
-        setExercise(random);
+        return;
       }
+
+      // 2. Fetch already-seen exercises for this user + bloc
+      const { data: seenData } = await supabase
+        .from("exercices_vus")
+        .select("exercice_id")
+        .eq("user_id", user.id)
+        .eq("bloc_id", blocId);
+      const seenIds = new Set((seenData || []).map((s) => s.exercice_id));
+
+      // 3. Prioritize unseen exercises; fallback to seen ones if all are seen
+      const unseen = allExercises.filter((ex) => !seenIds.has(ex.id));
+      const pool = unseen.length > 0 ? unseen : allExercises;
+      const chosen = pool[Math.floor(Math.random() * pool.length)];
+      setExercise(chosen);
+
+      // 4. Mark as seen (idempotent thanks to UNIQUE constraint)
+      await supabase
+        .from("exercices_vus")
+        .upsert(
+          { user_id: user.id, exercice_id: chosen.id, bloc_id: blocId },
+          { onConflict: "user_id,exercice_id" }
+        );
     } catch (e) {
       console.error("Exercise fetch error:", e);
       setNoExercise(true);
     } finally {
       setExerciseLoading(false);
     }
-  }, [blocId]);
+  }, [blocId, user]);
 
   // Auto-fetch exercise when bloc loads
   useEffect(() => {
