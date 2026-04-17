@@ -12,7 +12,6 @@ import Dashboard from "./pages/Dashboard";
 import Onboarding from "./pages/Onboarding";
 import WorkSession from "./pages/WorkSession";
 import Progress from "./pages/Progress";
-import Library from "./pages/Library";
 import Annales from "./pages/Annales";
 import NotFound from "./pages/NotFound";
 
@@ -33,7 +32,6 @@ const App = () => (
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/work" element={<ProtectedRoute><WorkSession /></ProtectedRoute>} />
             <Route path="/progress" element={<ProtectedRoute><Progress /></ProtectedRoute>} />
-            <Route path="/library" element={<ProtectedRoute><Library /></ProtectedRoute>} />
             <Route path="/annales" element={<ProtectedRoute><Annales /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

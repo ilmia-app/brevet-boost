@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Play, Clock, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3, BookOpen, FileText } from "lucide-react";
+import { Play, Clock, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3, FileText } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import EndOfDayModal from "@/components/dashboard/EndOfDayModal";
 
@@ -84,7 +84,7 @@ const Dashboard = () => {
   const [endingDay, setEndingDay] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [yesterdayBlocIds, setYesterdayBlocIds] = useState<Set<string>>(new Set());
-  const [libraryUnlockedNotified, setLibraryUnlockedNotified] = useState(false);
+  
 
   // Load profile from Supabase
   useEffect(() => {
@@ -354,19 +354,6 @@ const Dashboard = () => {
     ? dailyTasks.filter((t) => completedTasks.has(t.bloc.id)).length / dailyTasks.length
     : 0;
   const allDone = dailyTasks.length > 0 && dailyTasks.every((t) => completedTasks.has(t.bloc.id));
-  const libraryUnlocked = currentPhase === 3 || completionRate >= 0.8;
-  const showLibraryButton = currentPhase >= 2;
-
-  // Notify when library unlocks (phase 2 only, on threshold cross)
-  useEffect(() => {
-    if (currentPhase === 2 && libraryUnlocked && !libraryUnlockedNotified) {
-      toast({
-        title: "Bien joué ! 🎉",
-        description: "La bibliothèque est débloquée pour aujourd'hui",
-      });
-      setLibraryUnlockedNotified(true);
-    }
-  }, [currentPhase, libraryUnlocked, libraryUnlockedNotified]);
 
   if (!profile || loading)
     return (
@@ -386,22 +373,7 @@ const Dashboard = () => {
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">Bonjour {profile.name} 👋</h1>
             <div className="flex items-center gap-1">
-              {showLibraryButton && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => libraryUnlocked && navigate("/library")}
-                  disabled={!libraryUnlocked}
-                  aria-label="Bibliothèque"
-                  title={libraryUnlocked ? "Bibliothèque débloquée" : "Complète 80% de ton planning pour débloquer"}
-                >
-                  <BookOpen className={`w-5 h-5 ${libraryUnlocked ? "text-primary" : "text-muted-foreground/40"}`} />
-                </Button>
-              )}
-              <Button variant="ghost" size="icon" onClick={() => navigate("/annales")} aria-label="Annales" title="Annales du brevet">
-                <FileText className="w-5 h-5 text-primary" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={() => navigate("/progress")}>
+              <Button variant="ghost" size="icon" onClick={() => navigate("/progress")} aria-label="Progression">
                 <BarChart3 className="w-5 h-5 text-primary" />
               </Button>
             </div>
@@ -505,11 +477,6 @@ const Dashboard = () => {
               )}
               Terminer ma journée
             </Button>
-            {currentPhase === 1 && (
-              <p className="text-xs text-muted-foreground text-center mt-3 italic">
-                La bibliothèque de notions s'ouvrira quand tu auras complété 80% de ton planning aujourd'hui 📚
-              </p>
-            )}
           </section>
         )}
 
@@ -536,6 +503,37 @@ const Dashboard = () => {
                 </div>
               );
             })}
+          </div>
+        </section>
+
+        {/* SECTION — S'entraîner sur une annale */}
+        <section className="space-y-3">
+          <div className="rounded-2xl border border-primary/15 bg-accent/30 p-4 space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <FileText className="w-4 h-4 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-base font-semibold leading-tight">S'entraîner sur une annale</h2>
+                <p className="text-xs text-muted-foreground">Travaille un sujet complet en conditions réelles</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                className="rounded-xl h-11 text-sm font-medium border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-700"
+                onClick={() => navigate("/annales?matiere=Maths")}
+              >
+                Annales Maths
+              </Button>
+              <Button
+                variant="outline"
+                className="rounded-xl h-11 text-sm font-medium border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:text-purple-700"
+                onClick={() => navigate("/annales?matiere=Français")}
+              >
+                Annales Français
+              </Button>
+            </div>
           </div>
         </section>
 
