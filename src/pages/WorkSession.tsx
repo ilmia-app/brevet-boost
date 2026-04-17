@@ -68,8 +68,11 @@ const WorkSession = () => {
   const [notes, setNotes] = useState("");
   const [completed, setCompleted] = useState(false);
   const [showTimeUp, setShowTimeUp] = useState(false);
-  const [generatedExercise, setGeneratedExercise] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [exercise, setExercise] = useState<{ id: string; enonce: string | null; corrige: string | null; annale_source: string | null; annee: number | null; session: string | null } | null>(null);
+  const [exerciseLoading, setExerciseLoading] = useState(false);
+  const [noExercise, setNoExercise] = useState(false);
+  const [showCorrigeButton, setShowCorrigeButton] = useState(false);
+  const [showCorrigeModal, setShowCorrigeModal] = useState(false);
 
   // Timer: always counts UP (elapsed seconds)
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
