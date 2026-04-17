@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import katex from "katex";
-import "katex/dist/katex.min.css";
 import DOMPurify from "dompurify";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import rehypeSanitize from "rehype-sanitize";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -331,16 +332,10 @@ const WorkSession = () => {
                 <CardContent className="p-4 bg-accent/30 rounded-r-lg">
                   <div className="text-sm leading-relaxed prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-foreground prose-strong:text-foreground">
                     <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      rehypePlugins={[rehypeSanitize]}
+                      remarkPlugins={[remarkGfm, remarkMath]}
+                      rehypePlugins={[rehypeKatex]}
                     >
-                      {exercise.enonce.replace(/\$([^$\n]+)\$/g, (_, math) => {
-                        try {
-                          return katex.renderToString(math, { throwOnError: false });
-                        } catch {
-                          return math;
-                        }
-                      })}
+                      {exercise.enonce}
                     </ReactMarkdown>
                   </div>
                 </CardContent>
@@ -464,16 +459,10 @@ const WorkSession = () => {
               <>
                 <div className="text-sm leading-relaxed text-foreground/90 prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-foreground prose-strong:text-foreground prose-hr:my-4 prose-ul:my-2 prose-li:my-0.5">
                   <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    rehypePlugins={[rehypeSanitize]}
+                    remarkPlugins={[remarkGfm, remarkMath]}
+                    rehypePlugins={[rehypeKatex]}
                   >
-                    {corrigeContent.replace(/\$([^$\n]+)\$/g, (_, math) => {
-                      try {
-                        return katex.renderToString(math, { throwOnError: false });
-                      } catch {
-                        return math;
-                      }
-                    })}
+                    {corrigeContent}
                   </ReactMarkdown>
                 </div>
                 {corrigeIsAI && !corrigeLoading && (
