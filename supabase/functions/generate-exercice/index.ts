@@ -114,7 +114,7 @@ Le markdown peut utiliser : ### titres, **gras**, listes -, séparateurs ---, et
       });
     }
 
-    const data = await response.json();
+    const data = await response!.json();
     const raw = data.choices?.[0]?.message?.content || "{}";
     let parsed: { enonce?: string; corrige?: string } = {};
     try {
