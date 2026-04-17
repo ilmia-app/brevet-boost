@@ -1,5 +1,6 @@
 // Edge function : génère un exercice + corrigé via Lovable AI Gateway (Gemini 2.5 Pro)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { callAIGateway } from "../_shared/aiGateway.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -67,33 +68,14 @@ FORMAT DE RÉPONSE (JSON STRICT, rien d'autre) :
 
 Le markdown peut utiliser : ### titres, **gras**, listes -, séparateurs ---, et formules $...$.`;
 
-    const callModel = async (model: string) =>
-      await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: `Génère l'exercice + corrigé pour : ${titre}` },
-          ],
-          response_format: { type: "json_object" },
-        }),
-      });
-
-    // Essai principal + 1 retry + fallback vers flash si gateway en panne (5xx)
-    const models = ["google/gemini-2.5-pro", "google/gemini-2.5-pro", "google/gemini-2.5-flash"];
-    let response: Response | null = null;
-    for (const m of models) {
-      response = await callModel(m);
-      if (response.ok || response.status === 429 || response.status === 402) break;
-      const txt = await response.text();
-      console.error(`AI gateway ${m} -> ${response.status}:`, txt.slice(0, 200));
-      await new Promise((r) => setTimeout(r, 800));
-    }
+    const { response } = await callAIGateway({
+      apiKey: LOVABLE_API_KEY,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Génère l'exercice + corrigé pour : ${titre}` },
+      ],
+      extraBody: { response_format: { type: "json_object" } },
+    });
 
     if (response!.status === 429) {
       return new Response(JSON.stringify({ error: "Trop de requêtes, réessaye dans un instant." }), {

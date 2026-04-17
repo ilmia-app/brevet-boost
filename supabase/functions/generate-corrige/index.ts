@@ -1,5 +1,6 @@
 // Edge function : génère un corrigé type via Lovable AI Gateway
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { callAIGateway } from "../_shared/aiGateway.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -52,30 +53,13 @@ Méthode à suivre : ${etapes || "non précisée"}.
 Le corrigé doit montrer étape par étape comment appliquer la méthode correctement, avec un exemple chiffré concret.
 Sois précis, clair, niveau 3ème. Maximum 200 mots.`;
 
-    const callModel = (model: string) =>
-      fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: `Génère le corrigé type pour : ${titre}` },
-          ],
-        }),
-      });
-
-    const models = ["google/gemini-2.5-pro", "google/gemini-2.5-pro", "google/gemini-2.5-flash"];
-    let response: Response = await callModel(models[0]);
-    for (let i = 1; i < models.length; i++) {
-      if (response.ok || response.status === 429 || response.status === 402) break;
-      console.warn(`[generate-corrige] retry with ${models[i]} after status ${response.status}`);
-      await new Promise((r) => setTimeout(r, 800));
-      response = await callModel(models[i]);
-    }
+    const { response } = await callAIGateway({
+      apiKey: LOVABLE_API_KEY,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Génère le corrigé type pour : ${titre}` },
+      ],
+    });
 
     if (response.status === 429) {
       return new Response(JSON.stringify({ error: "Trop de requêtes, réessaye dans un instant." }), {
