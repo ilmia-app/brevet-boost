@@ -13,6 +13,7 @@ import Onboarding from "./pages/Onboarding";
 import WorkSession from "./pages/WorkSession";
 import Progress from "./pages/Progress";
 import Annales from "./pages/Annales";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/work" element={<ProtectedRoute><WorkSession /></ProtectedRoute>} />
             <Route path="/progress" element={<ProtectedRoute><Progress /></ProtectedRoute>} />
             <Route path="/annales" element={<ProtectedRoute><Annales /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
