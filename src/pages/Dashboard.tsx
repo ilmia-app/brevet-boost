@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Play, Clock, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3, FileText } from "lucide-react";
+import { Play, Clock, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3, BookOpen, Target } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import EndOfDayModal from "@/components/dashboard/EndOfDayModal";
 
@@ -84,6 +84,7 @@ const Dashboard = () => {
   const [endingDay, setEndingDay] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [yesterdayBlocIds, setYesterdayBlocIds] = useState<Set<string>>(new Set());
+  const [annalesCounts, setAnnalesCounts] = useState({ maths: 0, francais: 0 });
   
 
   // Load profile from Supabase
@@ -167,6 +168,37 @@ const Dashboard = () => {
       if (data) setBlocs(data);
     };
     fetchBlocs();
+  }, []);
+
+  // Fetch annales counts
+  useEffect(() => {
+    const fetchAnnalesCounts = async () => {
+      const { data } = await supabase
+        .from("exercices")
+        .select("annale_source, annee, session");
+      
+      if (data) {
+        const uniqueSubjects = new Map<string, Set<string>>();
+        
+        data.forEach((ex) => {
+          if (ex.annale_source && ex.annee && ex.session) {
+            const key = `${ex.annale_source}|${ex.annee}|${ex.session}`;
+            const subject = ex.annale_source.toLowerCase().includes("math") ? "maths" : 
+                             ex.annale_source.toLowerCase().includes("fran") ? "francais" : null;
+            if (subject) {
+              if (!uniqueSubjects.has(subject)) uniqueSubjects.set(subject, new Set());
+              uniqueSubjects.get(subject)!.add(key);
+            }
+          }
+        });
+        
+        setAnnalesCounts({
+          maths: uniqueSubjects.get("maths")?.size || 0,
+          francais: uniqueSubjects.get("francais")?.size || 0,
+        });
+      }
+    };
+    fetchAnnalesCounts();
   }, []);
 
   // Computed values
@@ -390,9 +422,13 @@ const Dashboard = () => {
           </div>
         </section>
 
-        {/* SECTION 2 — Planning du jour */}
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold">Ton programme d'aujourd'hui</h2>
+        {/* SECTION 1 — Ton programme du jour */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Target className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold">Ton programme du jour</h2>
+          </div>
+          
           {dailyTasks.map(({ bloc, weight }) => (
             <Card
               key={bloc.id}
@@ -480,9 +516,9 @@ const Dashboard = () => {
           </section>
         )}
 
-        {/* SECTION 3 — Progression semaine */}
-        <section className="space-y-2">
-          <h2 className="text-lg font-semibold">Progression de la semaine</h2>
+        {/* SECTION — Progression semaine */}
+        <section className="space-y-3">
+          <h3 className="text-sm font-medium text-muted-foreground">Progression de la semaine</h3>
           <div className="flex justify-between px-2">
             {DAYS.map((day, i) => {
               const isPast = i < dayIndexMondayBased;
@@ -506,34 +542,44 @@ const Dashboard = () => {
           </div>
         </section>
 
-        {/* SECTION — S'entraîner sur une annale */}
-        <section className="space-y-3">
-          <div className="rounded-2xl border border-primary/15 bg-accent/30 p-4 space-y-3">
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <FileText className="w-4 h-4 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-base font-semibold leading-tight">S'entraîner sur une annale</h2>
-                <p className="text-xs text-muted-foreground">Travaille un sujet complet en conditions réelles</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="outline"
-                className="rounded-xl h-11 text-sm font-medium border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-700"
-                onClick={() => navigate("/annales?matiere=Maths")}
-              >
-                Annales Maths
-              </Button>
-              <Button
-                variant="outline"
-                className="rounded-xl h-11 text-sm font-medium border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:text-purple-700"
-                onClick={() => navigate("/annales?matiere=Français")}
-              >
-                Annales Français
-              </Button>
-            </div>
+        {/* SEPARATEUR VISUEL */}
+        <div className="relative py-2">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-border/60"></div>
+          </div>
+          <div className="relative flex justify-center">
+            <span className="bg-background px-3 text-xs text-muted-foreground font-medium">ou</span>
+          </div>
+        </div>
+
+        {/* SECTION 2 — S'entraîner sur une annale complète */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold">S'entraîner sur une annale complète</h2>
+          </div>
+          <p className="text-sm text-muted-foreground">Simule les conditions du brevet</p>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <Card className="border-blue-200/60 bg-blue-50/50 hover:bg-blue-50 transition-colors cursor-pointer" onClick={() => navigate("/annales?matiere=Maths")}>
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-blue-500 text-white text-xs">Maths</Badge>
+                </div>
+                <p className="font-semibold text-blue-900">Annales Maths</p>
+                <p className="text-xs text-blue-700/80">{annalesCounts.maths} sujet{annalesCounts.maths > 1 ? 's' : ''} disponible{annalesCounts.maths > 1 ? 's' : ''}</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-purple-200/60 bg-purple-50/50 hover:bg-purple-50 transition-colors cursor-pointer" onClick={() => navigate("/annales?matiere=Français")}>
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-purple-500 text-white text-xs">Français</Badge>
+                </div>
+                <p className="font-semibold text-purple-900">Annales Français</p>
+                <p className="text-xs text-purple-700/80">{annalesCounts.francais} sujet{annalesCounts.francais > 1 ? 's' : ''} disponible{annalesCounts.francais > 1 ? 's' : ''}</p>
+              </CardContent>
+            </Card>
           </div>
         </section>
 
