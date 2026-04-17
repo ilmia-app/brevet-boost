@@ -506,6 +506,37 @@ const Dashboard = () => {
           </div>
         </section>
 
+        {/* SECTION — S'entraîner sur une annale */}
+        <section className="space-y-3">
+          <div className="rounded-2xl border border-primary/15 bg-accent/30 p-4 space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <FileText className="w-4 h-4 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-base font-semibold leading-tight">S'entraîner sur une annale</h2>
+                <p className="text-xs text-muted-foreground">Travaille un sujet complet en conditions réelles</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                className="rounded-xl h-11 text-sm font-medium border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-700"
+                onClick={() => navigate("/annales?matiere=Maths")}
+              >
+                Annales Maths
+              </Button>
+              <Button
+                variant="outline"
+                className="rounded-xl h-11 text-sm font-medium border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:text-purple-700"
+                onClick={() => navigate("/annales?matiere=Français")}
+              >
+                Annales Français
+              </Button>
+            </div>
+          </div>
+        </section>
+
         {/* SECTION 4 — Feedback */}
         {showFeedback && feedback?.message && (
           <section>
