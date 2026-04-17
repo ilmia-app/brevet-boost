@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Play, Pause, CheckCircle2, ChevronRight, Sparkles } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { ArrowLeft, Play, Pause, CheckCircle2, ChevronRight, Sparkles, Loader2 } from "lucide-react";
 
 const SUBJECT_COLORS: Record<string, string> = {
   Maths: "bg-blue-500 text-white",
@@ -69,6 +70,12 @@ const WorkSession = () => {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Corrigé modal
+  const [corrigeOpen, setCorrigeOpen] = useState(false);
+  const [corrigeContent, setCorrigeContent] = useState<string>("");
+  const [corrigeIsAI, setCorrigeIsAI] = useState(false);
+  const [corrigeLoading, setCorrigeLoading] = useState(false);
 
   // Fetch bloc + méthode + exercice (simple, robuste)
   useEffect(() => {
@@ -161,9 +168,43 @@ const WorkSession = () => {
         { onConflict: "user_id,bloc_id,date_completion" }
       );
     }
+
+    // Ouvrir la modale de corrigé
+    setCorrigeOpen(true);
+
+    if (exercise?.corrige) {
+      // CAS 1 : corrigé officiel
+      setCorrigeContent(exercise.corrige);
+      setCorrigeIsAI(false);
+    } else {
+      // CAS 2 : générer via Lovable AI
+      setCorrigeIsAI(true);
+      setCorrigeLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("generate-corrige", {
+          body: {
+            titre: bloc?.titre,
+            matiere: bloc?.matiere,
+            objectifs: bloc?.objectifs_pedagogiques,
+            etapes: methodeSteps.join("\n"),
+          },
+        });
+        if (error) throw error;
+        setCorrigeContent(data?.corrige || "Impossible de générer le corrigé.");
+      } catch (e) {
+        console.error("[WorkSession] erreur génération corrigé:", e);
+        setCorrigeContent("Désolé, impossible de générer le corrigé pour le moment. Réessaye plus tard.");
+      } finally {
+        setCorrigeLoading(false);
+      }
+    }
+  }, [user, blocId, exercise, bloc, methodeSteps]);
+
+  const handleCloseAndReturn = useCallback(() => {
+    setCorrigeOpen(false);
     setCompleted(true);
-    setTimeout(() => navigate(`/dashboard?task_completed=${blocId}`), 1500);
-  }, [user, blocId, navigate]);
+    setTimeout(() => navigate(`/dashboard?task_completed=${blocId}`), 800);
+  }, [blocId, navigate]);
 
   if (!blocId) {
     return (
@@ -339,10 +380,61 @@ const WorkSession = () => {
             onClick={handleComplete}
             className="w-full h-12 text-base font-semibold sprint-gradient text-primary-foreground rounded-xl gap-2"
           >
-            <CheckCircle2 className="w-5 h-5" /> J'ai terminé ✓
+            <CheckCircle2 className="w-5 h-5" /> J'ai terminé cet exercice ✓
           </Button>
         </section>
       </div>
+
+      {/* Modale de corrigé */}
+      <Dialog open={corrigeOpen} onOpenChange={setCorrigeOpen}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              {corrigeIsAI ? "Exemple de corrigé" : "Corrigé de l'exercice"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="py-2">
+            {corrigeLoading ? (
+              <div className="flex flex-col items-center justify-center py-8 gap-3">
+                <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                <p className="text-sm text-muted-foreground">Génération du corrigé en cours…</p>
+              </div>
+            ) : (
+              <>
+                <div
+                  className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90"
+                  dangerouslySetInnerHTML={{ __html: renderMathText(corrigeContent) }}
+                />
+                {corrigeIsAI && !corrigeLoading && (
+                  <p className="mt-4 text-xs text-muted-foreground italic text-center border-t pt-3">
+                    Exemple de corrigé type — compare ta démarche avec cet exemple
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+
+          <DialogFooter className="flex flex-row gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setCorrigeOpen(false)}
+              className="flex-1"
+              disabled={corrigeLoading}
+            >
+              Fermer
+            </Button>
+            <Button
+              onClick={handleCloseAndReturn}
+              className="flex-1 sprint-gradient text-primary-foreground"
+              disabled={corrigeLoading}
+            >
+              Retour au planning
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
