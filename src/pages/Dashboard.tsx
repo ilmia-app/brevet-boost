@@ -456,7 +456,7 @@ const Dashboard = () => {
                       <Button
                         size="sm"
                         className="h-7 text-xs rounded-lg sprint-gradient text-primary-foreground"
-                        onClick={() => navigate(`/work?bloc=${bloc.id}&slot=${weight}`)}
+                        onClick={() => navigate(`/work?bloc_id=${encodeURIComponent(bloc.id)}&slot=${weight}`)}
                       >
                         <Play className="w-3 h-3 mr-1" /> Commencer
                       </Button>
