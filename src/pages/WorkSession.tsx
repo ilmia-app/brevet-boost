@@ -207,12 +207,16 @@ const WorkSession = () => {
     // Ouvrir la modale de corrigé
     setCorrigeOpen(true);
 
-    if (exercise?.corrige) {
-      // CAS 1 : corrigé officiel
+    if (isAiMode && aiCorrigeCache) {
+      // Mode IA : corrigé déjà généré avec l'énoncé
+      setCorrigeContent(aiCorrigeCache);
+      setCorrigeIsAI(true);
+    } else if (exercise?.corrige) {
+      // Corrigé officiel
       setCorrigeContent(exercise.corrige);
       setCorrigeIsAI(false);
     } else {
-      // CAS 2 : générer via Lovable AI
+      // Fallback : générer un corrigé générique via l'ancienne function
       setCorrigeIsAI(true);
       setCorrigeLoading(true);
       try {
@@ -233,7 +237,7 @@ const WorkSession = () => {
         setCorrigeLoading(false);
       }
     }
-  }, [user, blocId, exercise, bloc, methodeSteps]);
+  }, [user, blocId, exercise, bloc, methodeSteps, isAiMode, aiCorrigeCache]);
 
   const handleCloseAndReturn = useCallback(() => {
     setCorrigeOpen(false);
