@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import DOMPurify from "dompurify";
@@ -10,16 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Play, Pause, CheckCircle2, ChevronRight, Target, Zap, Rocket, Clock, Sparkles, RefreshCw, Printer, Loader2 } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogAction,
-} from "@/components/ui/alert-dialog";
+import { ArrowLeft, Play, Pause, CheckCircle2, ChevronRight, Sparkles } from "lucide-react";
 
 const SUBJECT_COLORS: Record<string, string> = {
   Maths: "bg-blue-500 text-white",
@@ -32,165 +23,107 @@ const SUBJECT_COLORS: Record<string, string> = {
   Techno: "bg-gray-500 text-white",
 };
 
-const SLOT_CONFIG: Record<string, { label: string; icon: React.ReactNode; colors: string }> = {
-  heavy: { label: "Défi du jour", icon: <Target className="w-3.5 h-3.5" />, colors: "bg-red-100 text-red-700 border-red-200" },
-  medium: { label: "Entraînement", icon: <Zap className="w-3.5 h-3.5" />, colors: "bg-yellow-100 text-yellow-700 border-yellow-200" },
-  light: { label: "Sprint final", icon: <Rocket className="w-3.5 h-3.5" />, colors: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-};
-
 interface BlocData {
   id: string;
   matiere: string;
   titre: string;
   duree_min: number | null;
-  duree_examen_min: number | null;
   consigne_eleve: string | null;
   objectifs_pedagogiques: string | null;
   methode_id: string | null;
 }
 
-const getTimerKey = (blocId: string) => {
-  const today = new Date().toISOString().split("T")[0];
-  return `timer_${blocId}_${today}`;
-};
+interface Exercise {
+  id: string;
+  enonce: string | null;
+  corrige: string | null;
+  annale_source: string | null;
+}
 
 const WorkSession = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
-  const rawBlocId = searchParams.get("bloc_id") || searchParams.get("bloc") || "";
-  const blocId = rawBlocId.trim() ? rawBlocId.trim() : null;
-  const slotType = searchParams.get("slot") || "medium";
+  const blocId = searchParams.get("bloc_id") || searchParams.get("bloc") || "";
   console.log("[WorkSession] bloc_id reçu:", blocId);
 
   const [bloc, setBloc] = useState<BlocData | null>(null);
-  const [phase, setPhase] = useState<number>(1);
   const [methodeSteps, setMethodeSteps] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
+  const [exercise, setExercise] = useState<Exercise | null>(null);
   const [notes, setNotes] = useState("");
   const [completed, setCompleted] = useState(false);
-  const [showTimeUp, setShowTimeUp] = useState(false);
-  const [exercise, setExercise] = useState<{ id: string; enonce: string | null; corrige: string | null; annale_source: string | null; annee: number | null; session: string | null } | null>(null);
-  const [exerciseLoading, setExerciseLoading] = useState(false);
-  const [noExercise, setNoExercise] = useState(false);
-  const [showCorrigeButton, setShowCorrigeButton] = useState(false);
-  const [showCorrigeModal, setShowCorrigeModal] = useState(false);
 
-  // Timer: always counts UP (elapsed seconds)
+  // Timer
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const timeUpShownRef = useRef(false);
 
-  // Load saved elapsed time from localStorage
+  // Fetch bloc + méthode + exercice (simple, robuste)
   useEffect(() => {
     if (!blocId) return;
-    const saved = localStorage.getItem(getTimerKey(blocId));
-    if (saved) {
-      const parsed = parseInt(saved, 10);
-      if (!isNaN(parsed) && parsed > 0) {
-        setElapsedSeconds(parsed);
-      }
-    }
-  }, [blocId]);
+    let cancelled = false;
 
-  // Fetch bloc + user phase in parallel
-  useEffect(() => {
-    if (!blocId || !user) return;
-
-    const fetchBloc = async () => {
-      const { data } = await supabase
+    (async () => {
+      // 1. Bloc
+      const { data: blocData, error: blocErr } = await supabase
         .from("blocs_examen")
-        .select("id, matiere, titre, duree_min, duree_examen_min, consigne_eleve, objectifs_pedagogiques, methode_id")
+        .select("id, matiere, titre, duree_min, consigne_eleve, objectifs_pedagogiques, methode_id")
         .eq("id", blocId)
-        .limit(1);
-      if (data && data.length > 0) {
-        setBloc(data[0]);
-      }
-    };
+        .maybeSingle();
+      if (blocErr) console.error("[WorkSession] bloc error:", blocErr);
+      if (cancelled) return;
+      if (blocData) setBloc(blocData);
 
-    const fetchPhase = async () => {
-      const { data } = await supabase
-        .from("users")
-        .select("phase_actuelle")
-        .eq("id", user.id)
-        .limit(1);
-      if (data && data.length > 0 && data[0].phase_actuelle) {
-        setPhase(data[0].phase_actuelle);
-      }
-    };
-
-    fetchBloc();
-    fetchPhase();
-  }, [blocId, user]);
-
-  // Fetch methode
-  useEffect(() => {
-    if (!bloc?.methode_id) return;
-    const fetchMethode = async () => {
-      const { data } = await supabase
-        .from("methodes")
-        .select("etapes")
-        .eq("id", bloc.methode_id!)
-        .limit(1);
-      if (data && data.length > 0 && data[0].etapes) {
-        try {
-          const parsed = JSON.parse(data[0].etapes);
-          if (Array.isArray(parsed)) setMethodeSteps(parsed);
-          else setMethodeSteps(data[0].etapes.split("\n").filter(Boolean));
-        } catch {
-          setMethodeSteps(data[0].etapes.split("\n").filter(Boolean));
+      // 2. Méthode
+      if (blocData?.methode_id) {
+        const { data: methData } = await supabase
+          .from("methodes")
+          .select("etapes")
+          .eq("id", blocData.methode_id)
+          .maybeSingle();
+        if (cancelled) return;
+        if (methData?.etapes) {
+          try {
+            const parsed = JSON.parse(methData.etapes);
+            setMethodeSteps(Array.isArray(parsed) ? parsed : methData.etapes.split("\n").filter(Boolean));
+          } catch {
+            setMethodeSteps(methData.etapes.split("\n").filter(Boolean));
+          }
         }
       }
+
+      // 3. Exercice (optionnel)
+      const { data: exData, error: exErr } = await supabase
+        .from("exercices")
+        .select("id, enonce, corrige, annale_source")
+        .eq("bloc_id", blocId)
+        .limit(1);
+      console.log("[WorkSession] exercices trouvés pour", blocId, ":", exData?.length || 0, exErr || "");
+      if (cancelled) return;
+      if (exData && exData.length > 0) setExercise(exData[0]);
+    })();
+
+    return () => {
+      cancelled = true;
     };
-    fetchMethode();
-  }, [bloc?.methode_id]);
+  }, [blocId]);
 
-  // Derived values
-  const isPhase3 = phase >= 3;
-  const dureeRevision = bloc?.duree_min || 30;
-  const dureeExamen = bloc?.duree_examen_min || dureeRevision;
-  const countdownTotalSec = dureeExamen * 60;
-
-  // Timer tick — always counts UP
+  // Timer tick
   useEffect(() => {
     if (timerRunning) {
-      intervalRef.current = setInterval(() => {
-        setElapsedSeconds((prev) => {
-          const next = prev + 1;
-          if (blocId) {
-            localStorage.setItem(getTimerKey(blocId), String(next));
-          }
-          return next;
-        });
-      }, 1000);
+      intervalRef.current = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
     }
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [timerRunning, blocId]);
-
-  // Phase 3: detect time up
-  useEffect(() => {
-    if (isPhase3 && elapsedSeconds >= countdownTotalSec && !timeUpShownRef.current && timerRunning) {
-      timeUpShownRef.current = true;
-      setTimerRunning(false);
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      setShowTimeUp(true);
-    }
-  }, [isPhase3, elapsedSeconds, countdownTotalSec, timerRunning]);
-
-  const toggleTimer = () => setTimerRunning((r) => !r);
+  }, [timerRunning]);
 
   const renderMathText = useCallback((text: string) => {
-    // Escape HTML first to prevent XSS from AI-generated content
     const escaped = text
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-    // Replace $...$ with KaTeX rendered HTML (KaTeX output is safe)
+      .replace(/>/g, "&gt;");
     const withKatex = escaped.replace(/\$([^$]+)\$/g, (_, math) => {
       try {
         return katex.renderToString(math, { throwOnError: false });
@@ -198,88 +131,8 @@ const WorkSession = () => {
         return math;
       }
     });
-    // Sanitize final HTML as defense-in-depth
-    return DOMPurify.sanitize(withKatex, {
-      ADD_TAGS: ["math", "semantics", "annotation", "mrow", "mi", "mo", "mn", "msup", "msub", "mfrac", "msqrt"],
-      ADD_ATTR: ["class", "style", "aria-hidden"],
-    });
+    return DOMPurify.sanitize(withKatex);
   }, []);
-
-  const fetchRandomExercise = useCallback(async (excludeId?: string) => {
-    if (!blocId || !user) return;
-    setExerciseLoading(true);
-    setNoExercise(false);
-    try {
-      // 1. Fetch all exercises for this bloc
-      let query = supabase
-        .from("exercices")
-        .select("id, enonce, corrige, annale_source, annee, session")
-        .eq("bloc_id", blocId);
-      if (excludeId) query = query.neq("id", excludeId);
-      const { data: allExercises, error } = await query;
-      if (error) throw error;
-      console.log("[WorkSession] exercices trouvés pour bloc_id=", blocId, ":", allExercises?.length || 0);
-
-      if (!allExercises || allExercises.length === 0) {
-        if (excludeId) {
-          setExerciseLoading(false);
-          return;
-        }
-        setExercise(null);
-        setNoExercise(true);
-        return;
-      }
-
-      // 2. Fetch already-seen exercises for this user + bloc
-      const { data: seenData } = await supabase
-        .from("exercices_vus")
-        .select("exercice_id")
-        .eq("user_id", user.id)
-        .eq("bloc_id", blocId);
-      const seenIds = new Set((seenData || []).map((s) => s.exercice_id));
-
-      // 3. Prioritize unseen exercises; fallback to seen ones if all are seen
-      const unseen = allExercises.filter((ex) => !seenIds.has(ex.id));
-      const pool = unseen.length > 0 ? unseen : allExercises;
-      const chosen = pool[Math.floor(Math.random() * pool.length)];
-      console.log("[WorkSession] exercice chargé:", chosen.id, "bloc attendu:", blocId);
-      setExercise(chosen);
-
-      // 4. Mark as seen (idempotent thanks to UNIQUE constraint)
-      await supabase
-        .from("exercices_vus")
-        .upsert(
-          { user_id: user.id, exercice_id: chosen.id, bloc_id: blocId },
-          { onConflict: "user_id,exercice_id" }
-        );
-    } catch (e) {
-      console.error("Exercise fetch error:", e);
-      setNoExercise(true);
-    } finally {
-      setExerciseLoading(false);
-    }
-  }, [blocId, user]);
-
-  // Auto-fetch exercise when bloc loads
-  useEffect(() => {
-    if (blocId) fetchRandomExercise();
-  }, [blocId, fetchRandomExercise]);
-
-  // Display values
-  const displaySeconds = isPhase3
-    ? Math.max(0, countdownTotalSec - elapsedSeconds)
-    : elapsedSeconds;
-
-  const timerPercent = useMemo(() => {
-    if (isPhase3) {
-      if (countdownTotalSec === 0) return 0;
-      return Math.round((Math.max(0, countdownTotalSec - elapsedSeconds) / countdownTotalSec) * 100);
-    }
-    // Phase 1-2: fill up based on duree_min
-    const totalSec = dureeRevision * 60;
-    if (totalSec === 0) return 100;
-    return Math.min(100, Math.round((elapsedSeconds / totalSec) * 100));
-  }, [isPhase3, elapsedSeconds, countdownTotalSec, dureeRevision]);
 
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);
@@ -288,28 +141,26 @@ const WorkSession = () => {
   };
 
   const handleComplete = useCallback(async () => {
-    if (!bloc || !user || !blocId) return;
-
     setTimerRunning(false);
     if (intervalRef.current) clearInterval(intervalRef.current);
-
-    const today = new Date().toISOString().split("T")[0];
-    await supabase.from("completions").upsert(
-      { user_id: user.id, bloc_id: blocId, date_completion: today, completed: true },
-      { onConflict: "user_id,bloc_id,date_completion" }
-    );
-
-    // If a corrigé is available, reveal the button and let the student review it before navigating
-    if (exercise?.corrige) {
-      setShowCorrigeButton(true);
-      setCompleted(true);
-    } else {
-      setCompleted(true);
-      setTimeout(() => navigate(`/dashboard?task_completed=${blocId}`), 2000);
+    if (user && blocId) {
+      const today = new Date().toISOString().split("T")[0];
+      await supabase.from("completions").upsert(
+        { user_id: user.id, bloc_id: blocId, date_completion: today, completed: true },
+        { onConflict: "user_id,bloc_id,date_completion" }
+      );
     }
-  }, [bloc, user, blocId, navigate, exercise]);
+    setCompleted(true);
+    setTimeout(() => navigate(`/dashboard?task_completed=${blocId}`), 1500);
+  }, [user, blocId, navigate]);
 
-  const slot = SLOT_CONFIG[slotType] || SLOT_CONFIG.medium;
+  if (!blocId) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <p className="text-muted-foreground text-sm text-center">Aucun bloc sélectionné. Reviens au tableau de bord.</p>
+      </div>
+    );
+  }
 
   if (!bloc) {
     return (
@@ -319,166 +170,74 @@ const WorkSession = () => {
     );
   }
 
-  if (completed && !showCorrigeButton) {
+  if (completed) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 px-4">
         <div className="w-16 h-16 rounded-full sprint-gradient flex items-center justify-center">
           <CheckCircle2 className="w-8 h-8 text-primary-foreground" />
         </div>
-        <h2 className="text-xl font-bold text-center">Bravo, exercice terminé ! 🎉</h2>
-        <p className="text-muted-foreground text-sm text-center">Tu progresses à chaque séance. Retour au tableau de bord…</p>
+        <h2 className="text-xl font-bold text-center">Bravo, séance terminée ! 🎉</h2>
+        <p className="text-muted-foreground text-sm text-center">Retour au tableau de bord…</p>
       </div>
     );
   }
 
+  const dureeRevision = bloc.duree_min || 30;
+
   return (
     <div className="min-h-screen bg-background pb-8">
       <div className="max-w-lg mx-auto px-4 pt-4 space-y-6">
-        {/* Back button */}
         <button onClick={() => navigate("/dashboard")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="w-4 h-4" /> Retour
         </button>
 
-        {/* Phase badge */}
-        {isPhase3 ? (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 border border-red-200 w-fit text-sm font-medium text-red-700">
-            🎯 Conditions brevet — {dureeExamen} min
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent border border-border w-fit text-sm font-medium text-muted-foreground">
-            ⏱ Temps examen : {dureeExamen} min
-          </div>
-        )}
-
-        {/* SECTION 1 — Header */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge className={SUBJECT_COLORS[bloc.matiere] || "bg-muted text-foreground"}>
-              {bloc.matiere}
-            </Badge>
-            <Badge variant="outline" className={`text-xs font-semibold border ${slot.colors}`}>
-              {slot.icon} {slot.label}
-            </Badge>
-          </div>
+        {/* Header */}
+        <section className="space-y-3">
+          <Badge className={SUBJECT_COLORS[bloc.matiere] || "bg-muted text-foreground"}>
+            {bloc.matiere}
+          </Badge>
           <h1 className="text-xl font-bold leading-tight">{bloc.titre}</h1>
 
-          {/* Timer circle */}
-          <div className="flex flex-col items-center gap-3">
-            <div className="relative w-32 h-32">
-              <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-                <circle cx="60" cy="60" r="52" fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
-                <circle
-                  cx="60" cy="60" r="52" fill="none"
-                  stroke="url(#timerGrad)"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  strokeDasharray={2 * Math.PI * 52}
-                  strokeDashoffset={2 * Math.PI * 52 * (1 - timerPercent / 100)}
-                  className="transition-all duration-1000"
-                />
-                <defs>
-                  <linearGradient id="timerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="hsl(217 72% 53%)" />
-                    <stop offset="100%" stopColor="hsl(160 50% 45%)" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-2xl font-bold tabular-nums">{formatTime(displaySeconds)}</span>
-                <span className="text-xs text-muted-foreground">
-                  {isPhase3 ? `${dureeExamen} min` : `${dureeRevision} min`}
-                </span>
-              </div>
-            </div>
+          {/* Timer */}
+          <div className="flex flex-col items-center gap-3 pt-2">
+            <div className="text-4xl font-bold tabular-nums">{formatTime(elapsedSeconds)}</div>
+            <p className="text-xs text-muted-foreground">Durée conseillée : {dureeRevision} min</p>
             <Button
-              onClick={toggleTimer}
+              onClick={() => setTimerRunning((r) => !r)}
               size="sm"
               className="rounded-full sprint-gradient text-primary-foreground gap-1.5"
             >
               {timerRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               {timerRunning ? "Pause" : "Démarrer"}
             </Button>
-            {elapsedSeconds > 0 && (
-              <p className="text-xs text-muted-foreground">
-                Temps travaillé : {formatTime(elapsedSeconds)}
-              </p>
-            )}
-            {!isPhase3 && (
-              <p className="text-xs text-muted-foreground text-center max-w-[280px]">
-                Prends le temps qu'il te faut — en phase finale tu travailleras en conditions réelles
-              </p>
-            )}
           </div>
         </section>
 
-        {/* Exercise Section — exercices Brevet officiels */}
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary" /> Ton exercice du jour
-          </h2>
-          {exerciseLoading && (
-            <Card>
-              <CardContent className="p-4 flex items-center justify-center gap-2 text-muted-foreground">
-                <Loader2 className="w-4 h-4 animate-spin" /> Chargement de l'exercice…
-              </CardContent>
-            </Card>
-          )}
-          {!exerciseLoading && noExercise && (
-            <Card className="border-dashed">
-              <CardContent className="p-4">
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Exercice disponible prochainement — travaille avec la méthode ci-dessous sur un exercice de ton manuel CNED.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-          {!exerciseLoading && exercise && (
-            <>
-              {exercise.annale_source && (
-                <Badge variant="outline" className="text-xs font-medium border-primary/30 text-primary bg-primary/5">
-                  📜 {exercise.annale_source}
-                </Badge>
-              )}
+        {/* Exercise (optionnel) */}
+        {exercise && (
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" /> Ton exercice
+            </h2>
+            {exercise.annale_source && (
+              <Badge variant="outline" className="text-xs font-medium border-primary/30 text-primary bg-primary/5">
+                📜 {exercise.annale_source}
+              </Badge>
+            )}
+            {exercise.enonce && (
               <Card className="border-l-4 border-l-primary">
                 <CardContent className="p-4 bg-accent/30 rounded-r-lg">
                   <div
                     className="text-sm leading-relaxed whitespace-pre-wrap"
-                    dangerouslySetInnerHTML={{ __html: renderMathText(exercise.enonce || "") }}
+                    dangerouslySetInnerHTML={{ __html: renderMathText(exercise.enonce) }}
                   />
                 </CardContent>
               </Card>
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => fetchRandomExercise(exercise.id)}
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5 flex-1"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" /> Autre exercice
-                </Button>
-                <Button
-                  onClick={() => window.print()}
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5 flex-1"
-                >
-                  <Printer className="w-3.5 h-3.5" /> Imprimer
-                </Button>
-              </div>
-              {showCorrigeButton && exercise.corrige && (
-                <Button
-                  onClick={() => setShowCorrigeModal(true)}
-                  variant="secondary"
-                  className="w-full gap-2"
-                >
-                  <CheckCircle2 className="w-4 h-4" /> Voir le corrigé
-                </Button>
-              )}
-            </>
-          )}
-        </section>
+            )}
+          </section>
+        )}
 
-        {/* SECTION 2 — Méthode pas-à-pas */}
+        {/* Méthode */}
         {methodeSteps.length > 0 && (
           <section className="space-y-3">
             <h2 className="text-lg font-semibold">Ta méthode</h2>
@@ -488,11 +247,7 @@ const WorkSession = () => {
                 <Card
                   key={i}
                   className={`transition-all ${
-                    i === currentStep
-                      ? "border-primary shadow-md"
-                      : i < currentStep
-                      ? "opacity-50"
-                      : "opacity-40"
+                    i === currentStep ? "border-primary shadow-md" : i < currentStep ? "opacity-50" : "opacity-40"
                   }`}
                 >
                   <CardContent className="p-3 flex items-start gap-3">
@@ -518,116 +273,47 @@ const WorkSession = () => {
           </section>
         )}
 
-        {/* SECTION 3 — Espace de travail */}
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold">Ta consigne</h2>
-          {bloc.consigne_eleve && (
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-sm leading-relaxed">{bloc.consigne_eleve}</p>
-              </CardContent>
-            </Card>
-          )}
-          {bloc.objectifs_pedagogiques && (
-            <Card className="border-primary/20 bg-accent/30">
-              <CardContent className="p-4 space-y-1">
-                <p className="text-xs font-semibold text-primary">Objectifs de cette séance</p>
-                <p className="text-sm leading-relaxed text-foreground/80">{bloc.objectifs_pedagogiques}</p>
-              </CardContent>
-            </Card>
-          )}
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">Tes notes</label>
-            <Textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Écris tes notes, brouillons ou réponses ici…"
-              className="min-h-[120px]"
-            />
-          </div>
+        {/* Consigne / objectifs / notes */}
+        {(bloc.consigne_eleve || bloc.objectifs_pedagogiques) && (
+          <section className="space-y-3">
+            {bloc.consigne_eleve && (
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-sm leading-relaxed">{bloc.consigne_eleve}</p>
+                </CardContent>
+              </Card>
+            )}
+            {bloc.objectifs_pedagogiques && (
+              <Card className="border-primary/20 bg-accent/30">
+                <CardContent className="p-4 space-y-1">
+                  <p className="text-xs font-semibold text-primary">Objectifs</p>
+                  <p className="text-sm leading-relaxed text-foreground/80">{bloc.objectifs_pedagogiques}</p>
+                </CardContent>
+              </Card>
+            )}
+          </section>
+        )}
+
+        <section className="space-y-1.5">
+          <label className="text-sm font-medium">Tes notes</label>
+          <Textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Écris tes notes, brouillons ou réponses ici…"
+            className="min-h-[120px]"
+          />
         </section>
 
-        {/* SECTION 4 — Validation */}
+        {/* Validation */}
         <section className="pb-4">
           <Button
             onClick={handleComplete}
             className="w-full h-12 text-base font-semibold sprint-gradient text-primary-foreground rounded-xl gap-2"
           >
-            <CheckCircle2 className="w-5 h-5" /> J'ai terminé cet exercice ✓
+            <CheckCircle2 className="w-5 h-5" /> J'ai terminé ✓
           </Button>
         </section>
       </div>
-
-      {/* Time's up modal (Phase 3) */}
-      <AlertDialog open={showTimeUp} onOpenChange={setShowTimeUp}>
-        <AlertDialogContent className="max-w-sm mx-auto">
-          <AlertDialogHeader className="text-center space-y-3">
-            <div className="mx-auto w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-              <Clock className="w-6 h-6 text-red-600" />
-            </div>
-            <AlertDialogTitle>Temps écoulé !</AlertDialogTitle>
-            <AlertDialogDescription className="text-sm leading-relaxed">
-              Au brevet tu devrais t'arrêter ici. Tu peux continuer ou valider ce que tu as fait.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex flex-col gap-2 sm:flex-col">
-            <Button
-              onClick={() => {
-                setShowTimeUp(false);
-                setTimerRunning(true);
-              }}
-              variant="outline"
-              className="w-full"
-            >
-              Continuer quand même
-            </Button>
-            <Button
-              onClick={() => {
-                setShowTimeUp(false);
-                handleComplete();
-              }}
-              className="w-full sprint-gradient text-primary-foreground"
-            >
-              Valider et passer à la suite
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Corrigé modal */}
-      <AlertDialog open={showCorrigeModal} onOpenChange={setShowCorrigeModal}>
-        <AlertDialogContent className="max-w-lg mx-auto max-h-[80vh] overflow-y-auto">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-primary" /> Corrigé
-            </AlertDialogTitle>
-            {exercise?.annale_source && (
-              <AlertDialogDescription className="text-xs">
-                {exercise.annale_source}
-              </AlertDialogDescription>
-            )}
-          </AlertDialogHeader>
-          <div
-            className="text-sm leading-relaxed whitespace-pre-wrap py-2"
-            dangerouslySetInnerHTML={{ __html: renderMathText(exercise?.corrige || "") }}
-          />
-          <AlertDialogFooter className="flex flex-col gap-2 sm:flex-col">
-            <Button
-              onClick={() => setShowCorrigeModal(false)}
-              variant="outline"
-              className="w-full"
-            >
-              Fermer
-            </Button>
-            <Button
-              onClick={() => navigate(`/dashboard?task_completed=${blocId}`)}
-              className="w-full sprint-gradient text-primary-foreground"
-            >
-              Retour au planning
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
