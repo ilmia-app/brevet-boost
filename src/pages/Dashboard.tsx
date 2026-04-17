@@ -365,10 +365,12 @@ const Dashboard = () => {
       </div>
     );
 
+  const firstPendingTask = dailyTasks.find((t) => !completedTasks.has(t.bloc.id)) || dailyTasks[0];
+
   return (
     <div className="min-h-screen bg-background pb-8">
-      <div className="max-w-lg mx-auto px-4 pt-6 space-y-6">
-        {/* SECTION 1 — Header */}
+      <div className="max-w-6xl mx-auto px-4 pt-6 space-y-6">
+        {/* HEADER */}
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">Bonjour {profile.name} 👋</h1>
@@ -390,152 +392,151 @@ const Dashboard = () => {
           </div>
         </section>
 
-        {/* SECTION 2 — Planning du jour */}
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold">Ton programme d'aujourd'hui</h2>
-          {dailyTasks.map(({ bloc, weight }) => (
-            <Card
-              key={bloc.id}
-              className={`transition-all ${completedTasks.has(bloc.id) ? "opacity-60" : ""}`}
-            >
-              <CardContent className="p-4 flex items-start gap-3">
-                <Checkbox
-                  checked={completedTasks.has(bloc.id)}
-                  disabled
-                  className="mt-1"
-                />
-                <div className="flex-1 min-w-0 space-y-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge className={SUBJECT_COLORS[bloc.matiere] || "bg-muted text-foreground"}>
-                      {bloc.matiere}
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className={`text-xs font-semibold border ${TASK_LABEL_COLORS[weight]}`}
+        {/* GRILLE 2 COLONNES */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+          {/* COLONNE GAUCHE — Programme du jour */}
+          <Card className="rounded-2xl flex flex-col">
+            <CardContent className="p-5 flex flex-col flex-1 space-y-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🎯</span>
+                <h2 className="text-base font-semibold">Ton programme du jour</h2>
+              </div>
+
+              <div className="space-y-2 flex-1">
+                {dailyTasks.map(({ bloc, weight }) => {
+                  const done = completedTasks.has(bloc.id);
+                  return (
+                    <div
+                      key={bloc.id}
+                      className={`flex items-center gap-2 rounded-lg border bg-card p-3 ${done ? "opacity-60" : ""}`}
                     >
-                      {TASK_ICONS[weight]} {TASK_LABELS[weight]}
-                    </Badge>
-                  </div>
-                  <p
-                    className={`font-medium text-sm leading-snug ${
-                      completedTasks.has(bloc.id) ? "line-through text-muted-foreground" : ""
-                    }`}
-                  >
-                    {bloc.titre}
+                      <Checkbox checked={done} disabled />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                          <Badge className={`${SUBJECT_COLORS[bloc.matiere] || "bg-muted text-foreground"} text-[10px] px-1.5 py-0`}>
+                            {bloc.matiere}
+                          </Badge>
+                          <span className="text-[10px] text-muted-foreground">
+                            {TASK_ICONS[weight]} {bloc.duree_min} min
+                          </span>
+                        </div>
+                        <p className={`text-xs leading-snug truncate ${done ? "line-through text-muted-foreground" : "font-medium"}`}>
+                          {bloc.titre}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+                {dailyTasks.length === 0 && (
+                  <p className="text-muted-foreground text-xs text-center py-4">
+                    Aucune tâche disponible.
                   </p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> {bloc.duree_min} min
-                    </span>
-                    {!completedTasks.has(bloc.id) && (
-                      <Button
-                        size="sm"
-                        className="h-7 text-xs rounded-lg sprint-gradient text-primary-foreground"
-                        onClick={() => navigate(`/work?bloc_id=${encodeURIComponent(bloc.id)}&slot=${weight}`)}
-                      >
-                        <Play className="w-3 h-3 mr-1" /> Commencer
-                      </Button>
-                    )}
-                  </div>
-                  {!completedTasks.has(bloc.id) && (
-                    <p className="text-xs text-muted-foreground italic">
-                      Démarre l'exercice pour valider
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-          {dailyTasks.length === 0 && (
-            <p className="text-muted-foreground text-sm text-center py-4">
-              Aucune tâche disponible pour tes matières.
-            </p>
-          )}
-          {currentPhase === 3 && (
-            <p className="text-sm text-primary/80 text-center italic pt-2">
-              Tu es en phase finale — tu connais tes lacunes, travaille ce dont tu as besoin 🎯
-            </p>
-          )}
-        </section>
+                )}
+              </div>
 
-        {/* Bouton Terminer ma journée */}
-        {dailyTasks.length > 0 && (
-          <section>
-            <Button
-              onClick={handleEndDay}
-              disabled={endingDay}
-              className={`w-full rounded-xl h-12 text-base font-semibold ${
-                allDone
-                  ? "sprint-gradient text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              }`}
-            >
-              {endingDay ? (
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
-              ) : (
-                <CheckCircle2 className="w-5 h-5 mr-2" />
+              {firstPendingTask && !allDone && (
+                <Button
+                  className="w-full rounded-xl h-11 text-sm font-semibold sprint-gradient text-primary-foreground"
+                  onClick={() =>
+                    navigate(
+                      `/work?bloc_id=${encodeURIComponent(firstPendingTask.bloc.id)}&slot=${firstPendingTask.weight}`,
+                    )
+                  }
+                >
+                  <Play className="w-4 h-4 mr-1" /> Démarrer mon programme
+                </Button>
               )}
-              Terminer ma journée
-            </Button>
-          </section>
-        )}
 
-        {/* SECTION 3 — Progression semaine */}
-        <section className="space-y-2">
-          <h2 className="text-lg font-semibold">Progression de la semaine</h2>
-          <div className="flex justify-between px-2">
-            {DAYS.map((day, i) => {
-              const isPast = i < dayIndexMondayBased;
-              const isToday = i === dayIndexMondayBased;
-              return (
-                <div key={i} className="flex flex-col items-center gap-1">
-                  <div
-                    className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold transition-all ${
-                      isPast
-                        ? "sprint-gradient text-primary-foreground"
-                        : isToday
-                        ? "border-2 border-primary text-primary bg-transparent"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {day}
-                  </div>
+              {dailyTasks.length > 0 && (
+                <Button
+                  onClick={handleEndDay}
+                  disabled={endingDay}
+                  variant={allDone ? "default" : "secondary"}
+                  className={`w-full rounded-xl h-10 text-sm font-medium ${
+                    allDone ? "sprint-gradient text-primary-foreground" : ""
+                  }`}
+                >
+                  {endingDay ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                  )}
+                  Terminer ma journée
+                </Button>
+              )}
+
+              {/* Progression semaine */}
+              <div className="pt-2 border-t space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">Progression de la semaine</p>
+                <div className="flex justify-between">
+                  {DAYS.map((day, i) => {
+                    const isPast = i < dayIndexMondayBased;
+                    const isToday = i === dayIndexMondayBased;
+                    return (
+                      <div
+                        key={i}
+                        className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold transition-all ${
+                          isPast
+                            ? "sprint-gradient text-primary-foreground"
+                            : isToday
+                            ? "border-2 border-primary text-primary bg-transparent"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {day}
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
-          </div>
-        </section>
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* SECTION — S'entraîner sur une annale */}
-        <section className="space-y-3">
-          <div className="rounded-2xl border border-primary/15 bg-accent/30 p-4 space-y-3">
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <FileText className="w-4 h-4 text-primary" />
+          {/* COLONNE DROITE — Annales */}
+          <Card className="rounded-2xl flex flex-col">
+            <CardContent className="p-5 flex flex-col flex-1 space-y-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📄</span>
+                <h2 className="text-base font-semibold">S'entraîner sur une annale</h2>
               </div>
-              <div className="flex-1">
-                <h2 className="text-base font-semibold leading-tight">S'entraîner sur une annale</h2>
-                <p className="text-xs text-muted-foreground">Travaille un sujet complet en conditions réelles</p>
+              <p className="text-xs text-muted-foreground -mt-2">Simule les conditions du brevet</p>
+
+              <div className="space-y-3 flex-1 flex flex-col justify-center">
+                <button
+                  onClick={() => navigate("/annales?matiere=Maths")}
+                  className="w-full text-left rounded-xl border border-blue-200 bg-blue-50 p-4 hover:bg-blue-100 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-blue-900">Annales Maths</p>
+                      <p className="text-xs text-blue-700/80 mt-0.5">4 sujets disponibles</p>
+                    </div>
+                    <Badge className="bg-blue-500 text-white">Maths</Badge>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => navigate("/annales?matiere=Français")}
+                  className="w-full text-left rounded-xl border border-purple-200 bg-purple-50 p-4 hover:bg-purple-100 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-purple-900">Annales Français</p>
+                      <p className="text-xs text-purple-700/80 mt-0.5">4 sujets disponibles</p>
+                    </div>
+                    <Badge className="bg-purple-500 text-white">Français</Badge>
+                  </div>
+                </button>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="outline"
-                className="rounded-xl h-11 text-sm font-medium border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-700"
-                onClick={() => navigate("/annales?matiere=Maths")}
-              >
-                Annales Maths
-              </Button>
-              <Button
-                variant="outline"
-                className="rounded-xl h-11 text-sm font-medium border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:text-purple-700"
-                onClick={() => navigate("/annales?matiere=Français")}
-              >
-                Annales Français
-              </Button>
-            </div>
-          </div>
-        </section>
+
+              {currentPhase === 3 && (
+                <p className="text-xs text-primary/80 text-center italic">
+                  Phase finale — entraîne-toi sur de vrais sujets 🎯
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         {/* SECTION 4 — Feedback */}
         {showFeedback && feedback?.message && (
