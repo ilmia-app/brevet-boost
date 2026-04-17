@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Play, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3, ChevronLeft, Sparkles } from "lucide-react";
+import { Play, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3, ChevronLeft, Sparkles, Settings, X } from "lucide-react";
 import EndOfDayModal from "@/components/dashboard/EndOfDayModal";
 
 interface ProfileData {
@@ -86,6 +86,7 @@ const Dashboard = () => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [yesterdayBlocIds, setYesterdayBlocIds] = useState<Set<string>>(new Set());
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+  const [showWeeklyBanner, setShowWeeklyBanner] = useState(false);
 
   // Profile
   useEffect(() => {
