@@ -448,13 +448,16 @@ const Dashboard = () => {
               )}
 
               {dailyTasks.length > 0 && (
+                <p className="text-xs text-muted-foreground text-center">
+                  {dailyTasks.filter((t) => completedTasks.has(t.bloc.id)).length}/{dailyTasks.length} tâches complétées aujourd'hui
+                </p>
+              )}
+
+              {dailyTasks.length > 0 && allDone && (
                 <Button
                   onClick={handleEndDay}
                   disabled={endingDay}
-                  variant={allDone ? "default" : "secondary"}
-                  className={`w-full rounded-xl h-10 text-sm font-medium ${
-                    allDone ? "sprint-gradient text-primary-foreground" : ""
-                  }`}
+                  className="w-full rounded-xl h-10 text-sm font-medium sprint-gradient text-primary-foreground animate-in fade-in duration-500"
                 >
                   {endingDay ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
