@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Play, Clock, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3, FileText } from "lucide-react";
+import { Play, Clock, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3, FileText, BookOpen, Target } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import EndOfDayModal from "@/components/dashboard/EndOfDayModal";
 
@@ -84,6 +84,7 @@ const Dashboard = () => {
   const [endingDay, setEndingDay] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [yesterdayBlocIds, setYesterdayBlocIds] = useState<Set<string>>(new Set());
+  const [annalesCounts, setAnnalesCounts] = useState({ maths: 0, francais: 0 });
   
 
   // Load profile from Supabase
