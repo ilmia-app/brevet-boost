@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Play, Pause, CheckCircle2, ChevronRight, Sparkles } from "lucide-react";
+import { ArrowLeft, Play, Pause, CheckCircle2, ChevronRight, Sparkles, BookOpen } from "lucide-react";
 
 const SUBJECT_COLORS: Record<string, string> = {
   Maths: "bg-blue-500 text-white",
@@ -21,6 +21,28 @@ const SUBJECT_COLORS: Record<string, string> = {
   Physique: "bg-red-500 text-white",
   SVT: "bg-green-700 text-white",
   Techno: "bg-gray-500 text-white",
+};
+
+const SUBJECT_BORDER_COLORS: Record<string, string> = {
+  Maths: "border-blue-500",
+  Français: "border-purple-500",
+  Histoire: "border-orange-500",
+  Géographie: "border-emerald-500",
+  EMC: "border-yellow-500",
+  Physique: "border-red-500",
+  SVT: "border-green-700",
+  Techno: "border-gray-500",
+};
+
+const SUBJECT_BG_COLORS: Record<string, string> = {
+  Maths: "bg-blue-500/10",
+  Français: "bg-purple-500/10",
+  Histoire: "bg-orange-500/10",
+  Géographie: "bg-emerald-500/10",
+  EMC: "bg-yellow-500/10",
+  Physique: "bg-red-500/10",
+  SVT: "bg-green-700/10",
+  Techno: "bg-gray-500/10",
 };
 
 interface BlocData {
