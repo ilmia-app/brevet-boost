@@ -332,7 +332,7 @@ const WorkSession = () => {
                   <div className="text-sm leading-relaxed prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-foreground prose-strong:text-foreground">
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
-                      rehypePlugins={[rehypeRaw]}
+                      rehypePlugins={[rehypeSanitize]}
                     >
                       {exercise.enonce.replace(/\$([^$\n]+)\$/g, (_, math) => {
                         try {
@@ -465,7 +465,7 @@ const WorkSession = () => {
                 <div className="text-sm leading-relaxed text-foreground/90 prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-foreground prose-strong:text-foreground prose-hr:my-4 prose-ul:my-2 prose-li:my-0.5">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
-                    rehypePlugins={[rehypeRaw]}
+                    rehypePlugins={[rehypeSanitize]}
                   >
                     {corrigeContent.replace(/\$([^$\n]+)\$/g, (_, math) => {
                       try {
