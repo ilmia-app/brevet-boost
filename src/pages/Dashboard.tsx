@@ -170,6 +170,37 @@ const Dashboard = () => {
     fetchBlocs();
   }, []);
 
+  // Fetch annales counts
+  useEffect(() => {
+    const fetchAnnalesCounts = async () => {
+      const { data } = await supabase
+        .from("exercices")
+        .select("annale_source, annee, session");
+      
+      if (data) {
+        const uniqueSubjects = new Map<string, Set<string>>();
+        
+        data.forEach((ex) => {
+          if (ex.annale_source && ex.annee && ex.session) {
+            const key = `${ex.annale_source}|${ex.annee}|${ex.session}`;
+            const subject = ex.annale_source.toLowerCase().includes("math") ? "maths" : 
+                             ex.annale_source.toLowerCase().includes("fran") ? "francais" : null;
+            if (subject) {
+              if (!uniqueSubjects.has(subject)) uniqueSubjects.set(subject, new Set());
+              uniqueSubjects.get(subject)!.add(key);
+            }
+          }
+        });
+        
+        setAnnalesCounts({
+          maths: uniqueSubjects.get("maths")?.size || 0,
+          francais: uniqueSubjects.get("francais")?.size || 0,
+        });
+      }
+    };
+    fetchAnnalesCounts();
+  }, []);
+
   // Computed values
   const daysUntilExam = useMemo(() => {
     if (!profile?.examDate) return 0;
