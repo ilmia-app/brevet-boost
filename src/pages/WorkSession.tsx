@@ -58,8 +58,9 @@ const WorkSession = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
-  const blocId = searchParams.get("bloc");
+  const blocId = searchParams.get("bloc_id") || searchParams.get("bloc");
   const slotType = searchParams.get("slot") || "medium";
+  console.log("[WorkSession] bloc_id reçu:", blocId);
 
   const [bloc, setBloc] = useState<BlocData | null>(null);
   const [phase, setPhase] = useState<number>(1);
@@ -216,6 +217,7 @@ const WorkSession = () => {
       if (excludeId) query = query.neq("id", excludeId);
       const { data: allExercises, error } = await query;
       if (error) throw error;
+      console.log("[WorkSession] exercices trouvés pour bloc_id=", blocId, ":", allExercises?.length || 0);
 
       if (!allExercises || allExercises.length === 0) {
         if (excludeId) {
@@ -239,6 +241,7 @@ const WorkSession = () => {
       const unseen = allExercises.filter((ex) => !seenIds.has(ex.id));
       const pool = unseen.length > 0 ? unseen : allExercises;
       const chosen = pool[Math.floor(Math.random() * pool.length)];
+      console.log("[WorkSession] exercice chargé:", chosen.id, "bloc attendu:", blocId);
       setExercise(chosen);
 
       // 4. Mark as seen (idempotent thanks to UNIQUE constraint)
