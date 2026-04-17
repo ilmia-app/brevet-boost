@@ -322,7 +322,6 @@ const Dashboard = () => {
       </div>
     );
 
-  const firstPendingTask = dailyTasks.find((t) => !completedTasks.has(t.bloc.id)) || dailyTasks[0];
   const completedCount = dailyTasks.filter((t) => completedTasks.has(t.bloc.id)).length;
 
   return (
