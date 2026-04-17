@@ -294,7 +294,7 @@ const WorkSession = () => {
     );
   }
 
-  if (completed) {
+  if (completed && !showCorrigeButton) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 px-4">
         <div className="w-16 h-16 rounded-full sprint-gradient flex items-center justify-center">
