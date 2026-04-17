@@ -67,9 +67,7 @@ const WorkSession = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [notes, setNotes] = useState("");
   const [completed, setCompleted] = useState(false);
-  const [showNotEnough, setShowNotEnough] = useState(false);
   const [showTimeUp, setShowTimeUp] = useState(false);
-  const [remainingMinutes, setRemainingMinutes] = useState(0);
   const [generatedExercise, setGeneratedExercise] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -509,33 +507,6 @@ const WorkSession = () => {
           </Button>
         </section>
       </div>
-
-      {/* Not enough time modal (Phase 1-2) */}
-      <AlertDialog open={showNotEnough} onOpenChange={setShowNotEnough}>
-        <AlertDialogContent className="max-w-sm mx-auto">
-          <AlertDialogHeader className="text-center space-y-3">
-            <div className="mx-auto w-12 h-12 rounded-full bg-accent flex items-center justify-center">
-              <Clock className="w-6 h-6 text-primary" />
-            </div>
-            <AlertDialogTitle>Tu y es presque !</AlertDialogTitle>
-            <AlertDialogDescription className="text-sm leading-relaxed">
-              Continue encore <span className="font-semibold text-foreground">{remainingMinutes} minute{remainingMinutes > 1 ? "s" : ""}</span> pour valider cet exercice.
-              Le travail régulier fait toute la différence. 💪
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="sm:justify-center">
-            <AlertDialogAction
-              onClick={() => {
-                setShowNotEnough(false);
-                setTimerRunning(true);
-              }}
-              className="sprint-gradient text-primary-foreground rounded-xl px-8"
-            >
-              Continuer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Time's up modal (Phase 3) */}
       <AlertDialog open={showTimeUp} onOpenChange={setShowTimeUp}>

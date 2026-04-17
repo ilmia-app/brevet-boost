@@ -116,6 +116,53 @@ export type Database = {
           },
         ]
       }
+      exercices: {
+        Row: {
+          annale_source: string | null
+          annee: number | null
+          bloc_id: string | null
+          corrige: string | null
+          created_at: string | null
+          difficulte: string | null
+          enonce: string | null
+          explication_ia: string | null
+          id: string
+          session: string | null
+        }
+        Insert: {
+          annale_source?: string | null
+          annee?: number | null
+          bloc_id?: string | null
+          corrige?: string | null
+          created_at?: string | null
+          difficulte?: string | null
+          enonce?: string | null
+          explication_ia?: string | null
+          id: string
+          session?: string | null
+        }
+        Update: {
+          annale_source?: string | null
+          annee?: number | null
+          bloc_id?: string | null
+          corrige?: string | null
+          created_at?: string | null
+          difficulte?: string | null
+          enonce?: string | null
+          explication_ia?: string | null
+          id?: string
+          session?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercices_bloc_id_fkey"
+            columns: ["bloc_id"]
+            isOneToOne: false
+            referencedRelation: "blocs_examen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages_feedback: {
         Row: {
           action_associee: string | null
