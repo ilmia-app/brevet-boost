@@ -60,7 +60,9 @@ const WorkSession = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const blocId = searchParams.get("bloc_id") || searchParams.get("bloc") || "";
-  console.log("[WorkSession] bloc_id reçu:", blocId);
+  const mode = searchParams.get("mode") || "";
+  const isAiMode = mode === "ai";
+  console.log("[WorkSession] bloc_id reçu:", blocId, "mode:", mode);
 
   const [bloc, setBloc] = useState<BlocData | null>(null);
   const [methodeSteps, setMethodeSteps] = useState<string[]>([]);
@@ -68,6 +70,8 @@ const WorkSession = () => {
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const [notes, setNotes] = useState("");
   const [completed, setCompleted] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiCorrigeCache, setAiCorrigeCache] = useState<string>("");
 
   // Timer
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
