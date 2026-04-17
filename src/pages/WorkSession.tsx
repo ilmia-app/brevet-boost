@@ -2,6 +2,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import DOMPurify from "dompurify";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -387,7 +390,7 @@ const WorkSession = () => {
 
       {/* Modale de corrigé */}
       <Dialog open={corrigeOpen} onOpenChange={setCorrigeOpen}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />
@@ -403,10 +406,20 @@ const WorkSession = () => {
               </div>
             ) : (
               <>
-                <div
-                  className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90"
-                  dangerouslySetInnerHTML={{ __html: renderMathText(corrigeContent) }}
-                />
+                <div className="text-sm leading-relaxed text-foreground/90 prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-foreground prose-strong:text-foreground prose-hr:my-4 prose-ul:my-2 prose-li:my-0.5">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw]}
+                  >
+                    {corrigeContent.replace(/\$([^$\n]+)\$/g, (_, math) => {
+                      try {
+                        return katex.renderToString(math, { throwOnError: false });
+                      } catch {
+                        return math;
+                      }
+                    })}
+                  </ReactMarkdown>
+                </div>
                 {corrigeIsAI && !corrigeLoading && (
                   <p className="mt-4 text-xs text-muted-foreground italic text-center border-t pt-3">
                     Exemple de corrigé type — compare ta démarche avec cet exemple
