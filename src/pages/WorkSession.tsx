@@ -305,27 +305,47 @@ const WorkSession = () => {
         </section>
 
         {/* Exercise section - conditionnel */}
-        {exercise ? (
+        {aiLoading ? (
+          <section className="space-y-3">
+            <Card className="border-l-4 border-l-primary">
+              <CardContent className="p-6 flex flex-col items-center justify-center gap-3">
+                <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                <p className="text-sm text-muted-foreground text-center">
+                  L'IA prépare un exercice personnalisé pour toi…
+                </p>
+              </CardContent>
+            </Card>
+          </section>
+        ) : exercise ? (
           <section className="space-y-3">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" /> Ton exercice
             </h2>
             {exercise.annale_source && (
               <Badge variant="outline" className="text-xs font-medium border-primary/30 text-primary bg-primary/5">
-                📜 {exercise.annale_source}
+                {isAiMode ? "✨" : "📜"} {exercise.annale_source}
               </Badge>
             )}
             {exercise.enonce && (
               <Card className="border-l-4 border-l-primary">
                 <CardContent className="p-4 bg-accent/30 rounded-r-lg">
-                  <div
-                    className="text-sm leading-relaxed whitespace-pre-wrap"
-                    dangerouslySetInnerHTML={{ __html: renderMathText(exercise.enonce) }}
-                  />
+                  <div className="text-sm leading-relaxed prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-foreground prose-strong:text-foreground">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      rehypePlugins={[rehypeRaw]}
+                    >
+                      {exercise.enonce.replace(/\$([^$\n]+)\$/g, (_, math) => {
+                        try {
+                          return katex.renderToString(math, { throwOnError: false });
+                        } catch {
+                          return math;
+                        }
+                      })}
+                    </ReactMarkdown>
+                  </div>
                 </CardContent>
               </Card>
             )}
-            {/* Message d'orientation sous l'exercice officiel */}
             <p className="text-xs text-muted-foreground text-center italic px-2">
               Suis la méthode ci-dessous étape par étape pendant que tu travailles ✨
             </p>
