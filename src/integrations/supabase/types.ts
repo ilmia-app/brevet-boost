@@ -306,6 +306,7 @@ export type Database = {
           created_at: string | null
           date_examen: string | null
           derniere_activite: string | null
+          derniere_modif_priorites: string | null
           email: string | null
           id: string
           jours_travailles: number[] | null
@@ -323,6 +324,7 @@ export type Database = {
           created_at?: string | null
           date_examen?: string | null
           derniere_activite?: string | null
+          derniere_modif_priorites?: string | null
           email?: string | null
           id?: string
           jours_travailles?: number[] | null
@@ -340,6 +342,7 @@ export type Database = {
           created_at?: string | null
           date_examen?: string | null
           derniere_activite?: string | null
+          derniere_modif_priorites?: string | null
           email?: string | null
           id?: string
           jours_travailles?: number[] | null
