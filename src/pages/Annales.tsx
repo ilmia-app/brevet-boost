@@ -151,7 +151,7 @@ const Annales = () => {
           </Button>
           <div className="flex-1">
             <h1 className="text-2xl font-bold">
-              {selected ? "Sujet d'annale" : "Annales du brevet"}
+              {selected ? "Sujet d'annale" : matiereFilter ? `Annales ${matiereFilter}` : "Annales du brevet"}
             </h1>
             <p className="text-sm text-muted-foreground">
               {selected
