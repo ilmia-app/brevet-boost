@@ -542,34 +542,44 @@ const Dashboard = () => {
           </div>
         </section>
 
-        {/* SECTION — S'entraîner sur une annale */}
-        <section className="space-y-3">
-          <div className="rounded-2xl border border-primary/15 bg-accent/30 p-4 space-y-3">
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <FileText className="w-4 h-4 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-base font-semibold leading-tight">S'entraîner sur une annale</h2>
-                <p className="text-xs text-muted-foreground">Travaille un sujet complet en conditions réelles</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="outline"
-                className="rounded-xl h-11 text-sm font-medium border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-700"
-                onClick={() => navigate("/annales?matiere=Maths")}
-              >
-                Annales Maths
-              </Button>
-              <Button
-                variant="outline"
-                className="rounded-xl h-11 text-sm font-medium border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:text-purple-700"
-                onClick={() => navigate("/annales?matiere=Français")}
-              >
-                Annales Français
-              </Button>
-            </div>
+        {/* SEPARATEUR VISUEL */}
+        <div className="relative py-2">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-border/60"></div>
+          </div>
+          <div className="relative flex justify-center">
+            <span className="bg-background px-3 text-xs text-muted-foreground font-medium">ou</span>
+          </div>
+        </div>
+
+        {/* SECTION 2 — S'entraîner sur une annale complète */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold">S'entraîner sur une annale complète</h2>
+          </div>
+          <p className="text-sm text-muted-foreground">Simule les conditions du brevet</p>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <Card className="border-blue-200/60 bg-blue-50/50 hover:bg-blue-50 transition-colors cursor-pointer" onClick={() => navigate("/annales?matiere=Maths")}>
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-blue-500 text-white text-xs">Maths</Badge>
+                </div>
+                <p className="font-semibold text-blue-900">Annales Maths</p>
+                <p className="text-xs text-blue-700/80">{annalesCounts.maths} sujet{annalesCounts.maths > 1 ? 's' : ''} disponible{annalesCounts.maths > 1 ? 's' : ''}</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-purple-200/60 bg-purple-50/50 hover:bg-purple-50 transition-colors cursor-pointer" onClick={() => navigate("/annales?matiere=Français")}>
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-purple-500 text-white text-xs">Français</Badge>
+                </div>
+                <p className="font-semibold text-purple-900">Annales Français</p>
+                <p className="text-xs text-purple-700/80">{annalesCounts.francais} sujet{annalesCounts.francais > 1 ? 's' : ''} disponible{annalesCounts.francais > 1 ? 's' : ''}</p>
+              </CardContent>
+            </Card>
           </div>
         </section>
 
