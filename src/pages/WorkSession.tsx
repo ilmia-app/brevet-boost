@@ -406,10 +406,20 @@ const WorkSession = () => {
               </div>
             ) : (
               <>
-                <div
-                  className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90"
-                  dangerouslySetInnerHTML={{ __html: renderMathText(corrigeContent) }}
-                />
+                <div className="text-sm leading-relaxed text-foreground/90 prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-foreground prose-strong:text-foreground prose-hr:my-4 prose-ul:my-2 prose-li:my-0.5">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw]}
+                  >
+                    {corrigeContent.replace(/\$([^$\n]+)\$/g, (_, math) => {
+                      try {
+                        return katex.renderToString(math, { throwOnError: false });
+                      } catch {
+                        return math;
+                      }
+                    })}
+                  </ReactMarkdown>
+                </div>
                 {corrigeIsAI && !corrigeLoading && (
                   <p className="mt-4 text-xs text-muted-foreground italic text-center border-t pt-3">
                     Exemple de corrigé type — compare ta démarche avec cet exemple
