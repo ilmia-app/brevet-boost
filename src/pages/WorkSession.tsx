@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Play, Pause, CheckCircle2, ChevronRight, Target, Zap, Rocket, Sparkles, RefreshCw, Printer, Loader2 } from "lucide-react";
+import { ArrowLeft, Play, Pause, CheckCircle2, ChevronRight, Target, Zap, Rocket, Clock, Sparkles, RefreshCw, Printer, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogContent,
