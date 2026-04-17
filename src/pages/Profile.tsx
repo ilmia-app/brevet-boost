@@ -182,17 +182,17 @@ const Profile = () => {
             <h2 className="text-base font-semibold">Mes informations</h2>
 
             <div className="space-y-2">
-              <Label htmlFor="prenom">Prénom</Label>
+              <label className="text-sm font-medium leading-none" htmlFor="prenom">Prénom</label>
               <Input id="prenom" value={name} onChange={(e) => setName(e.target.value)} maxLength={50} />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="examen">Date d'examen</Label>
+              <label className="text-sm font-medium leading-none" htmlFor="examen">Date d'examen</label>
               <Input id="examen" type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)} />
             </div>
 
             <div className="space-y-2">
-              <Label>Volume quotidien</Label>
+              <label className="text-sm font-medium leading-none">Volume quotidien</label>
               <div className="grid grid-cols-3 gap-2">
                 {VOLUME_OPTIONS.map((opt) => {
                   const active = volume === opt.value;
