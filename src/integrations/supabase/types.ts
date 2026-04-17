@@ -163,6 +163,30 @@ export type Database = {
           },
         ]
       }
+      exercices_vus: {
+        Row: {
+          bloc_id: string
+          exercice_id: string
+          id: string
+          user_id: string
+          vu_at: string
+        }
+        Insert: {
+          bloc_id: string
+          exercice_id: string
+          id?: string
+          user_id: string
+          vu_at?: string
+        }
+        Update: {
+          bloc_id?: string
+          exercice_id?: string
+          id?: string
+          user_id?: string
+          vu_at?: string
+        }
+        Relationships: []
+      }
       messages_feedback: {
         Row: {
           action_associee: string | null
