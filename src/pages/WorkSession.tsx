@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Play, Pause, CheckCircle2, ChevronRight, Sparkles, BookOpen } from "lucide-react";
+import { ArrowLeft, Play, Pause, CheckCircle2, ChevronRight, Sparkles } from "lucide-react";
 
 const SUBJECT_COLORS: Record<string, string> = {
   Maths: "bg-blue-500 text-white",
@@ -21,28 +21,6 @@ const SUBJECT_COLORS: Record<string, string> = {
   Physique: "bg-red-500 text-white",
   SVT: "bg-green-700 text-white",
   Techno: "bg-gray-500 text-white",
-};
-
-const SUBJECT_BORDER_COLORS: Record<string, string> = {
-  Maths: "border-blue-500",
-  Français: "border-purple-500",
-  Histoire: "border-orange-500",
-  Géographie: "border-emerald-500",
-  EMC: "border-yellow-500",
-  Physique: "border-red-500",
-  SVT: "border-green-700",
-  Techno: "border-gray-500",
-};
-
-const SUBJECT_BG_COLORS: Record<string, string> = {
-  Maths: "bg-blue-500/10",
-  Français: "bg-purple-500/10",
-  Histoire: "bg-orange-500/10",
-  Géographie: "bg-emerald-500/10",
-  EMC: "bg-yellow-500/10",
-  Physique: "bg-red-500/10",
-  SVT: "bg-green-700/10",
-  Techno: "bg-gray-500/10",
 };
 
 interface BlocData {
@@ -235,8 +213,8 @@ const WorkSession = () => {
           </div>
         </section>
 
-        {/* Exercise section - conditional display */}
-        {exercise ? (
+        {/* Exercise (optionnel) */}
+        {exercise && (
           <section className="space-y-3">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" /> Ton exercice
@@ -256,27 +234,6 @@ const WorkSession = () => {
                 </CardContent>
               </Card>
             )}
-            <p className="text-xs text-muted-foreground italic">
-              Tu peux aussi utiliser un exercice de ton cours CNED sur ce thème.
-            </p>
-          </section>
-        ) : (
-          <section className="space-y-3">
-            <Card className={`border-l-4 ${SUBJECT_BORDER_COLORS[bloc.matiere] || "border-primary"} ${SUBJECT_BG_COLORS[bloc.matiere] || "bg-accent/30"}`}>
-              <CardContent className="p-4 rounded-r-lg">
-                <div className="flex items-start gap-3">
-                  <div className={`p-2 rounded-full ${SUBJECT_COLORS[bloc.matiere] || "bg-muted"}`}>
-                    <BookOpen className="w-4 h-4" />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-semibold">Prends ton exercice 📖</h3>
-                    <p className="text-sm text-foreground/80 leading-relaxed">
-                      Ouvre ton cours CNED ou une annale du brevet sur ce thème. Suis ensuite la méthode ci-dessous étape par étape pendant que tu travailles.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </section>
         )}
 
