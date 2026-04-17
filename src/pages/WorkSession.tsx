@@ -23,6 +23,17 @@ const SUBJECT_COLORS: Record<string, string> = {
   Techno: "bg-gray-500 text-white",
 };
 
+const SUBJECT_BG_COLORS: Record<string, string> = {
+  Maths: "bg-blue-50 border-blue-400",
+  Français: "bg-purple-50 border-purple-400",
+  Histoire: "bg-orange-50 border-orange-400",
+  Géographie: "bg-emerald-50 border-emerald-400",
+  EMC: "bg-yellow-50 border-yellow-400",
+  Physique: "bg-red-50 border-red-400",
+  SVT: "bg-green-50 border-green-600",
+  Techno: "bg-gray-50 border-gray-400",
+};
+
 interface BlocData {
   id: string;
   matiere: string;
@@ -213,8 +224,8 @@ const WorkSession = () => {
           </div>
         </section>
 
-        {/* Exercise (optionnel) */}
-        {exercise && (
+        {/* Exercise section - conditionnel */}
+        {exercise ? (
           <section className="space-y-3">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" /> Ton exercice
@@ -234,6 +245,24 @@ const WorkSession = () => {
                 </CardContent>
               </Card>
             )}
+            {/* Message d'orientation sous l'exercice officiel */}
+            <p className="text-xs text-muted-foreground text-center italic px-2">
+              Suis la méthode ci-dessous étape par étape pendant que tu travailles ✨
+            </p>
+          </section>
+        ) : (
+          /* Carte "Prends ton exercice" quand aucun exercice n'existe */
+          <section className="space-y-3">
+            <Card className={`border-l-4 ${SUBJECT_BG_COLORS[bloc.matiere] || "bg-muted/30 border-muted-foreground"}`}>
+              <CardContent className="p-4 space-y-2">
+                <h2 className="font-semibold flex items-center gap-2">
+                  <span className="text-lg">📖</span> Prends ton exercice
+                </h2>
+                <p className="text-sm text-foreground/80 leading-relaxed">
+                  Choisis un exercice de ton choix sur ce thème puis suis la méthode ci-dessous étape par étape pendant que tu travailles.
+                </p>
+              </CardContent>
+            </Card>
           </section>
         )}
 
