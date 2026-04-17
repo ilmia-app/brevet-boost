@@ -203,38 +203,42 @@ const WorkSession = () => {
     });
   }, []);
 
-  const handleGenerateExercise = useCallback(async () => {
-    if (!bloc) return;
-    setIsGenerating(true);
+  const fetchRandomExercise = useCallback(async (excludeId?: string) => {
+    if (!blocId) return;
+    setExerciseLoading(true);
+    setNoExercise(false);
     try {
-      const methodeText = methodeSteps.length > 0
-        ? methodeSteps.map((s, i) => `${i + 1}. ${s}`).join("\n")
-        : null;
-
-      const { data, error } = await supabase.functions.invoke("generate-exercise", {
-        body: {
-          bloc_id: bloc.id,
-          matiere: bloc.matiere,
-          titre: bloc.titre,
-          objectifs_pedagogiques: bloc.objectifs_pedagogiques,
-          duree_examen_min: bloc.duree_examen_min,
-          tags: null,
-          methode_etapes: methodeText,
-        },
-      });
+      let query = supabase
+        .from("exercices")
+        .select("id, enonce, corrige, annale_source, annee, session")
+        .eq("bloc_id", blocId);
+      if (excludeId) query = query.neq("id", excludeId);
+      const { data, error } = await query;
       if (error) throw error;
-      if (data?.fallback) {
-        setGeneratedExercise(data.error || "Génération temporairement indisponible.");
+      if (!data || data.length === 0) {
+        if (excludeId) {
+          // No other exercise — keep current one
+          setExerciseLoading(false);
+          return;
+        }
+        setExercise(null);
+        setNoExercise(true);
       } else {
-        setGeneratedExercise(data?.exercise || "Impossible de générer l'exercice.");
+        const random = data[Math.floor(Math.random() * data.length)];
+        setExercise(random);
       }
     } catch (e) {
-      console.error("Exercise generation error:", e);
-      setGeneratedExercise("Erreur lors de la génération. Réessaie plus tard.");
+      console.error("Exercise fetch error:", e);
+      setNoExercise(true);
     } finally {
-      setIsGenerating(false);
+      setExerciseLoading(false);
     }
-  }, [bloc, methodeSteps]);
+  }, [blocId]);
+
+  // Auto-fetch exercise when bloc loads
+  useEffect(() => {
+    if (blocId) fetchRandomExercise();
+  }, [blocId, fetchRandomExercise]);
 
   // Display values
   const displaySeconds = isPhase3
