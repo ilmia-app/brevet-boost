@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
@@ -55,6 +55,8 @@ const inferMatiere = (blocId: string | null, blocsMap: Map<string, Bloc>): strin
 
 const Annales = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const matiereFilter = searchParams.get("matiere");
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [exercices, setExercices] = useState<Exercice[]>([]);
@@ -116,13 +118,16 @@ const Annales = () => {
   }, [exercices, blocsMap]);
 
   const grouped = useMemo(() => {
+    const filtered = matiereFilter
+      ? groups.filter((g) => g.matiere.toLowerCase() === matiereFilter.toLowerCase())
+      : groups;
     const byMat = new Map<string, SubjectGroup[]>();
-    for (const g of groups) {
+    for (const g of filtered) {
       if (!byMat.has(g.matiere)) byMat.set(g.matiere, []);
       byMat.get(g.matiere)!.push(g);
     }
     return Array.from(byMat.entries());
-  }, [groups]);
+  }, [groups, matiereFilter]);
 
   if (loading) {
     return (
