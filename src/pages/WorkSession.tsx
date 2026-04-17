@@ -235,8 +235,8 @@ const WorkSession = () => {
           </div>
         </section>
 
-        {/* Exercise (optionnel) */}
-        {exercise && (
+        {/* Exercise section - conditional display */}
+        {exercise ? (
           <section className="space-y-3">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" /> Ton exercice
@@ -256,6 +256,27 @@ const WorkSession = () => {
                 </CardContent>
               </Card>
             )}
+            <p className="text-xs text-muted-foreground italic">
+              Tu peux aussi utiliser un exercice de ton cours CNED sur ce thème.
+            </p>
+          </section>
+        ) : (
+          <section className="space-y-3">
+            <Card className={`border-l-4 ${SUBJECT_BORDER_COLORS[bloc.matiere] || "border-primary"} ${SUBJECT_BG_COLORS[bloc.matiere] || "bg-accent/30"}`}>
+              <CardContent className="p-4 rounded-r-lg">
+                <div className="flex items-start gap-3">
+                  <div className={`p-2 rounded-full ${SUBJECT_COLORS[bloc.matiere] || "bg-muted"}`}>
+                    <BookOpen className="w-4 h-4" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-semibold">Prends ton exercice 📖</h3>
+                    <p className="text-sm text-foreground/80 leading-relaxed">
+                      Ouvre ton cours CNED ou une annale du brevet sur ce thème. Suis ensuite la méthode ci-dessous étape par étape pendant que tu travailles.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </section>
         )}
 
