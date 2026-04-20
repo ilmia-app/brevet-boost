@@ -24,9 +24,9 @@ const SUBJECT_COLORS: Record<string, string> = {
 };
 
 const VOLUME_OPTIONS = [
-  { value: "leger", label: "Léger", desc: "~1h30 / jour" },
-  { value: "moyen", label: "Moyen", desc: "~2h30 / jour" },
-  { value: "intensif", label: "Intensif", desc: "~3h30 / jour" },
+  { value: "leger", label: "Léger", desc: "1h30 / jour" },
+  { value: "moyen", label: "Moyen", desc: "2h30 / jour" },
+  { value: "intensif", label: "Intensif", desc: "3h30 / jour" },
 ];
 
 // Lundi de la semaine ISO de la date donnée (UTC-safe via local)
