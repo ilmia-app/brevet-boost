@@ -335,8 +335,6 @@ const WorkSession = () => {
     );
   }
 
-    const dureeExamen = bloc.duree_examen_min || bloc.duree_min || 30;
-
   return (
     <div className="min-h-screen bg-background pb-8">
       <div className="max-w-lg mx-auto px-4 pt-4 space-y-6">
@@ -354,7 +352,6 @@ const WorkSession = () => {
           {/* Timer */}
           <div className="flex flex-col items-center gap-3 pt-2">
             <div className="text-4xl font-bold tabular-nums">{formatTime(elapsedSeconds)}</div>
-            <p className="text-xs text-muted-foreground">⏱ Durée estimée : {dureeExamen} min</p>
             <Button
               onClick={() => setTimerRunning((r) => !r)}
               size="sm"

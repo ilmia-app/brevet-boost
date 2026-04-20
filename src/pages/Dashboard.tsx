@@ -443,7 +443,7 @@ const Dashboard = () => {
                               {bloc.matiere}
                             </Badge>
                             <span className="text-[10px] text-muted-foreground">
-                              {TASK_ICONS[weight]} {bloc.duree_min} min
+                              {TASK_ICONS[weight]}
                             </span>
                           </div>
                           <p className={`text-xs leading-snug ${done ? "line-through text-muted-foreground" : "font-medium"}`}>
