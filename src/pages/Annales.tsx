@@ -215,7 +215,25 @@ const Annales = () => {
             <p className="text-xs text-muted-foreground italic line-clamp-2">
               {selected.annale_source}
             </p>
-            {selected.exercices.map((ex, idx) => {
+            {(() => {
+              const filtered = exercices
+                .filter(
+                  (e) =>
+                    e.annale_source === selected.annale_source &&
+                    e.annee === selected.annee &&
+                    (e.session || "") === selected.session,
+                )
+                .sort((a, b) => (a.bloc_id || "").localeCompare(b.bloc_id || ""));
+              console.log("annale_source filtrée:", selected.annale_source);
+              console.log("exercices trouvés:", filtered.length);
+              if (filtered.length === 0) {
+                return (
+                  <p className="text-center text-muted-foreground text-sm py-12">
+                    Aucun exercice disponible pour ce sujet
+                  </p>
+                );
+              }
+              return filtered.map((ex, idx) => {
               const bloc = ex.bloc_id ? blocsMap.get(ex.bloc_id) : null;
               const done = ex.bloc_id ? completedBlocs.has(ex.bloc_id) : false;
               return (
@@ -254,7 +272,8 @@ const Annales = () => {
                   </CardContent>
                 </Card>
               );
-            })}
+              });
+            })()}
           </div>
         )}
       </div>
