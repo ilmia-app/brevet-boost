@@ -449,6 +449,9 @@ const Dashboard = () => {
                           <p className={`text-xs leading-snug ${done ? "line-through text-muted-foreground" : "font-medium"}`}>
                             {bloc.titre}
                           </p>
+                          <p className="text-[10px] uppercase tracking-wide text-primary font-semibold mt-1">
+                            {TASK_LABELS[weight]}
+                          </p>
                           <p className="text-[10px] text-muted-foreground/80 mt-1 flex items-center gap-1">
                             <Sparkles className="w-2.5 h-2.5 text-primary shrink-0" />
                             L'IA va générer un exercice sur ce thème
