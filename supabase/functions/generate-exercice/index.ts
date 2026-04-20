@@ -1,6 +1,5 @@
 // Edge function : génère un exercice + corrigé via Lovable AI Gateway (Gemini 2.5 Pro)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { callAIGateway } from "../_shared/aiGateway.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -37,9 +36,9 @@ Deno.serve(async (req) => {
 
     const { titre, matiere, objectifs, etapes, theme } = await req.json();
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY non configurée" }), {
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ANTHROPIC_API_KEY) {
+      return new Response(JSON.stringify({ error: "ANTHROPIC_API_KEY non configurée" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -77,13 +76,21 @@ FORMAT DE RÉPONSE (JSON STRICT, rien d'autre) :
 
 Dans le corrigé uniquement, le markdown peut utiliser : ### titres, **gras**, listes -, séparateurs ---, et formules $...$.`;
 
-    const { response } = await callAIGateway({
-      apiKey: LOVABLE_API_KEY,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: `Génère l'exercice + corrigé pour : ${titre}` },
-      ],
-      extraBody: { response_format: { type: "json_object" } },
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: [
+          { role: "user", content: `Génère l'exercice + corrigé pour : ${titre}. Réponds UNIQUEMENT avec un objet JSON strict {"enonce": "...", "corrige": "..."} sans aucun texte autour.` },
+        ],
+      }),
     });
 
     if (response!.status === 429) {
@@ -99,6 +106,8 @@ Dans le corrigé uniquement, le markdown peut utiliser : ### titres, **gras**, l
       });
     }
     if (!response!.ok) {
+      const errText = await response!.text();
+      console.error("Anthropic API error:", response!.status, errText);
       return new Response(JSON.stringify({ error: "Le service IA est temporairement indisponible. Réessaye dans un instant." }), {
         status: 503,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -106,7 +115,7 @@ Dans le corrigé uniquement, le markdown peut utiliser : ### titres, **gras**, l
     }
 
     const data = await response!.json();
-    const raw = data.choices?.[0]?.message?.content || "{}";
+    const raw = data.content?.[0]?.text || "{}";
     let parsed: { enonce?: string; corrige?: string } = {};
     try {
       parsed = JSON.parse(raw);
