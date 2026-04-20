@@ -34,7 +34,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { titre, matiere, objectifs, etapes, theme } = await req.json();
+    const { titre, matiere, objectifs, etapes, theme, bloc_id } = await req.json();
+    const isChartBloc = bloc_id === "MAT-04";
 
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     if (!ANTHROPIC_API_KEY) {
@@ -44,7 +45,40 @@ Deno.serve(async (req) => {
       });
     }
 
-    const systemPrompt = `Tu es le meilleur professeur de collège français, expert du Brevet (DNB) niveau 3ème.
+    const chartPrompt = `Tu es le meilleur professeur de collège français, expert du Brevet (DNB) niveau 3ème.
+Tu vas générer **un exercice original de lecture/exploitation de graphique** sur la notion suivante :
+
+- Matière : ${matiere || "non précisée"}
+- Thème / bloc : ${titre || "non précisé"}
+${theme ? `- Sous-thème : ${theme}` : ""}
+${objectifs ? `- Objectifs pédagogiques : ${objectifs}` : ""}
+
+CONTRAINTES STRICTES :
+- Niveau 3ème (Brevet), réaliste et faisable en 10-15 min.
+- L'exercice s'appuie sur UN graphique (barres, courbe ou camembert) avec des données réalistes.
+- 2 à 4 questions progressives basées sur la lecture/interprétation du graphique.
+- Le corrigé doit être détaillé étape par étape, pédagogique.
+
+FORMAT DE RÉPONSE (JSON STRICT, rien d'autre) :
+{
+  "enonce": "court contexte introductif sans markdown ni mise en forme",
+  "graphique": {
+    "type": "bar" | "line" | "pie",
+    "titre": "titre du graphique",
+    "labels": ["Lundi", "Mardi", ...],
+    "donnees": [381, 363, 322, ...],
+    "unite": "kWh" | "€" | "%" | ""
+  },
+  "questions": ["Question 1 ?", "Question 2 ?"],
+  "corrige": "markdown du corrigé détaillé étape par étape, formules en $...$"
+}
+
+RÈGLES :
+- "labels" et "donnees" doivent avoir la même longueur (4 à 8 valeurs).
+- Pas de markdown dans "enonce" ni dans "questions".
+- Le corrigé peut utiliser markdown : ### titres, **gras**, listes -, $...$ pour les formules.`;
+
+    const standardPrompt = `Tu es le meilleur professeur de collège français, expert du Brevet (DNB) niveau 3ème.
 Tu vas générer **un exercice original** ET **son corrigé détaillé** sur la notion suivante :
 
 - Matière : ${matiere || "non précisée"}
@@ -75,6 +109,8 @@ FORMAT DE RÉPONSE (JSON STRICT, rien d'autre) :
 }
 
 Dans le corrigé uniquement, le markdown peut utiliser : ### titres, **gras**, listes -, séparateurs ---, et formules $...$.`;
+
+    const systemPrompt = isChartBloc ? chartPrompt : standardPrompt;
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -116,7 +152,12 @@ Dans le corrigé uniquement, le markdown peut utiliser : ### titres, **gras**, l
 
     const data = await response!.json();
     const raw = data.content?.[0]?.text || "{}";
-    let parsed: { enonce?: string; corrige?: string } = {};
+    let parsed: {
+      enonce?: string;
+      corrige?: string;
+      graphique?: { type: string; titre: string; labels: string[]; donnees: number[]; unite?: string };
+      questions?: string[];
+    } = {};
     try {
       parsed = JSON.parse(raw);
     } catch {
@@ -130,6 +171,8 @@ Dans le corrigé uniquement, le markdown peut utiliser : ### titres, **gras**, l
       JSON.stringify({
         enonce: parsed.enonce || "Impossible de générer l'énoncé.",
         corrige: parsed.corrige || "Impossible de générer le corrigé.",
+        graphique: parsed.graphique || null,
+        questions: parsed.questions || null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
