@@ -381,7 +381,7 @@ const Dashboard = () => {
         )}
 
         {/* 3 CARTES */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
           {/* CARTE 1 — Programme du jour */}
           <Card className="rounded-2xl flex flex-col">
             <CardContent className="p-5 flex flex-col flex-1 space-y-4">
