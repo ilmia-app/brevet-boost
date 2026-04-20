@@ -142,6 +142,16 @@ const Onboarding = () => {
                 onChange={(e) => setExamDate(e.target.value)}
                 className="h-12 text-base rounded-xl"
               />
+              {daysUntilExam !== null && daysUntilExam < 14 && (
+                <div className="rounded-xl border border-red-300 bg-red-50 dark:bg-red-950/30 dark:border-red-800 px-4 py-3 text-sm text-red-900 dark:text-red-200">
+                  🎯 Phase finale ! Ton planning est optimisé pour les derniers jours avant le brevet. Concentre-toi sur l'essentiel.
+                </div>
+              )}
+              {daysUntilExam !== null && daysUntilExam >= 14 && daysUntilExam < 35 && (
+                <div className="rounded-xl border border-orange-300 bg-orange-50 dark:bg-orange-950/30 dark:border-orange-800 px-4 py-3 text-sm text-orange-900 dark:text-orange-200">
+                  ⚡ Ton brevet arrive vite — Sprint DNB adapte ton planning en mode intensif. Chaque jour compte !
+                </div>
+              )}
             </div>
           )}
 
