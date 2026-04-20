@@ -11,7 +11,7 @@ const Index = () => {
   useEffect(() => {
     if (loading) return;
     if (!user) {
-      navigate("/register", { replace: true });
+      navigate("/login", { replace: true });
       return;
     }
     (async () => {
