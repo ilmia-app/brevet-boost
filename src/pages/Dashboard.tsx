@@ -197,45 +197,76 @@ const Dashboard = () => {
     })();
   }, [profile, currentPhase]);
 
-  // Daily tasks (priorité=1 uniquement, comme avant)
+  // Daily tasks — 3 tâches : Défi du jour (matière faible) + rotation HG/EMC + rotation Sciences
   const dailyTasks = useMemo(() => {
     const mode = profile?.modeActuel || "normal";
-    const userSubjects = profile?.subjects || [];
+    const userSubjects = (profile?.subjects || []).map((s) => s.toLowerCase());
     const priorityBlocs = blocs.filter((b) => b.priorite === 1);
 
-    const usedIds = new Set<string>();
+    const matches = (bm: string, s: string) => bm.toLowerCase() === s.toLowerCase();
+    const pickBloc = (subject: string, used: Set<string>) =>
+      priorityBlocs.find((b) => !used.has(b.id) && matches(b.matiere, subject));
+
+    // Rotation cyclique basée sur le jour de l'année
+    const start = new Date(new Date().getFullYear(), 0, 0);
+    const dayOfYear = Math.floor((new Date().getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+    const rotationHGE = ["Histoire", "Géographie", "EMC"];
+    const rotationSci = ["Physique", "SVT", "Techno"];
+
+    const pickRotation = (rotation: string[], used: Set<string>, faibles: string[]) => {
+      // Si une matière de la rotation est dans les faibles → avance d'un cran
+      for (let offset = 0; offset < rotation.length; offset++) {
+        const subject = rotation[(dayOfYear + offset) % rotation.length];
+        if (faibles.includes(subject.toLowerCase())) continue;
+        const bloc = pickBloc(subject, used);
+        if (bloc) return bloc;
+      }
+      // fallback : n'importe quel bloc de la rotation non utilisé
+      for (const subject of rotation) {
+        const bloc = pickBloc(subject, used);
+        if (bloc) return bloc;
+      }
+      return null;
+    };
+
+    const used = new Set<string>();
     const slots: Array<{ bloc: BlocExamen; weight: "heavy" | "medium" | "light" }> = [];
-    const weights: Array<"heavy" | "medium" | "light"> = ["heavy", "medium", "light"];
-    const matchesSubject = (bm: string, s: string) => bm.toLowerCase() === s.toLowerCase();
 
-    let availableBlocs = [...priorityBlocs];
-    if (mode === "maintien") availableBlocs = availableBlocs.filter((b) => !yesterdayBlocIds.has(b.id));
-
-    let maxSlots = 3;
-    if (mode === "allegement") maxSlots = 2;
-    if (mode === "reset_doux") maxSlots = 1;
-
-    if (mode === "reset_doux") {
-      const shortest = [...availableBlocs].sort((a, b) => (a.duree_min || 0) - (b.duree_min || 0))[0];
-      if (shortest) slots.push({ bloc: shortest, weight: "light" });
-      return slots;
-    }
-
-    for (let i = 0; i < Math.min(userSubjects.length, maxSlots); i++) {
-      const subject = userSubjects[i];
-      const bloc = availableBlocs.find((b) => !usedIds.has(b.id) && matchesSubject(b.matiere, subject));
+    // TÂCHE 1 — Défi du jour (matière faible prioritaire)
+    let defiBloc: BlocExamen | null = null;
+    for (const subject of userSubjects) {
+      const bloc = priorityBlocs.find((b) => !used.has(b.id) && matches(b.matiere, subject));
       if (bloc) {
-        usedIds.add(bloc.id);
-        slots.push({ bloc, weight: weights[i] });
+        defiBloc = bloc;
+        break;
       }
     }
-    while (slots.length < maxSlots) {
-      const weight = weights[slots.length];
-      const bloc = availableBlocs.find((b) => !usedIds.has(b.id));
-      if (!bloc) break;
-      usedIds.add(bloc.id);
-      slots.push({ bloc, weight });
+    if (defiBloc) {
+      used.add(defiBloc.id);
+      slots.push({ bloc: defiBloc, weight: "heavy" });
     }
+
+    // Mode reset_doux : seulement le défi
+    if (mode === "reset_doux") return slots;
+
+    // TÂCHE 2 — Entraînement (rotation Histoire/Géo/EMC)
+    const entrainement = pickRotation(rotationHGE, used, userSubjects);
+    if (entrainement) {
+      used.add(entrainement.id);
+      slots.push({ bloc: entrainement, weight: "medium" });
+    }
+
+    // Mode allegement : seulement 2 tâches
+    if (mode === "allegement") return slots;
+
+    // TÂCHE 3 — Sprint final (rotation Sciences)
+    const sprint = pickRotation(rotationSci, used, userSubjects);
+    if (sprint) {
+      used.add(sprint.id);
+      slots.push({ bloc: sprint, weight: "light" });
+    }
+
     return slots;
   }, [blocs, profile, yesterdayBlocIds]);
 
