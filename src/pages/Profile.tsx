@@ -24,9 +24,9 @@ const SUBJECT_COLORS: Record<string, string> = {
 };
 
 const VOLUME_OPTIONS = [
-  { value: "leger", label: "Léger", desc: "~1h30 / jour" },
-  { value: "moyen", label: "Moyen", desc: "~2h30 / jour" },
-  { value: "intensif", label: "Intensif", desc: "~3h30 / jour" },
+  { value: "leger", label: "Léger", desc: "1h30 / jour" },
+  { value: "moyen", label: "Moyen", desc: "2h30 / jour" },
+  { value: "intensif", label: "Intensif", desc: "3h30 / jour" },
 ];
 
 // Lundi de la semaine ISO de la date donnée (UTC-safe via local)
@@ -270,27 +270,51 @@ const Profile = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {ALL_SUBJECTS.map((s) => {
-                const selected = subjects.includes(s);
-                const disabled = !canEditPrios;
-                return (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => toggleSubject(s)}
-                    disabled={disabled}
-                    className={`rounded-xl border-2 p-2.5 text-xs font-semibold transition-all ${
-                      selected
-                        ? `${SUBJECT_COLORS[s]} border-transparent`
-                        : "bg-card border-border text-foreground hover:border-primary/40"
-                    } ${disabled ? "opacity-70 cursor-not-allowed" : ""}`}
-                  >
-                    {s}
-                  </button>
-                );
-              })}
-            </div>
+            {isPhase1 ? (
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  {ALL_SUBJECTS.filter((s) => subjects.includes(s)).map((s) => (
+                    <Badge key={s} className={`${SUBJECT_COLORS[s]} text-xs px-2.5 py-1 rounded-lg`}>
+                      {s}
+                    </Badge>
+                  ))}
+                </div>
+                {ALL_SUBJECTS.some((s) => !subjects.includes(s)) && (
+                  <div className="flex flex-wrap gap-x-3 gap-y-1">
+                    {ALL_SUBJECTS.filter((s) => !subjects.includes(s)).map((s) => (
+                      <span key={s} className="text-xs text-muted-foreground">
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <p className="text-[11px] text-muted-foreground/80">
+                  Modifiable à partir de la semaine 4
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {ALL_SUBJECTS.map((s) => {
+                  const selected = subjects.includes(s);
+                  const disabled = !canEditPrios;
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => toggleSubject(s)}
+                      disabled={disabled}
+                      className={`rounded-xl border-2 p-2.5 text-xs font-semibold transition-all ${
+                        selected
+                          ? `${SUBJECT_COLORS[s]} border-transparent`
+                          : "bg-card border-border text-foreground hover:border-primary/40"
+                      } ${disabled ? "opacity-70 cursor-not-allowed" : ""}`}
+                    >
+                      {s}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             {canEditPrios && (
               <Button
