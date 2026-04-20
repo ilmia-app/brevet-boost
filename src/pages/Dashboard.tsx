@@ -175,8 +175,8 @@ const Dashboard = () => {
   const totalSprintDays = useMemo(() => Math.max(daysUntilExam, 1), [daysUntilExam]);
 
   const currentPhase = useMemo(() => {
-    if (daysUntilExam > 21) return 1;
-    if (daysUntilExam > 7) return 2;
+    if (daysUntilExam > 35) return 1;
+    if (daysUntilExam > 14) return 2;
     return 3;
   }, [daysUntilExam]);
 
