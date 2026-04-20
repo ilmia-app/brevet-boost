@@ -15,7 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { ArrowLeft, Play, Pause, CheckCircle2, ChevronRight, Sparkles, Loader2, RefreshCw } from "lucide-react";
+import { ArrowLeft, Play, Pause, CheckCircle2, Sparkles, Loader2, RefreshCw } from "lucide-react";
 
 const SUBJECT_COLORS: Record<string, string> = {
   Maths: "bg-blue-500 text-white",
@@ -470,8 +470,13 @@ const WorkSession = () => {
               {methodeSteps.map((step, i) => (
                 <Card
                   key={i}
+                  onClick={() => i !== currentStep && setCurrentStep(i)}
                   className={`transition-all ${
-                    i === currentStep ? "border-primary shadow-md" : i < currentStep ? "opacity-50" : "opacity-40"
+                    i === currentStep
+                      ? "border-primary shadow-md"
+                      : i < currentStep
+                      ? "opacity-60 cursor-pointer hover:opacity-90"
+                      : "opacity-40 cursor-pointer hover:opacity-70"
                   }`}
                 >
                   <CardContent className="p-3 flex items-start gap-3">
@@ -485,15 +490,6 @@ const WorkSession = () => {
                 </Card>
               ))}
             </div>
-            {currentStep < methodeSteps.length - 1 && (
-              <Button
-                onClick={() => setCurrentStep((s) => s + 1)}
-                variant="outline"
-                className="w-full gap-1"
-              >
-                Étape suivante <ChevronRight className="w-4 h-4" />
-              </Button>
-            )}
           </section>
         )}
 
