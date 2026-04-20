@@ -382,12 +382,12 @@ const Dashboard = () => {
 
         {/* 3 CARTES */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
-          {/* CARTE 1 — Programme du jour */}
+          {/* CARTE 1 — Sprint du jour */}
           <Card className="rounded-2xl flex flex-col">
             <CardContent className="p-5 flex flex-col flex-1 space-y-4">
               <div className="flex items-center gap-2">
                 <span className="text-xl">🎯</span>
-                <h2 className="text-base font-semibold">Mon programme du jour</h2>
+                <h2 className="text-base font-semibold">Mon sprint du jour</h2>
               </div>
 
               <div className="space-y-2 flex-1">
