@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,16 @@ const SUBJECTS = ["Maths", "Français", "Histoire", "Géographie", "EMC", "Physi
 
 const Onboarding = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      toast({ title: "Crée ton compte pour commencer ton sprint" });
+      navigate("/login", { replace: true });
+    }
+  }, [user, loading, navigate]);
+
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [examDate, setExamDate] = useState("");
