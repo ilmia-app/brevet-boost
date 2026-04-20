@@ -24,7 +24,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
+        <BrowserRouter basename="/brevet-boost">
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
