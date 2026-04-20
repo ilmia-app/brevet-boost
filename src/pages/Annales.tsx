@@ -66,11 +66,17 @@ const Annales = () => {
 
   useEffect(() => {
     const load = async () => {
+      let exercicesQuery = supabase
+        .from("exercices")
+        .select("id, bloc_id, annale_source, annee, session")
+        .not("annale_source", "is", null);
+
+      if (annaleSource) {
+        exercicesQuery = exercicesQuery.eq("annale_source", annaleSource).order("bloc_id");
+      }
+
       const [{ data: exData }, { data: blData }] = await Promise.all([
-        supabase
-          .from("exercices")
-          .select("id, bloc_id, annale_source, annee, session")
-          .not("annale_source", "is", null),
+        exercicesQuery,
         supabase.from("blocs_examen").select("id, titre, matiere"),
       ]);
 
@@ -90,7 +96,7 @@ const Annales = () => {
       setLoading(false);
     };
     load();
-  }, [user]);
+  }, [user, annaleSource]);
 
   const groups = useMemo<SubjectGroup[]>(() => {
     const m = new Map<string, SubjectGroup>();
@@ -144,7 +150,7 @@ const Annales = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => (selected ? setSelected(null) : navigate("/dashboard"))}
+            onClick={() => (annaleSource ? navigate("/annales") : navigate("/dashboard"))}
             aria-label="Retour"
           >
             <ArrowLeft className="w-5 h-5" />

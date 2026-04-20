@@ -63,6 +63,7 @@ const WorkSession = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const blocId = searchParams.get("bloc_id") || searchParams.get("bloc") || "";
+  const annaleSource = searchParams.get("annale_source") || "";
   const mode = searchParams.get("mode") || "";
   const isAiMode = mode === "ai";
   console.log("[WorkSession] bloc_id reçu:", blocId, "mode:", mode);
@@ -154,11 +155,17 @@ const WorkSession = () => {
           if (!cancelled) setAiLoading(false);
         }
       } else {
-        const { data: exData, error: exErr } = await supabase
+        let exerciseQuery = supabase
           .from("exercices")
           .select("id, enonce, corrige, annale_source")
-          .eq("bloc_id", blocId)
-          .limit(1);
+          .eq("bloc_id", blocId);
+
+        if (annaleSource) {
+          exerciseQuery = exerciseQuery.eq("annale_source", annaleSource);
+        }
+
+        const { data: exData, error: exErr } = await exerciseQuery.limit(1);
+        console.log("[WorkSession] filtre annale:", annaleSource || "aucun");
         console.log("[WorkSession] exercices trouvés pour", blocId, ":", exData?.length || 0, exErr || "");
         if (cancelled) return;
         if (exData && exData.length > 0) setExercise(exData[0]);
@@ -168,7 +175,7 @@ const WorkSession = () => {
     return () => {
       cancelled = true;
     };
-  }, [blocId, isAiMode]);
+  }, [blocId, isAiMode, annaleSource]);
 
   // Timer tick
   useEffect(() => {
