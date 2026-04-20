@@ -219,13 +219,11 @@ const Annales = () => {
               const filtered = exercices
                 .filter(
                   (e) =>
-                    e.annale_source === selected.annale_source &&
-                    e.annee === selected.annee &&
-                    (e.session || "") === selected.session,
+                    e.annale_source === selected.annale_source,
                 )
                 .sort((a, b) => (a.bloc_id || "").localeCompare(b.bloc_id || ""));
-              console.log("annale_source filtrée:", selected.annale_source);
-              console.log("exercices trouvés:", filtered.length);
+              console.log("Filtre annale:", selected.annale_source);
+              console.log("Nb exercices:", filtered.length);
               if (filtered.length === 0) {
                 return (
                   <p className="text-center text-muted-foreground text-sm py-12">
