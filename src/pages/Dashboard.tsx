@@ -383,6 +383,18 @@ const Dashboard = () => {
           </div>
         </section>
 
+        {/* Bandeau de phase selon jours restants */}
+        {currentPhase === 2 && (
+          <div className="rounded-xl border border-orange-300 bg-orange-50 dark:bg-orange-950/30 dark:border-orange-800 px-4 py-3 text-sm text-orange-900 dark:text-orange-200">
+            ⚡ Mode entraînement intensif — ton planning est accéléré
+          </div>
+        )}
+        {currentPhase === 3 && (
+          <div className="rounded-xl border border-red-300 bg-red-50 dark:bg-red-950/30 dark:border-red-800 px-4 py-3 text-sm text-red-900 dark:text-red-200">
+            🎯 Dernière ligne droite — concentre-toi sur tes points faibles
+          </div>
+        )}
+
         {/* Bandeau hebdomadaire phase 2 (lundi) */}
         {showWeeklyBanner && (
           <Card className="border-primary/30 bg-accent/30 rounded-xl">
