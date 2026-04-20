@@ -175,8 +175,8 @@ const Dashboard = () => {
   const totalSprintDays = useMemo(() => Math.max(daysUntilExam, 1), [daysUntilExam]);
 
   const currentPhase = useMemo(() => {
-    if (daysUntilExam > 21) return 1;
-    if (daysUntilExam > 7) return 2;
+    if (daysUntilExam > 35) return 1;
+    if (daysUntilExam > 14) return 2;
     return 3;
   }, [daysUntilExam]);
 
@@ -382,6 +382,18 @@ const Dashboard = () => {
             <Progress value={progressPercent} className="h-2.5 rounded-full" />
           </div>
         </section>
+
+        {/* Bandeau de phase selon jours restants */}
+        {currentPhase === 2 && (
+          <div className="rounded-xl border border-orange-300 bg-orange-50 dark:bg-orange-950/30 dark:border-orange-800 px-4 py-3 text-sm text-orange-900 dark:text-orange-200">
+            ⚡ Mode entraînement intensif — ton planning est accéléré
+          </div>
+        )}
+        {currentPhase === 3 && (
+          <div className="rounded-xl border border-red-300 bg-red-50 dark:bg-red-950/30 dark:border-red-800 px-4 py-3 text-sm text-red-900 dark:text-red-200">
+            🎯 Dernière ligne droite — concentre-toi sur tes points faibles
+          </div>
+        )}
 
         {/* Bandeau hebdomadaire phase 2 (lundi) */}
         {showWeeklyBanner && (

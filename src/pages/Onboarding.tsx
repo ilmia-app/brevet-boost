@@ -36,6 +36,10 @@ const Onboarding = () => {
     setSubjects(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
   };
 
+  const daysUntilExam = examDate
+    ? Math.max(0, Math.ceil((new Date(examDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
+    : null;
+
   const canProceed = () => {
     switch (step) {
       case 1: return true;
@@ -73,6 +77,9 @@ const Onboarding = () => {
       volume_quotidien: volumeMap[rhythm] || rhythm,
       retard_initial: retardMap[level] || level,
       matieres_faibles: subjects,
+      phase_actuelle: daysUntilExam !== null
+        ? (daysUntilExam <= 14 ? 3 : daysUntilExam <= 35 ? 2 : 1)
+        : 1,
     });
 
     if (error) {
@@ -138,6 +145,16 @@ const Onboarding = () => {
                 onChange={(e) => setExamDate(e.target.value)}
                 className="h-12 text-base rounded-xl"
               />
+              {daysUntilExam !== null && daysUntilExam < 14 && (
+                <div className="rounded-xl border border-red-300 bg-red-50 dark:bg-red-950/30 dark:border-red-800 px-4 py-3 text-sm text-red-900 dark:text-red-200">
+                  🎯 Phase finale ! Ton planning est optimisé pour les derniers jours avant le brevet. Concentre-toi sur l'essentiel.
+                </div>
+              )}
+              {daysUntilExam !== null && daysUntilExam >= 14 && daysUntilExam < 35 && (
+                <div className="rounded-xl border border-orange-300 bg-orange-50 dark:bg-orange-950/30 dark:border-orange-800 px-4 py-3 text-sm text-orange-900 dark:text-orange-200">
+                  ⚡ Ton brevet arrive vite — Sprint DNB adapte ton planning en mode intensif. Chaque jour compte !
+                </div>
+              )}
             </div>
           )}
 
