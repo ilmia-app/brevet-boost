@@ -97,7 +97,7 @@ const WorkSession = () => {
       // 1. Bloc
       const { data: blocData, error: blocErr } = await supabase
         .from("blocs_examen")
-        .select("id, matiere, titre, duree_min, consigne_eleve, objectifs_pedagogiques, methode_id")
+        .select("id, matiere, titre, duree_min, duree_examen_min, consigne_eleve, objectifs_pedagogiques, methode_id")
         .eq("id", blocId)
         .maybeSingle();
       if (blocErr) console.error("[WorkSession] bloc error:", blocErr);
@@ -335,7 +335,7 @@ const WorkSession = () => {
     );
   }
 
-  const dureeRevision = bloc.duree_min || 30;
+    const dureeExamen = bloc.duree_examen_min || bloc.duree_min || 30;
 
   return (
     <div className="min-h-screen bg-background pb-8">
@@ -354,7 +354,7 @@ const WorkSession = () => {
           {/* Timer */}
           <div className="flex flex-col items-center gap-3 pt-2">
             <div className="text-4xl font-bold tabular-nums">{formatTime(elapsedSeconds)}</div>
-            <p className="text-xs text-muted-foreground">Durée conseillée : {dureeRevision} min</p>
+            <p className="text-xs text-muted-foreground">⏱ Durée estimée : {dureeExamen} min</p>
             <Button
               onClick={() => setTimerRunning((r) => !r)}
               size="sm"
