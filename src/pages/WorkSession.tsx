@@ -130,6 +130,7 @@ const WorkSession = () => {
         try {
           const { data: gen, error: genErr } = await supabase.functions.invoke("generate-exercice", {
             body: {
+              bloc_id: blocData.id,
               titre: blocData.titre,
               matiere: blocData.matiere,
               objectifs: blocData.objectifs_pedagogiques,
@@ -143,6 +144,8 @@ const WorkSession = () => {
             enonce: gen?.enonce || "Impossible de générer l'énoncé.",
             corrige: null,
             annale_source: "Exercice généré par IA ✨",
+            graphique: gen?.graphique || null,
+            questions: gen?.questions || null,
           });
           setAiCorrigeCache(gen?.corrige || "");
         } catch (e) {
@@ -256,6 +259,7 @@ const WorkSession = () => {
     try {
       const { data: gen, error: genErr } = await supabase.functions.invoke("generate-exercice", {
         body: {
+          bloc_id: bloc.id,
           titre: bloc.titre,
           matiere: bloc.matiere,
           objectifs: bloc.objectifs_pedagogiques,
@@ -268,6 +272,8 @@ const WorkSession = () => {
         enonce: gen?.enonce || "Impossible de générer l'énoncé.",
         corrige: null,
         annale_source: "Exercice généré par IA ✨",
+        graphique: gen?.graphique || null,
+        questions: gen?.questions || null,
       });
       setAiCorrigeCache(gen?.corrige || "");
     } catch (e) {
@@ -283,6 +289,7 @@ const WorkSession = () => {
     try {
       const { data: gen, error: genErr } = await supabase.functions.invoke("generate-exercice", {
         body: {
+          bloc_id: bloc.id,
           titre: bloc.titre,
           matiere: bloc.matiere,
           objectifs: bloc.objectifs_pedagogiques,
@@ -295,6 +302,8 @@ const WorkSession = () => {
         enonce: gen?.enonce || "Impossible de générer l'énoncé.",
         corrige: null,
         annale_source: "Exercice généré par IA ✨",
+        graphique: gen?.graphique || null,
+        questions: gen?.questions || null,
       });
       setAiCorrigeCache(gen?.corrige || "");
       // Met à jour l'URL pour refléter le mode IA (sans recharger)
@@ -397,6 +406,18 @@ const WorkSession = () => {
                       {exercise.enonce}
                     </ReactMarkdown>
                   </div>
+                  {exercise.graphique && exercise.graphique.labels?.length > 0 && (
+                    <div className="mt-4 bg-background rounded-lg p-3 border border-border">
+                      <ExerciseChart graphique={exercise.graphique} />
+                    </div>
+                  )}
+                  {exercise.questions && exercise.questions.length > 0 && (
+                    <ol className="mt-4 space-y-2 text-sm leading-relaxed list-decimal list-inside marker:text-primary marker:font-semibold">
+                      {exercise.questions.map((q, i) => (
+                        <li key={i}>{q}</li>
+                      ))}
+                    </ol>
+                  )}
                 </CardContent>
               </Card>
             )}
