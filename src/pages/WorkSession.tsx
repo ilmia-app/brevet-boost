@@ -401,28 +401,50 @@ const WorkSession = () => {
                 </CardContent>
               </Card>
             )}
-            <div className="flex items-center justify-center gap-2 pt-1">
-              <span className="text-xs text-muted-foreground">
-                Préfères-tu un exercice généré sur ce thème ?
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleGenerateAlternative}
-                disabled={regenLoading}
-                className="h-7 px-2 text-xs text-primary hover:text-primary hover:bg-primary/10 gap-1"
-              >
-                {regenLoading ? (
-                  <>
-                    <Loader2 className="w-3 h-3 animate-spin" /> Génération…
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-3 h-3" /> Générer
-                  </>
-                )}
-              </Button>
-            </div>
+            {exercise.id.startsWith("ai-") ? (
+              <div className="flex justify-center pt-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleGenerateAlternative}
+                  disabled={regenLoading}
+                  className="h-7 px-2 text-xs text-muted-foreground hover:text-primary hover:bg-primary/10 gap-1"
+                >
+                  {regenLoading ? (
+                    <>
+                      <Loader2 className="w-3 h-3 animate-spin" /> Génération…
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-3 h-3" /> Autre exercice sur ce thème
+                    </>
+                  )}
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">
+                <span className="text-xs text-muted-foreground">
+                  ✨ Préfères-tu un exercice généré par IA sur ce thème ?
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSwitchToAi}
+                  disabled={switchAiLoading}
+                  className="h-7 px-2 text-xs text-primary hover:text-primary hover:bg-primary/10 gap-1"
+                >
+                  {switchAiLoading ? (
+                    <>
+                      <Loader2 className="w-3 h-3 animate-spin" /> Génération…
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3 h-3" /> Générer
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
             <p className="text-xs text-muted-foreground text-center italic px-2">
               Suis la méthode ci-dessous étape par étape pendant que tu travailles ✨
             </p>
