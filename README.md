@@ -1,3 +1,3 @@
-# Welcome to your Lovable project
+# Sprint DNB
 
-TODO: Document your project here
+Application de planification des révisions pour le Brevet des Collèges (DNB).
