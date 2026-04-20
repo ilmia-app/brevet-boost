@@ -44,6 +44,7 @@ interface BlocData {
   matiere: string;
   titre: string;
   duree_min: number | null;
+  duree_examen_min: number | null;
   consigne_eleve: string | null;
   objectifs_pedagogiques: string | null;
   methode_id: string | null;
