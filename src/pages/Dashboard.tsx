@@ -25,7 +25,6 @@ interface BlocExamen {
   id: string;
   matiere: string;
   titre: string;
-  duree_min: number | null;
   priorite: number | null;
   phase_min: number | null;
   type: string | null;
@@ -161,9 +160,8 @@ const Dashboard = () => {
     (async () => {
       const { data } = await supabase
         .from("blocs_examen")
-        .select("id, matiere, titre, duree_min, priorite, phase_min, type, theme")
-        .order("priorite", { ascending: true })
-        .order("duree_min", { ascending: false });
+        .select("id, matiere, titre, priorite, phase_min, type, theme")
+        .order("priorite", { ascending: true });
       if (data) setBlocs(data);
     })();
   }, []);

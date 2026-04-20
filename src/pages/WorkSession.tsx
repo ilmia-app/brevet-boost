@@ -43,8 +43,6 @@ interface BlocData {
   id: string;
   matiere: string;
   titre: string;
-  duree_min: number | null;
-  duree_examen_min: number | null;
   consigne_eleve: string | null;
   objectifs_pedagogiques: string | null;
   methode_id: string | null;
@@ -97,7 +95,7 @@ const WorkSession = () => {
       // 1. Bloc
       const { data: blocData, error: blocErr } = await supabase
         .from("blocs_examen")
-        .select("id, matiere, titre, duree_min, duree_examen_min, consigne_eleve, objectifs_pedagogiques, methode_id")
+        .select("id, matiere, titre, consigne_eleve, objectifs_pedagogiques, methode_id")
         .eq("id", blocId)
         .maybeSingle();
       if (blocErr) console.error("[WorkSession] bloc error:", blocErr);

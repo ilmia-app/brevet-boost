@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Play, Clock, CheckCircle2, Loader2, FileText } from "lucide-react";
+import { ArrowLeft, Play, CheckCircle2, Loader2, FileText } from "lucide-react";
 
 interface Exercice {
   id: string;
@@ -19,7 +19,6 @@ interface Bloc {
   id: string;
   titre: string;
   matiere: string;
-  duree_min: number | null;
 }
 
 interface SubjectGroup {
@@ -71,7 +70,7 @@ const Annales = () => {
           .from("exercices")
           .select("id, bloc_id, annale_source, annee, session")
           .not("annale_source", "is", null),
-        supabase.from("blocs_examen").select("id, titre, matiere, duree_min"),
+        supabase.from("blocs_examen").select("id, titre, matiere"),
       ]);
 
       const map = new Map<string, Bloc>();
