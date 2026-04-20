@@ -77,6 +77,9 @@ const Onboarding = () => {
       volume_quotidien: volumeMap[rhythm] || rhythm,
       retard_initial: retardMap[level] || level,
       matieres_faibles: subjects,
+      phase_actuelle: daysUntilExam !== null
+        ? (daysUntilExam <= 14 ? 3 : daysUntilExam <= 35 ? 2 : 1)
+        : 1,
     });
 
     if (error) {
