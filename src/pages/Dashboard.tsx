@@ -485,9 +485,9 @@ const Dashboard = () => {
             <CardContent className="p-5 flex flex-col flex-1 space-y-4">
               <div className="flex items-center gap-2">
                 <span className="text-xl">📄</span>
-                <h2 className="text-base font-semibold">S'entraîner sur une annale</h2>
+                <h2 className="text-base font-semibold">Passe un vrai sujet</h2>
               </div>
-              <p className="text-xs text-muted-foreground -mt-2">Travaille un sujet officiel du brevet</p>
+              <p className="text-xs text-muted-foreground -mt-2">Travaille un sujet officiel du brevet DNB</p>
 
               <div className="space-y-3 flex-1 flex flex-col justify-center">
                 <button
