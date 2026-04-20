@@ -72,7 +72,6 @@ const Dashboard = () => {
   const [endingDay, setEndingDay] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [yesterdayBlocIds, setYesterdayBlocIds] = useState<Set<string>>(new Set());
-  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [showWeeklyBanner, setShowWeeklyBanner] = useState(false);
 
   // Profile
