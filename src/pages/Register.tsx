@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Rocket, Loader2 } from "lucide-react";
+import { Rocket, Loader2, Mail } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const Register = () => {
@@ -12,6 +12,7 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,14 +41,37 @@ const Register = () => {
       return;
     }
 
-    toast({ title: "Compte créé !", description: "Tu peux maintenant configurer ton sprint." });
-    navigate("/onboarding");
+    toast({ title: "Compte créé !", description: "Vérifie ta boîte mail pour confirmer." });
+    setEmailSent(true);
     setLoading(false);
   };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-8">
+        {emailSent ? (
+          <>
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 rounded-2xl sprint-gradient mx-auto flex items-center justify-center shadow-lg">
+                <Mail className="w-8 h-8 text-primary-foreground" />
+              </div>
+              <h1 className="text-2xl font-bold">Vérifie ta boîte mail</h1>
+              <p className="text-muted-foreground text-sm">
+                Un email de confirmation t'a été envoyé. Clique sur le lien dans l'email pour activer ton compte et commencer ton sprint.
+              </p>
+              <p className="text-xs text-muted-foreground/80">
+                Tu n'as pas reçu l'email ? Vérifie tes spams ou contacte-nous.
+              </p>
+            </div>
+            <Button
+              onClick={() => navigate("/login")}
+              className="w-full h-12 sprint-gradient text-primary-foreground font-semibold rounded-xl hover:opacity-90 transition-opacity"
+            >
+              J'ai confirmé mon email
+            </Button>
+          </>
+        ) : (
+        <>
         <div className="text-center space-y-4">
           <div className="w-16 h-16 rounded-2xl sprint-gradient mx-auto flex items-center justify-center shadow-lg">
             <Rocket className="w-8 h-8 text-primary-foreground" />
@@ -96,6 +120,8 @@ const Register = () => {
             Se connecter
           </Link>
         </p>
+        </>
+        )}
       </div>
     </div>
   );
