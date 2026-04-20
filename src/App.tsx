@@ -36,6 +36,7 @@ const App = () => (
             <Route path="/work" element={<ProtectedRoute><WorkSession /></ProtectedRoute>} />
             <Route path="/progress" element={<ProtectedRoute><Progress /></ProtectedRoute>} />
             <Route path="/annales" element={<ProtectedRoute><Annales /></ProtectedRoute>} />
+            <Route path="/annales/:annaleSource" element={<ProtectedRoute><Annales /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

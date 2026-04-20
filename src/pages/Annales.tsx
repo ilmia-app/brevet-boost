@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
@@ -54,22 +54,29 @@ const inferMatiere = (blocId: string | null, blocsMap: Map<string, Bloc>): strin
 
 const Annales = () => {
   const navigate = useNavigate();
+  const { annaleSource: annaleSourceParam } = useParams();
   const [searchParams] = useSearchParams();
   const matiereFilter = searchParams.get("matiere");
+  const annaleSource = annaleSourceParam ? decodeURIComponent(annaleSourceParam) : null;
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [exercices, setExercices] = useState<Exercice[]>([]);
   const [blocsMap, setBlocsMap] = useState<Map<string, Bloc>>(new Map());
   const [completedBlocs, setCompletedBlocs] = useState<Set<string>>(new Set());
-  const [selected, setSelected] = useState<SubjectGroup | null>(null);
 
   useEffect(() => {
     const load = async () => {
+      let exercicesQuery = supabase
+        .from("exercices")
+        .select("id, bloc_id, annale_source, annee, session")
+        .not("annale_source", "is", null);
+
+      if (annaleSource) {
+        exercicesQuery = exercicesQuery.eq("annale_source", annaleSource).order("bloc_id");
+      }
+
       const [{ data: exData }, { data: blData }] = await Promise.all([
-        supabase
-          .from("exercices")
-          .select("id, bloc_id, annale_source, annee, session")
-          .not("annale_source", "is", null),
+        exercicesQuery,
         supabase.from("blocs_examen").select("id, titre, matiere"),
       ]);
 
@@ -89,7 +96,7 @@ const Annales = () => {
       setLoading(false);
     };
     load();
-  }, [user]);
+  }, [user, annaleSource]);
 
   const groups = useMemo<SubjectGroup[]>(() => {
     const m = new Map<string, SubjectGroup>();
@@ -143,24 +150,24 @@ const Annales = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => (selected ? setSelected(null) : navigate("/dashboard"))}
+            onClick={() => (annaleSource ? navigate("/annales") : navigate("/dashboard"))}
             aria-label="Retour"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1">
             <h1 className="text-2xl font-bold">
-              {selected ? "Sujet d'annale" : matiereFilter ? `Annales ${matiereFilter}` : "Annales du brevet"}
+              {annaleSource || (matiereFilter ? `Annales ${matiereFilter}` : "Annales du brevet")}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {selected
-                ? `${selected.annee} · ${selected.session}`
+              {annaleSource
+                ? "Exercices du sujet sélectionné"
                 : "Entraîne-toi sur de vrais sujets"}
             </p>
           </div>
         </div>
 
-        {!selected && (
+        {!annaleSource && (
           <div className="space-y-6">
             {grouped.length === 0 && (
               <p className="text-center text-muted-foreground text-sm py-12">
@@ -196,7 +203,7 @@ const Annales = () => {
                           <Button
                             size="sm"
                             className="h-8 text-xs rounded-lg"
-                            onClick={() => setSelected(g)}
+                            onClick={() => navigate(`/annales/${encodeURIComponent(g.annale_source)}`)}
                           >
                             Travailler ce sujet
                           </Button>
@@ -210,19 +217,19 @@ const Annales = () => {
           </div>
         )}
 
-        {selected && (
+        {annaleSource && (
           <div className="space-y-3">
             <p className="text-xs text-muted-foreground italic line-clamp-2">
-              {selected.annale_source}
+              {annaleSource}
             </p>
             {(() => {
               const filtered = exercices
                 .filter(
                   (e) =>
-                    e.annale_source === selected.annale_source,
+                    e.annale_source === annaleSource,
                 )
                 .sort((a, b) => (a.bloc_id || "").localeCompare(b.bloc_id || ""));
-              console.log("Filtre annale:", selected.annale_source);
+              console.log("Filtre annale:", annaleSource);
               console.log("Nb exercices:", filtered.length);
               if (filtered.length === 0) {
                 return (
@@ -260,7 +267,7 @@ const Annales = () => {
                           size="sm"
                           className="h-8 text-xs rounded-lg sprint-gradient text-primary-foreground"
                           onClick={() =>
-                            navigate(`/work?bloc_id=${encodeURIComponent(ex.bloc_id!)}`)
+                            navigate(`/work?bloc_id=${encodeURIComponent(ex.bloc_id!)}&annale_source=${encodeURIComponent(annaleSource)}`)
                           }
                         >
                           <Play className="w-3 h-3 mr-1" /> Commencer
