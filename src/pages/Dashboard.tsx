@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Play, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3, ChevronLeft, Sparkles, Settings, X } from "lucide-react";
+import { Play, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3, Sparkles, Settings, X } from "lucide-react";
 import EndOfDayModal from "@/components/dashboard/EndOfDayModal";
 
 interface ProfileData {
@@ -48,19 +48,6 @@ const SUBJECT_COLORS: Record<string, string> = {
   SVT: "bg-green-700 text-white",
   Techno: "bg-gray-500 text-white",
 };
-
-const SUBJECT_BTN: Record<string, string> = {
-  Maths: "border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-900",
-  Français: "border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-900",
-  Histoire: "border-orange-200 bg-orange-50 hover:bg-orange-100 text-orange-900",
-  Géographie: "border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-900",
-  EMC: "border-yellow-200 bg-yellow-50 hover:bg-yellow-100 text-yellow-900",
-  Physique: "border-red-200 bg-red-50 hover:bg-red-100 text-red-900",
-  SVT: "border-green-200 bg-green-50 hover:bg-green-100 text-green-900",
-  Techno: "border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-900",
-};
-
-const ALL_SUBJECTS = ["Maths", "Français", "Histoire", "Géographie", "EMC", "Physique", "SVT", "Techno"];
 
 const TASK_ICONS: Record<string, string> = {
   heavy: "🎯",
