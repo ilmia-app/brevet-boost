@@ -275,6 +275,37 @@ const WorkSession = () => {
     }
   }, [bloc, methodeSteps]);
 
+  const handleSwitchToAi = useCallback(async () => {
+    if (!bloc) return;
+    setSwitchAiLoading(true);
+    try {
+      const { data: gen, error: genErr } = await supabase.functions.invoke("generate-exercice", {
+        body: {
+          titre: bloc.titre,
+          matiere: bloc.matiere,
+          objectifs: bloc.objectifs_pedagogiques,
+          etapes: methodeSteps.join("\n"),
+        },
+      });
+      if (genErr) throw genErr;
+      setExercise({
+        id: `ai-${bloc.id}-${Date.now()}`,
+        enonce: gen?.enonce || "Impossible de générer l'énoncé.",
+        corrige: null,
+        annale_source: "Exercice généré par IA ✨",
+      });
+      setAiCorrigeCache(gen?.corrige || "");
+      // Met à jour l'URL pour refléter le mode IA (sans recharger)
+      const url = new URL(window.location.href);
+      url.searchParams.set("mode", "ai");
+      window.history.replaceState({}, "", url.toString());
+    } catch (e) {
+      console.error("[WorkSession] erreur bascule IA:", e);
+    } finally {
+      setSwitchAiLoading(false);
+    }
+  }, [bloc, methodeSteps]);
+
   if (!blocId) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
