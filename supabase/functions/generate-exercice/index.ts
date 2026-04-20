@@ -60,13 +60,22 @@ CONTRAINTES STRICTES :
 - L'exercice doit comporter 2 à 4 questions progressives (a, b, c…).
 - Le corrigé doit être **détaillé étape par étape**, pédagogique, comme l'expliquerait le meilleur prof : rappels de cours brefs, calculs détaillés, justifications.
 
+RÈGLES ABSOLUES DE MISE EN FORME DE L'ÉNONCÉ :
+- Ne jamais mettre en gras les réponses attendues
+- Ne jamais souligner les mots clés de la réponse
+- Ne jamais utiliser de markdown dans l'énoncé (pas de **, pas de __, pas de ##)
+- L'énoncé doit être du texte brut sans mise en forme
+- Les seules mises en forme autorisées dans l'énoncé sont les guillemets pour les citations et les tirets pour les listes de questions
+- Ne jamais donner d'indices visuels sur les réponses
+(Ces règles s'appliquent UNIQUEMENT au champ "enonce". Le champ "corrige" peut rester en markdown détaillé.)
+
 FORMAT DE RÉPONSE (JSON STRICT, rien d'autre) :
 {
-  "enonce": "markdown de l'énoncé...",
+  "enonce": "texte brut de l'énoncé, sans markdown...",
   "corrige": "markdown du corrigé détaillé..."
 }
 
-Le markdown peut utiliser : ### titres, **gras**, listes -, séparateurs ---, et formules $...$.`;
+Dans le corrigé uniquement, le markdown peut utiliser : ### titres, **gras**, listes -, séparateurs ---, et formules $...$.`;
 
     const { response } = await callAIGateway({
       apiKey: LOVABLE_API_KEY,
