@@ -36,6 +36,10 @@ const Onboarding = () => {
     setSubjects(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
   };
 
+  const daysUntilExam = examDate
+    ? Math.max(0, Math.ceil((new Date(examDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
+    : null;
+
   const canProceed = () => {
     switch (step) {
       case 1: return true;
