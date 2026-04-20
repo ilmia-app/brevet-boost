@@ -73,6 +73,7 @@ const WorkSession = () => {
   const [completed, setCompleted] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiCorrigeCache, setAiCorrigeCache] = useState<string>("");
+  const [regenLoading, setRegenLoading] = useState(false);
 
   // Timer
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -246,6 +247,33 @@ const WorkSession = () => {
     setTimeout(() => navigate(`/dashboard?task_completed=${blocId}`), 800);
   }, [blocId, navigate]);
 
+  const handleGenerateAlternative = useCallback(async () => {
+    if (!bloc) return;
+    setRegenLoading(true);
+    try {
+      const { data: gen, error: genErr } = await supabase.functions.invoke("generate-exercice", {
+        body: {
+          titre: bloc.titre,
+          matiere: bloc.matiere,
+          objectifs: bloc.objectifs_pedagogiques,
+          etapes: methodeSteps.join("\n"),
+        },
+      });
+      if (genErr) throw genErr;
+      setExercise({
+        id: `ai-${bloc.id}-${Date.now()}`,
+        enonce: gen?.enonce || "Impossible de générer l'énoncé.",
+        corrige: null,
+        annale_source: "Exercice généré par IA ✨",
+      });
+      setAiCorrigeCache(gen?.corrige || "");
+    } catch (e) {
+      console.error("[WorkSession] erreur génération alternative:", e);
+    } finally {
+      setRegenLoading(false);
+    }
+  }, [bloc, methodeSteps]);
+
   if (!blocId) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
@@ -341,6 +369,28 @@ const WorkSession = () => {
                 </CardContent>
               </Card>
             )}
+            <div className="flex items-center justify-center gap-2 pt-1">
+              <span className="text-xs text-muted-foreground">
+                Préfères-tu un exercice généré sur ce thème ?
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleGenerateAlternative}
+                disabled={regenLoading}
+                className="h-7 px-2 text-xs text-primary hover:text-primary hover:bg-primary/10 gap-1"
+              >
+                {regenLoading ? (
+                  <>
+                    <Loader2 className="w-3 h-3 animate-spin" /> Génération…
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3 h-3" /> Générer
+                  </>
+                )}
+              </Button>
+            </div>
             <p className="text-xs text-muted-foreground text-center italic px-2">
               Suis la méthode ci-dessous étape par étape pendant que tu travailles ✨
             </p>

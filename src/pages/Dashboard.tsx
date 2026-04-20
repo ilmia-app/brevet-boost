@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Play, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3, ChevronLeft, Sparkles, Settings, X } from "lucide-react";
+import { Play, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3, Sparkles, Settings, X } from "lucide-react";
 import EndOfDayModal from "@/components/dashboard/EndOfDayModal";
 
 interface ProfileData {
@@ -49,19 +49,6 @@ const SUBJECT_COLORS: Record<string, string> = {
   Techno: "bg-gray-500 text-white",
 };
 
-const SUBJECT_BTN: Record<string, string> = {
-  Maths: "border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-900",
-  Français: "border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-900",
-  Histoire: "border-orange-200 bg-orange-50 hover:bg-orange-100 text-orange-900",
-  Géographie: "border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-900",
-  EMC: "border-yellow-200 bg-yellow-50 hover:bg-yellow-100 text-yellow-900",
-  Physique: "border-red-200 bg-red-50 hover:bg-red-100 text-red-900",
-  SVT: "border-green-200 bg-green-50 hover:bg-green-100 text-green-900",
-  Techno: "border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-900",
-};
-
-const ALL_SUBJECTS = ["Maths", "Français", "Histoire", "Géographie", "EMC", "Physique", "SVT", "Techno"];
-
 const TASK_ICONS: Record<string, string> = {
   heavy: "🎯",
   medium: "⚡",
@@ -85,7 +72,6 @@ const Dashboard = () => {
   const [endingDay, setEndingDay] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [yesterdayBlocIds, setYesterdayBlocIds] = useState<Set<string>>(new Set());
-  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [showWeeklyBanner, setShowWeeklyBanner] = useState(false);
 
   // Profile
@@ -322,12 +308,6 @@ const Dashboard = () => {
 
   const allDone = dailyTasks.length > 0 && dailyTasks.every((t) => completedTasks.has(t.bloc.id));
 
-  // Blocs de la matière sélectionnée
-  const subjectBlocs = useMemo(() => {
-    if (!selectedSubject) return [];
-    return blocs.filter((b) => b.matiere.toLowerCase() === selectedSubject.toLowerCase());
-  }, [blocs, selectedSubject]);
-
   if (!profile || loading)
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -401,7 +381,7 @@ const Dashboard = () => {
         )}
 
         {/* 3 CARTES */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
           {/* CARTE 1 — Programme du jour */}
           <Card className="rounded-2xl flex flex-col">
             <CardContent className="p-5 flex flex-col flex-1 space-y-4">
@@ -500,66 +480,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* CARTE 2 — Choisir un thème (IA) */}
-          <Card className="rounded-2xl flex flex-col">
-            <CardContent className="p-5 flex flex-col flex-1 space-y-4">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">🧠</span>
-                <h2 className="text-base font-semibold">Choisir un thème</h2>
-              </div>
-              <p className="text-xs text-muted-foreground -mt-2 flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-primary" /> L'IA génère un exercice personnalisé
-              </p>
-
-              {!selectedSubject ? (
-                <div className="grid grid-cols-2 gap-2 flex-1 content-start">
-                  {ALL_SUBJECTS.map((subj) => (
-                    <button
-                      key={subj}
-                      onClick={() => setSelectedSubject(subj)}
-                      className={`rounded-lg border-2 p-2.5 text-xs font-semibold transition-colors ${SUBJECT_BTN[subj]}`}
-                    >
-                      {subj}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex-1 flex flex-col space-y-2 min-h-0">
-                  <button
-                    onClick={() => setSelectedSubject(null)}
-                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground self-start"
-                  >
-                    <ChevronLeft className="w-3 h-3" /> Retour aux matières
-                  </button>
-                  <div className="flex items-center gap-2">
-                    <Badge className={SUBJECT_COLORS[selectedSubject] || "bg-muted"}>{selectedSubject}</Badge>
-                    <span className="text-xs text-muted-foreground">{subjectBlocs.length} thèmes</span>
-                  </div>
-                  <div className="flex-1 overflow-y-auto space-y-1.5 max-h-[280px] pr-1">
-                    {subjectBlocs.map((bloc) => (
-                      <button
-                        key={bloc.id}
-                        onClick={() => navigate(`/work?bloc_id=${encodeURIComponent(bloc.id)}&mode=ai`)}
-                        className="w-full text-left rounded-lg border bg-card hover:border-primary hover:bg-accent/30 transition-all p-2.5"
-                      >
-                        <p className="text-xs font-medium leading-snug line-clamp-2">{bloc.titre}</p>
-                        {bloc.theme && (
-                          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{bloc.theme}</p>
-                        )}
-                      </button>
-                    ))}
-                    {subjectBlocs.length === 0 && (
-                      <p className="text-xs text-muted-foreground text-center py-4">
-                        Aucun thème disponible pour cette matière.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* CARTE 3 — Annales */}
+          {/* CARTE 2 — Annales */}
           <Card className="rounded-2xl flex flex-col">
             <CardContent className="p-5 flex flex-col flex-1 space-y-4">
               <div className="flex items-center gap-2">
