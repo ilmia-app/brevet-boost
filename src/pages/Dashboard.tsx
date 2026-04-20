@@ -55,6 +55,12 @@ const TASK_ICONS: Record<string, string> = {
   light: "🚀",
 };
 
+const TASK_LABELS: Record<string, string> = {
+  heavy: "Défi du jour",
+  medium: "Entraînement",
+  light: "Sprint final",
+};
+
 const DAYS = ["L", "M", "M", "J", "V", "S", "D"];
 
 const Dashboard = () => {
