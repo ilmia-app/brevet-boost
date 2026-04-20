@@ -16,6 +16,7 @@ import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ArrowLeft, Play, Pause, CheckCircle2, Sparkles, Loader2, RefreshCw } from "lucide-react";
+import ExerciseChart, { type GraphiqueData } from "@/components/work/ExerciseChart";
 
 const SUBJECT_COLORS: Record<string, string> = {
   Maths: "bg-blue-500 text-white",
@@ -53,6 +54,8 @@ interface Exercise {
   enonce: string | null;
   corrige: string | null;
   annale_source: string | null;
+  graphique?: GraphiqueData | null;
+  questions?: string[] | null;
 }
 
 const WorkSession = () => {
