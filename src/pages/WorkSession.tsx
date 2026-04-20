@@ -15,7 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { ArrowLeft, Play, Pause, CheckCircle2, ChevronRight, Sparkles, Loader2 } from "lucide-react";
+import { ArrowLeft, Play, Pause, CheckCircle2, ChevronRight, Sparkles, Loader2, RefreshCw } from "lucide-react";
 
 const SUBJECT_COLORS: Record<string, string> = {
   Maths: "bg-blue-500 text-white",
@@ -74,6 +74,7 @@ const WorkSession = () => {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiCorrigeCache, setAiCorrigeCache] = useState<string>("");
   const [regenLoading, setRegenLoading] = useState(false);
+  const [switchAiLoading, setSwitchAiLoading] = useState(false);
 
   // Timer
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
