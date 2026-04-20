@@ -480,66 +480,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* CARTE 2 — Choisir un thème (IA) */}
-          <Card className="rounded-2xl flex flex-col">
-            <CardContent className="p-5 flex flex-col flex-1 space-y-4">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">🧠</span>
-                <h2 className="text-base font-semibold">Choisir un thème</h2>
-              </div>
-              <p className="text-xs text-muted-foreground -mt-2 flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-primary" /> L'IA génère un exercice personnalisé
-              </p>
-
-              {!selectedSubject ? (
-                <div className="grid grid-cols-2 gap-2 flex-1 content-start">
-                  {ALL_SUBJECTS.map((subj) => (
-                    <button
-                      key={subj}
-                      onClick={() => setSelectedSubject(subj)}
-                      className={`rounded-lg border-2 p-2.5 text-xs font-semibold transition-colors ${SUBJECT_BTN[subj]}`}
-                    >
-                      {subj}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex-1 flex flex-col space-y-2 min-h-0">
-                  <button
-                    onClick={() => setSelectedSubject(null)}
-                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground self-start"
-                  >
-                    <ChevronLeft className="w-3 h-3" /> Retour aux matières
-                  </button>
-                  <div className="flex items-center gap-2">
-                    <Badge className={SUBJECT_COLORS[selectedSubject] || "bg-muted"}>{selectedSubject}</Badge>
-                    <span className="text-xs text-muted-foreground">{subjectBlocs.length} thèmes</span>
-                  </div>
-                  <div className="flex-1 overflow-y-auto space-y-1.5 max-h-[280px] pr-1">
-                    {subjectBlocs.map((bloc) => (
-                      <button
-                        key={bloc.id}
-                        onClick={() => navigate(`/work?bloc_id=${encodeURIComponent(bloc.id)}&mode=ai`)}
-                        className="w-full text-left rounded-lg border bg-card hover:border-primary hover:bg-accent/30 transition-all p-2.5"
-                      >
-                        <p className="text-xs font-medium leading-snug line-clamp-2">{bloc.titre}</p>
-                        {bloc.theme && (
-                          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{bloc.theme}</p>
-                        )}
-                      </button>
-                    ))}
-                    {subjectBlocs.length === 0 && (
-                      <p className="text-xs text-muted-foreground text-center py-4">
-                        Aucun thème disponible pour cette matière.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* CARTE 3 — Annales */}
+          {/* CARTE 2 — Annales */}
           <Card className="rounded-2xl flex flex-col">
             <CardContent className="p-5 flex flex-col flex-1 space-y-4">
               <div className="flex items-center gap-2">
