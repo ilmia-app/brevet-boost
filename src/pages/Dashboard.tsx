@@ -308,12 +308,6 @@ const Dashboard = () => {
 
   const allDone = dailyTasks.length > 0 && dailyTasks.every((t) => completedTasks.has(t.bloc.id));
 
-  // Blocs de la matière sélectionnée
-  const subjectBlocs = useMemo(() => {
-    if (!selectedSubject) return [];
-    return blocs.filter((b) => b.matiere.toLowerCase() === selectedSubject.toLowerCase());
-  }, [blocs, selectedSubject]);
-
   if (!profile || loading)
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
