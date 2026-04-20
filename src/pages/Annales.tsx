@@ -239,11 +239,7 @@ const Annales = () => {
                         <Badge variant="outline" className="shrink-0">À faire</Badge>
                       )}
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {bloc?.duree_min ? `${bloc.duree_min} min` : "Durée libre"}
-                      </span>
+                    <div className="flex items-center justify-end">
                       {ex.bloc_id && (
                         <Button
                           size="sm"
