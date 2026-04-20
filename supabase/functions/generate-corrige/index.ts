@@ -1,6 +1,5 @@
 // Edge function : génère un corrigé type via Lovable AI Gateway
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { callAIGateway } from "../_shared/aiGateway.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -37,9 +36,9 @@ Deno.serve(async (req) => {
 
     const { titre, objectifs, etapes, matiere } = await req.json();
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY non configurée" }), {
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ANTHROPIC_API_KEY) {
+      return new Response(JSON.stringify({ error: "ANTHROPIC_API_KEY non configurée" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -53,12 +52,21 @@ Méthode à suivre : ${etapes || "non précisée"}.
 Le corrigé doit montrer étape par étape comment appliquer la méthode correctement, avec un exemple chiffré concret.
 Sois précis, clair, niveau 3ème. Maximum 200 mots.`;
 
-    const { response } = await callAIGateway({
-      apiKey: LOVABLE_API_KEY,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: `Génère le corrigé type pour : ${titre}` },
-      ],
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: [
+          { role: "user", content: `Génère le corrigé type pour : ${titre}` },
+        ],
+      }),
     });
 
     if (response.status === 429) {
@@ -75,7 +83,7 @@ Sois précis, clair, niveau 3ème. Maximum 200 mots.`;
     }
     if (!response.ok) {
       const errText = await response.text();
-      console.error("AI gateway error:", response.status, errText);
+      console.error("Anthropic API error:", response.status, errText);
       return new Response(JSON.stringify({ error: "Erreur de génération" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -83,7 +91,7 @@ Sois précis, clair, niveau 3ème. Maximum 200 mots.`;
     }
 
     const data = await response.json();
-    const corrige = data.choices?.[0]?.message?.content || "Aucun corrigé généré.";
+    const corrige = data.content?.[0]?.text || "Aucun corrigé généré.";
 
     return new Response(JSON.stringify({ corrige }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
