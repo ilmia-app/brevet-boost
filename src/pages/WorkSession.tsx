@@ -470,8 +470,13 @@ const WorkSession = () => {
               {methodeSteps.map((step, i) => (
                 <Card
                   key={i}
+                  onClick={() => i !== currentStep && setCurrentStep(i)}
                   className={`transition-all ${
-                    i === currentStep ? "border-primary shadow-md" : i < currentStep ? "opacity-50" : "opacity-40"
+                    i === currentStep
+                      ? "border-primary shadow-md"
+                      : i < currentStep
+                      ? "opacity-60 cursor-pointer hover:opacity-90"
+                      : "opacity-40 cursor-pointer hover:opacity-70"
                   }`}
                 >
                   <CardContent className="p-3 flex items-start gap-3">
@@ -485,15 +490,6 @@ const WorkSession = () => {
                 </Card>
               ))}
             </div>
-            {currentStep < methodeSteps.length - 1 && (
-              <Button
-                onClick={() => setCurrentStep((s) => s + 1)}
-                variant="outline"
-                className="w-full gap-1"
-              >
-                Étape suivante <ChevronRight className="w-4 h-4" />
-              </Button>
-            )}
           </section>
         )}
 
