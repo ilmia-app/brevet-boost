@@ -193,39 +193,79 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="register" className="mt-6">
-            <form onSubmit={handleRegister} className="space-y-4">
-              <Input
-                type="email"
-                placeholder="Email"
-                value={regEmail}
-                onChange={(e) => setRegEmail(e.target.value)}
-                className="h-12 rounded-xl"
-                required
-              />
-              <Input
-                type="password"
-                placeholder="Mot de passe"
-                value={regPassword}
-                onChange={(e) => setRegPassword(e.target.value)}
-                className="h-12 rounded-xl"
-                required
-              />
-              <Input
-                type="password"
-                placeholder="Confirmer le mot de passe"
-                value={regConfirm}
-                onChange={(e) => setRegConfirm(e.target.value)}
-                className="h-12 rounded-xl"
-                required
-              />
-              <Button
-                type="submit"
-                disabled={regLoading}
-                className="w-full h-12 sprint-gradient text-primary-foreground font-semibold rounded-xl hover:opacity-90 transition-opacity"
-              >
-                {regLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Commencer mon sprint"}
-              </Button>
-            </form>
+            {isFull ? (
+              <div className="space-y-4">
+                <div className="rounded-xl bg-muted p-4 text-center space-y-1">
+                  <p className="font-semibold">Les {maxFree} places gratuites sont complètes 🎉</p>
+                  <p className="text-sm text-muted-foreground">
+                    Laisse ton email pour être prévenu de la prochaine ouverture.
+                  </p>
+                </div>
+                {waitlistDone ? (
+                  <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 text-center text-sm">
+                    Merci ! On te tient au courant 💌
+                  </div>
+                ) : (
+                  <form onSubmit={handleWaitlist} className="space-y-4">
+                    <Input
+                      type="email"
+                      placeholder="Ton email"
+                      value={waitlistEmail}
+                      onChange={(e) => setWaitlistEmail(e.target.value)}
+                      className="h-12 rounded-xl"
+                      maxLength={255}
+                      required
+                    />
+                    <Button
+                      type="submit"
+                      disabled={waitlistLoading}
+                      className="w-full h-12 sprint-gradient text-primary-foreground font-semibold rounded-xl hover:opacity-90 transition-opacity"
+                    >
+                      {waitlistLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Rejoindre la liste d'attente"}
+                    </Button>
+                  </form>
+                )}
+              </div>
+            ) : (
+              <form onSubmit={handleRegister} className="space-y-4">
+                <Input
+                  type="email"
+                  placeholder="Email"
+                  value={regEmail}
+                  onChange={(e) => setRegEmail(e.target.value)}
+                  className="h-12 rounded-xl"
+                  required
+                />
+                <Input
+                  type="password"
+                  placeholder="Mot de passe"
+                  value={regPassword}
+                  onChange={(e) => setRegPassword(e.target.value)}
+                  className="h-12 rounded-xl"
+                  required
+                />
+                <Input
+                  type="password"
+                  placeholder="Confirmer le mot de passe"
+                  value={regConfirm}
+                  onChange={(e) => setRegConfirm(e.target.value)}
+                  className="h-12 rounded-xl"
+                  required
+                />
+                <Button
+                  type="submit"
+                  disabled={regLoading}
+                  className="w-full h-12 sprint-gradient text-primary-foreground font-semibold rounded-xl hover:opacity-90 transition-opacity"
+                >
+                  {regLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Commencer mon sprint"}
+                </Button>
+                {remaining !== null && (
+                  <p className="text-center text-sm text-muted-foreground">
+                    {remaining}/{maxFree} places gratuites restantes
+                  </p>
+                )}
+              </form>
+            )}
           </TabsContent>
         </Tabs>
       </div>
