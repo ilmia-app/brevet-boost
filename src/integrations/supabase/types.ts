@@ -116,6 +116,21 @@ export type Database = {
           },
         ]
       }
+      config: {
+        Row: {
+          cle: string
+          valeur: string | null
+        }
+        Insert: {
+          cle: string
+          valeur?: string | null
+        }
+        Update: {
+          cle?: string
+          valeur?: string | null
+        }
+        Relationships: []
+      }
       exercices: {
         Row: {
           annale_source: string | null
@@ -355,6 +370,24 @@ export type Database = {
           retard_cumule_min?: number | null
           retard_initial?: string | null
           volume_quotidien?: string | null
+        }
+        Relationships: []
+      }
+      waitlist: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
         }
         Relationships: []
       }
