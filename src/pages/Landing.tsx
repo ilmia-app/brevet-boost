@@ -77,7 +77,7 @@ const Landing = () => {
         {/* Middle: 4 key points */}
         <div className="relative z-10 w-full grid grid-cols-2 gap-5 my-6">
           {[
-            { icon: Calendar, text: "Planning personnalisé sur 8 semaines" },
+            { icon: Calendar, text: "Planning personnalisé adapté à ta date d'examen" },
             { icon: BookOpen, text: "Méthode pas-à-pas sur chaque exercice" },
             { icon: FileText, text: "Vraies annales avec corrigés détaillés" },
             { icon: Sparkles, text: "Exercices générés par IA" },
@@ -126,29 +126,22 @@ const Landing = () => {
           >
             ✨ Accès gratuit — 20 places
           </div>
+          <p
+            className="mt-5 text-white/90 font-medium text-center"
+            style={{ fontSize: 20 }}
+          >
+            Par une maman CNED pour les familles CNED 💙
+          </p>
+          <p
+            className="mt-2 text-white/70 text-center"
+            style={{ fontSize: 18, letterSpacing: "0.3px" }}
+          >
+            ilmia-app.github.io/brevet-boost
+          </p>
         </div>
 
         {/* Bottom: URL + mention */}
         <div className="relative z-10 flex flex-col items-center text-center mt-4">
-          <div
-            className="rounded-xl border border-white/20"
-            style={{
-              padding: "12px 28px",
-              background: "rgba(255, 255, 255, 0.08)",
-              fontSize: 24,
-              fontWeight: 700,
-              letterSpacing: "0.5px",
-              color: "#a7f3d0",
-            }}
-          >
-            ilmia-app.github.io/brevet-boost
-          </div>
-          <p
-            className="mt-4 italic text-slate-400"
-            style={{ fontSize: 18 }}
-          >
-            Par une maman CNED, pour les familles CNED
-          </p>
         </div>
       </div>
     </div>
