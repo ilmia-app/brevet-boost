@@ -72,13 +72,15 @@ const Annales = () => {
         .select("id, bloc_id, annale_source, annee, session")
         .not("annale_source", "is", null);
 
-      if (annaleSource) {
-        exercicesQuery = exercicesQuery.eq("annale_source", annaleSource).order("bloc_id");
-      }
-
       const likePattern = getBlocIdLikePattern(matiereFilter);
+      if (annaleSource) {
+        exercicesQuery = exercicesQuery.eq("annale_source", annaleSource);
+      }
       if (likePattern) {
         exercicesQuery = exercicesQuery.like("bloc_id", likePattern);
+      }
+      if (annaleSource) {
+        exercicesQuery = exercicesQuery.order("bloc_id");
       }
 
       const [{ data: exData }, { data: blData }] = await Promise.all([
@@ -156,7 +158,11 @@ const Annales = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => (annaleSource ? navigate("/annales") : navigate("/dashboard"))}
+            onClick={() =>
+              annaleSource
+                ? navigate(`/annales${matiereFilter ? `?matiere=${encodeURIComponent(matiereFilter)}` : ""}`)
+                : navigate("/dashboard")
+            }
             aria-label="Retour"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -235,10 +241,13 @@ const Annales = () => {
               {annaleSource}
             </p>
             {(() => {
+              const likePattern = getBlocIdLikePattern(matiereFilter);
+              const blocPrefix = likePattern?.replace("%", "");
               const filtered = exercices
                 .filter(
                   (e) =>
-                    e.annale_source === annaleSource,
+                    e.annale_source === annaleSource &&
+                    (!blocPrefix || e.bloc_id?.startsWith(blocPrefix)),
                 )
                 .sort((a, b) => (a.bloc_id || "").localeCompare(b.bloc_id || ""));
               console.log("Filtre annale:", annaleSource);
