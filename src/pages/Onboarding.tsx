@@ -87,6 +87,13 @@ const Onboarding = () => {
       return;
     }
 
+    // Envoi de l'email de bienvenue (non bloquant)
+    if (user.email) {
+      supabase.functions.invoke("send-welcome-email", {
+        body: { email: user.email, prenom: name },
+      }).catch((err) => console.error("send-welcome-email failed", err));
+    }
+
     navigate("/dashboard");
   };
 
