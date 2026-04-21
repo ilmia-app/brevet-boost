@@ -15,7 +15,6 @@ import Progress from "./pages/Progress";
 import Annales from "./pages/Annales";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
-import Landing from "./pages/Landing";
 
 const queryClient = new QueryClient();
 
@@ -28,7 +27,6 @@ const App = () => (
         <BrowserRouter basename={import.meta.env.BASE_URL}>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/landing" element={<Landing />} />
             <Route path="/login" element={<Navigate to="/" replace />} />
             <Route path="/register" element={<Navigate to="/" replace />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
