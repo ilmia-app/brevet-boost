@@ -21,6 +21,32 @@ const Index = () => {
   const [regConfirm, setRegConfirm] = useState("");
   const [regLoading, setRegLoading] = useState(false);
 
+  const [maxFree, setMaxFree] = useState<number>(20);
+  const [userCount, setUserCount] = useState<number | null>(null);
+  const [waitlistEmail, setWaitlistEmail] = useState("");
+  const [waitlistLoading, setWaitlistLoading] = useState(false);
+  const [waitlistDone, setWaitlistDone] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { count } = await supabase
+        .from("users")
+        .select("*", { count: "exact", head: true });
+      setUserCount(count ?? 0);
+
+      const { data: cfg } = await (supabase as any)
+        .from("config")
+        .select("valeur")
+        .eq("cle", "max_inscriptions_gratuites")
+        .maybeSingle();
+      const parsed = parseInt(cfg?.valeur ?? "20", 10);
+      if (!Number.isNaN(parsed)) setMaxFree(parsed);
+    })();
+  }, []);
+
+  const isFull = userCount !== null && userCount >= maxFree;
+  const remaining = userCount === null ? null : Math.max(0, maxFree - userCount);
+
   useEffect(() => {
     if (authLoading || !user) return;
     (async () => {
@@ -48,6 +74,19 @@ const Index = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Re-vérification côté client du nombre de places
+    const { count } = await supabase
+      .from("users")
+      .select("*", { count: "exact", head: true });
+    if ((count ?? 0) >= maxFree) {
+      setUserCount(count ?? 0);
+      toast({
+        title: "Places complètes",
+        description: "Les 20 places gratuites sont prises. Rejoins la liste d'attente.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (regPassword !== regConfirm) {
       toast({ title: "Erreur", description: "Les mots de passe ne correspondent pas.", variant: "destructive" });
       return;
@@ -70,6 +109,24 @@ const Index = () => {
     toast({ title: "Compte créé !", description: "Bienvenue dans ton sprint." });
     setRegLoading(false);
     navigate("/onboarding");
+  };
+
+  const handleWaitlist = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const email = waitlistEmail.trim().toLowerCase();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast({ title: "Erreur", description: "Email invalide.", variant: "destructive" });
+      return;
+    }
+    setWaitlistLoading(true);
+    const { error } = await (supabase as any).from("waitlist").insert({ email });
+    setWaitlistLoading(false);
+    if (error && !error.message?.toLowerCase().includes("duplicate")) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      return;
+    }
+    setWaitlistDone(true);
+    toast({ title: "Inscrit ✨", description: "On te prévient dès la prochaine ouverture." });
   };
 
   if (authLoading || user) {
