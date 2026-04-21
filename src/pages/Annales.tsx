@@ -75,6 +75,19 @@ const Annales = () => {
         exercicesQuery = exercicesQuery.eq("annale_source", annaleSource).order("bloc_id");
       }
 
+      const matierePrefixMap: Record<string, string> = {
+        maths: "MAT",
+        français: "FRA",
+        francais: "FRA",
+        histoire: "HIS",
+      };
+      if (matiereFilter) {
+        const prefix = matierePrefixMap[matiereFilter.toLowerCase()];
+        if (prefix) {
+          exercicesQuery = exercicesQuery.like("bloc_id", `${prefix}%`);
+        }
+      }
+
       const [{ data: exData }, { data: blData }] = await Promise.all([
         exercicesQuery,
         supabase.from("blocs_examen").select("id, titre, matiere"),
@@ -96,7 +109,7 @@ const Annales = () => {
       setLoading(false);
     };
     load();
-  }, [user, annaleSource]);
+  }, [user, annaleSource, matiereFilter]);
 
   const groups = useMemo<SubjectGroup[]>(() => {
     const m = new Map<string, SubjectGroup>();
