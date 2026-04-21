@@ -490,7 +490,9 @@ const WorkSession = () => {
                   <span className="text-lg">📖</span> Prends ton exercice
                 </h2>
                 <p className="text-sm text-foreground/80 leading-relaxed">
-                  Choisis un exercice de ton choix sur ce thème puis suis la méthode ci-dessous étape par étape pendant que tu travailles.
+                  {isAiMode
+                    ? "Prends un exercice de ton choix sur ce thème, puis suis la méthode ci-dessous étape par étape pendant que tu travailles."
+                    : "Choisis un exercice de ton choix sur ce thème puis suis la méthode ci-dessous étape par étape pendant que tu travailles."}
                 </p>
               </CardContent>
             </Card>
