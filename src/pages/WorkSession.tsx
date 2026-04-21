@@ -140,17 +140,22 @@ const WorkSession = () => {
           });
           if (genErr) throw genErr;
           if (cancelled) return;
-          setExercise({
-            id: `ai-${blocData.id}`,
-            enonce: gen?.enonce || "Impossible de générer l'énoncé.",
-            corrige: null,
-            annale_source: "Exercice généré par IA ✨",
-            graphique: gen?.graphique || null,
-            questions: gen?.questions || null,
-          });
-          setAiCorrigeCache(gen?.corrige || "");
+          const enonceOk = gen?.enonce && gen.enonce !== "Impossible de générer l'énoncé.";
+          if (enonceOk) {
+            setExercise({
+              id: `ai-${blocData.id}`,
+              enonce: gen.enonce,
+              corrige: null,
+              annale_source: "Exercice généré par IA ✨",
+              graphique: gen?.graphique || null,
+              questions: gen?.questions || null,
+            });
+            setAiCorrigeCache(gen?.corrige || "");
+          }
+          // Sinon : on laisse exercise à null → la carte "Prends un exercice de ton choix" s'affiche
         } catch (e) {
           console.error("[WorkSession] erreur génération IA:", e);
+          // exercise reste à null → fallback "Prends un exercice de ton choix"
         } finally {
           if (!cancelled) setAiLoading(false);
         }
