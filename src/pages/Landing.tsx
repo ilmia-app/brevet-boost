@@ -22,7 +22,7 @@ const Landing = () => {
         {/* Title */}
         <h1 className="text-5xl font-extrabold tracking-tight mb-2">Sprint DNB</h1>
         <p className="text-base text-blue-100/90 mb-8">
-          Le coach brevet des élèves en IEF
+          Le coach brevet des élèves du CNED
         </p>
 
         {/* Features grid 2x2 */}
@@ -49,8 +49,8 @@ const Landing = () => {
           <div className="text-base font-bold leading-snug">
             🎁 Gratuit jusqu'au 30 avril 2026
           </div>
-          <div className="text-[11px] font-semibold opacity-95 mt-0.5">
-            (INSCRIPTION SANS CARTE BANCAIRE)
+          <div className="text-xs font-normal text-white/95 mt-1">
+            Inscription sans carte bancaire
           </div>
           <div className="text-sm font-semibold mt-1.5">
             puis 9,90€ jusqu'au brevet !
