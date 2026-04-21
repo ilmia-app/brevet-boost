@@ -158,11 +158,7 @@ const Annales = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() =>
-              annaleSource
-                ? navigate(`/annales${matiereFilter ? `?matiere=${encodeURIComponent(matiereFilter)}` : ""}`)
-                : navigate("/dashboard")
-            }
+            onClick={() => navigate(-1)}
             aria-label="Retour"
           >
             <ArrowLeft className="w-5 h-5" />

@@ -170,7 +170,7 @@ const Profile = () => {
     <div className="min-h-screen bg-background pb-12">
       <div className="max-w-2xl mx-auto px-4 pt-6 space-y-6">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} aria-label="Retour">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label="Retour">
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="text-2xl font-bold">Mon profil</h1>
