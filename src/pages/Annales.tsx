@@ -109,7 +109,7 @@ const Annales = () => {
       setLoading(false);
     };
     load();
-  }, [user, annaleSource]);
+  }, [user, annaleSource, matiereFilter]);
 
   const groups = useMemo<SubjectGroup[]>(() => {
     const m = new Map<string, SubjectGroup>();
