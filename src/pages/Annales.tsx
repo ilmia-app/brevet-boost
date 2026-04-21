@@ -209,7 +209,13 @@ const Annales = () => {
                           <Button
                             size="sm"
                             className="h-8 text-xs rounded-lg"
-                            onClick={() => navigate(`/annales/${encodeURIComponent(g.annale_source)}`)}
+                            onClick={() =>
+                              navigate(
+                                `/annales/${encodeURIComponent(g.annale_source)}${
+                                  matiereFilter ? `?matiere=${encodeURIComponent(matiereFilter)}` : ""
+                                }`,
+                              )
+                            }
                           >
                             Travailler ce sujet
                           </Button>
