@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Play, CheckCircle2, Loader2, FileText } from "lucide-react";
+import { getBlocIdLikePattern } from "@/lib/annales";
 
 interface Exercice {
   id: string;
@@ -75,17 +76,9 @@ const Annales = () => {
         exercicesQuery = exercicesQuery.eq("annale_source", annaleSource).order("bloc_id");
       }
 
-      const matierePrefixMap: Record<string, string> = {
-        maths: "MAT",
-        français: "FRA",
-        francais: "FRA",
-        histoire: "HIS",
-      };
-      if (matiereFilter) {
-        const prefix = matierePrefixMap[matiereFilter.toLowerCase()];
-        if (prefix) {
-          exercicesQuery = exercicesQuery.like("bloc_id", `${prefix}%`);
-        }
+      const likePattern = getBlocIdLikePattern(matiereFilter);
+      if (likePattern) {
+        exercicesQuery = exercicesQuery.like("bloc_id", likePattern);
       }
 
       const [{ data: exData }, { data: blData }] = await Promise.all([
