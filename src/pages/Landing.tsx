@@ -57,10 +57,10 @@ const Landing = () => {
           </div>
         </div>
 
-        {/* Dark info box */}
-        <div className="w-full rounded-2xl bg-white/5 border border-white/10 px-4 py-3 mb-3 text-xs text-blue-100/85 leading-relaxed">
-          Un paiement unique à partir du 1er Avril 2026 • Un accès illimité jusqu'au 01 juillet 2026
-        </div>
+        {/* Discrete payment info */}
+        <p className="w-full text-xs text-white/80 mb-3 leading-relaxed">
+          Paiement unique de 9,90€ · Accès jusqu'au 01 juillet 2026
+        </p>
 
         {/* Green highlight */}
         <div className="text-emerald-300 font-bold text-sm mb-6">
