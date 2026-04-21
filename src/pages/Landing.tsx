@@ -77,7 +77,7 @@ const Landing = () => {
         {/* Middle: 4 key points */}
         <div className="relative z-10 w-full grid grid-cols-2 gap-5 my-6">
           {[
-            { icon: Calendar, text: "Planning personnalisé sur 8 semaines" },
+            { icon: Calendar, text: "Planning personnalisé adapté à ta date d'examen" },
             { icon: BookOpen, text: "Méthode pas-à-pas sur chaque exercice" },
             { icon: FileText, text: "Vraies annales avec corrigés détaillés" },
             { icon: Sparkles, text: "Exercices générés par IA" },
