@@ -179,9 +179,7 @@ const Annales = () => {
           <div className="space-y-6">
             {grouped.length === 0 && (
               <p className="text-center text-muted-foreground text-sm py-12">
-                {matiereFilter
-                  ? "Annales disponibles prochainement 📚"
-                  : "Annales disponibles prochainement 📚"}
+                Aucune annale disponible pour le moment.
               </p>
             )}
             {grouped.map(([matiere, list]) => (
