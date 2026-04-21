@@ -6,7 +6,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
-import Landing from "./pages/Landing";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
@@ -28,7 +27,6 @@ const App = () => (
         <BrowserRouter basename={import.meta.env.BASE_URL}>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/landing" element={<Landing />} />
             <Route path="/login" element={<Navigate to="/" replace />} />
             <Route path="/register" element={<Navigate to="/" replace />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />

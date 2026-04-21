@@ -21,32 +21,6 @@ const Index = () => {
   const [regConfirm, setRegConfirm] = useState("");
   const [regLoading, setRegLoading] = useState(false);
 
-  const [maxFree, setMaxFree] = useState<number>(20);
-  const [userCount, setUserCount] = useState<number | null>(null);
-  const [waitlistEmail, setWaitlistEmail] = useState("");
-  const [waitlistLoading, setWaitlistLoading] = useState(false);
-  const [waitlistDone, setWaitlistDone] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      const { count } = await supabase
-        .from("users")
-        .select("*", { count: "exact", head: true });
-      setUserCount(count ?? 0);
-
-      const { data: cfg } = await (supabase as any)
-        .from("config")
-        .select("valeur")
-        .eq("cle", "max_inscriptions_gratuites")
-        .maybeSingle();
-      const parsed = parseInt(cfg?.valeur ?? "20", 10);
-      if (!Number.isNaN(parsed)) setMaxFree(parsed);
-    })();
-  }, []);
-
-  const isFull = userCount !== null && userCount >= maxFree;
-  const remaining = userCount === null ? null : Math.max(0, maxFree - userCount);
-
   useEffect(() => {
     if (authLoading || !user) return;
     (async () => {
@@ -74,19 +48,6 @@ const Index = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Re-vérification côté client du nombre de places
-    const { count } = await supabase
-      .from("users")
-      .select("*", { count: "exact", head: true });
-    if ((count ?? 0) >= maxFree) {
-      setUserCount(count ?? 0);
-      toast({
-        title: "Places complètes",
-        description: "Les 20 places gratuites sont prises. Rejoins la liste d'attente.",
-        variant: "destructive",
-      });
-      return;
-    }
     if (regPassword !== regConfirm) {
       toast({ title: "Erreur", description: "Les mots de passe ne correspondent pas.", variant: "destructive" });
       return;
@@ -109,24 +70,6 @@ const Index = () => {
     toast({ title: "Compte créé !", description: "Bienvenue dans ton sprint." });
     setRegLoading(false);
     navigate("/onboarding");
-  };
-
-  const handleWaitlist = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const email = waitlistEmail.trim().toLowerCase();
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      toast({ title: "Erreur", description: "Email invalide.", variant: "destructive" });
-      return;
-    }
-    setWaitlistLoading(true);
-    const { error } = await (supabase as any).from("waitlist").insert({ email });
-    setWaitlistLoading(false);
-    if (error && !error.message?.toLowerCase().includes("duplicate")) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
-      return;
-    }
-    setWaitlistDone(true);
-    toast({ title: "Inscrit ✨", description: "On te prévient dès la prochaine ouverture." });
   };
 
   if (authLoading || user) {
@@ -193,79 +136,39 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="register" className="mt-6">
-            {isFull ? (
-              <div className="space-y-4">
-                <div className="rounded-xl bg-muted p-4 text-center space-y-1">
-                  <p className="font-semibold">Les {maxFree} places gratuites sont complètes 🎉</p>
-                  <p className="text-sm text-muted-foreground">
-                    Laisse ton email pour être prévenu de la prochaine ouverture.
-                  </p>
-                </div>
-                {waitlistDone ? (
-                  <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 text-center text-sm">
-                    Merci ! On te tient au courant 💌
-                  </div>
-                ) : (
-                  <form onSubmit={handleWaitlist} className="space-y-4">
-                    <Input
-                      type="email"
-                      placeholder="Ton email"
-                      value={waitlistEmail}
-                      onChange={(e) => setWaitlistEmail(e.target.value)}
-                      className="h-12 rounded-xl"
-                      maxLength={255}
-                      required
-                    />
-                    <Button
-                      type="submit"
-                      disabled={waitlistLoading}
-                      className="w-full h-12 sprint-gradient text-primary-foreground font-semibold rounded-xl hover:opacity-90 transition-opacity"
-                    >
-                      {waitlistLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Rejoindre la liste d'attente"}
-                    </Button>
-                  </form>
-                )}
-              </div>
-            ) : (
-              <form onSubmit={handleRegister} className="space-y-4">
-                <Input
-                  type="email"
-                  placeholder="Email"
-                  value={regEmail}
-                  onChange={(e) => setRegEmail(e.target.value)}
-                  className="h-12 rounded-xl"
-                  required
-                />
-                <Input
-                  type="password"
-                  placeholder="Mot de passe"
-                  value={regPassword}
-                  onChange={(e) => setRegPassword(e.target.value)}
-                  className="h-12 rounded-xl"
-                  required
-                />
-                <Input
-                  type="password"
-                  placeholder="Confirmer le mot de passe"
-                  value={regConfirm}
-                  onChange={(e) => setRegConfirm(e.target.value)}
-                  className="h-12 rounded-xl"
-                  required
-                />
-                <Button
-                  type="submit"
-                  disabled={regLoading}
-                  className="w-full h-12 sprint-gradient text-primary-foreground font-semibold rounded-xl hover:opacity-90 transition-opacity"
-                >
-                  {regLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Commencer mon sprint"}
-                </Button>
-                {remaining !== null && (
-                  <p className="text-center text-sm text-muted-foreground">
-                    {remaining}/{maxFree} places gratuites restantes
-                  </p>
-                )}
-              </form>
-            )}
+            <form onSubmit={handleRegister} className="space-y-4">
+              <Input
+                type="email"
+                placeholder="Email"
+                value={regEmail}
+                onChange={(e) => setRegEmail(e.target.value)}
+                className="h-12 rounded-xl"
+                required
+              />
+              <Input
+                type="password"
+                placeholder="Mot de passe"
+                value={regPassword}
+                onChange={(e) => setRegPassword(e.target.value)}
+                className="h-12 rounded-xl"
+                required
+              />
+              <Input
+                type="password"
+                placeholder="Confirmer le mot de passe"
+                value={regConfirm}
+                onChange={(e) => setRegConfirm(e.target.value)}
+                className="h-12 rounded-xl"
+                required
+              />
+              <Button
+                type="submit"
+                disabled={regLoading}
+                className="w-full h-12 sprint-gradient text-primary-foreground font-semibold rounded-xl hover:opacity-90 transition-opacity"
+              >
+                {regLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Commencer mon sprint"}
+              </Button>
+            </form>
           </TabsContent>
         </Tabs>
       </div>
