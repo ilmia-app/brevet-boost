@@ -600,28 +600,28 @@ const Dashboard = () => {
                   </div>
                 </button>
 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-2">
                   <button
                     onClick={() => navigate("/annales?matiere=Maths")}
-                    className="rounded-lg border border-blue-200 bg-blue-50 p-2 text-xs font-medium text-blue-900 hover:bg-blue-100 transition-colors"
+                    className="w-full rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm font-medium text-blue-900 hover:bg-blue-100 transition-colors text-left"
                   >
                     Maths
                   </button>
                   <button
                     onClick={() => navigate("/annales?matiere=Français")}
-                    className="rounded-lg border border-purple-200 bg-purple-50 p-2 text-xs font-medium text-purple-900 hover:bg-purple-100 transition-colors"
+                    className="w-full rounded-lg border border-purple-200 bg-purple-50 p-3 text-sm font-medium text-purple-900 hover:bg-purple-100 transition-colors text-left"
                   >
                     Français
                   </button>
                   <button
                     onClick={() => navigate("/annales?matiere=Histoire-Géo")}
-                    className="rounded-lg border border-orange-200 bg-orange-50 p-2 text-xs font-medium text-orange-900 hover:bg-orange-100 transition-colors"
+                    className="w-full rounded-lg border border-orange-200 bg-orange-50 p-3 text-sm font-medium text-orange-900 hover:bg-orange-100 transition-colors text-left"
                   >
                     Histoire-Géo
                   </button>
                   <button
                     onClick={() => navigate("/annales?matiere=Sciences")}
-                    className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs font-medium text-red-900 hover:bg-red-100 transition-colors"
+                    className="w-full rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-900 hover:bg-red-100 transition-colors text-left"
                   >
                     Sciences
                   </button>
