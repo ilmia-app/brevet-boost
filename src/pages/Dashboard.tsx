@@ -66,6 +66,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
   const [blocs, setBlocs] = useState<BlocExamen[]>([]);
   const [feedback, setFeedback] = useState<MessageFeedback | null>(null);
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
@@ -81,53 +82,76 @@ const Dashboard = () => {
 
   // Profile
   useEffect(() => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-    (async () => {
-      const { data, error } = await supabase
-        .from("users")
-        .select("id, prenom, date_examen, volume_quotidien, retard_initial, matieres_faibles, mode_actuel, phase_actuelle, derniere_modif_priorites")
-        .eq("id", user.id)
-        .maybeSingle();
-      if (error) {
-        console.error("[Dashboard] erreur chargement profil:", error);
-        setLoading(false);
+    let isActive = true;
+
+    const loadProfile = async () => {
+      if (!user) {
+        navigate("/", { replace: true });
+        if (isActive) setLoading(false);
         return;
       }
-      if (!data) {
-        setLoading(false);
-        navigate("/onboarding");
-        return;
-      }
-      setProfile({
-        id: data.id,
-        name: data.prenom || "",
-        examDate: data.date_examen || "",
-        rhythm: data.volume_quotidien || "",
-        level: data.retard_initial || "",
-        subjects: data.matieres_faibles || [],
-        modeActuel: data.mode_actuel || "normal",
-        phaseActuelle: data.phase_actuelle || 1,
-      });
 
-      // Bandeau hebdo phase 2 : lundi + non modifié cette semaine + non dismissé aujourd'hui
-      const lastModif = (data as any).derniere_modif_priorites as string | null;
-      const phase = data.phase_actuelle || 1;
-      const today = new Date();
-      const isMonday = today.getDay() === 1;
-      const monday = new Date(today);
-      monday.setHours(0, 0, 0, 0);
-      const modifiedThisWeek = lastModif ? new Date(lastModif) >= monday : false;
-      const dismissedKey = `weekly-banner-dismissed-${today.toISOString().split("T")[0]}`;
-      const dismissed = localStorage.getItem(dismissedKey) === "1";
-      if (phase === 2 && isMonday && !modifiedThisWeek && !dismissed) {
-        setShowWeeklyBanner(true);
+      if (isActive) {
+        setLoading(true);
+        setProfileError(null);
       }
 
-      setLoading(false);
-    })();
+      try {
+        const { data, error } = await supabase
+          .from("users")
+          .select("id, prenom, date_examen, volume_quotidien, retard_initial, matieres_faibles, mode_actuel, phase_actuelle, derniere_modif_priorites")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error("[Dashboard] erreur chargement profil:", error);
+          throw error;
+        }
+
+        if (!data) {
+          navigate("/onboarding", { replace: true });
+          return;
+        }
+
+        if (!isActive) return;
+
+        setProfile({
+          id: data.id,
+          name: data.prenom || "",
+          examDate: data.date_examen || "",
+          rhythm: data.volume_quotidien || "",
+          level: data.retard_initial || "",
+          subjects: data.matieres_faibles || [],
+          modeActuel: data.mode_actuel || "normal",
+          phaseActuelle: data.phase_actuelle || 1,
+        });
+
+        const lastModif = data.derniere_modif_priorites;
+        const phase = data.phase_actuelle || 1;
+        const today = new Date();
+        const isMonday = today.getDay() === 1;
+        const monday = new Date(today);
+        monday.setHours(0, 0, 0, 0);
+        const modifiedThisWeek = lastModif ? new Date(lastModif) >= monday : false;
+        const dismissedKey = `weekly-banner-dismissed-${today.toISOString().split("T")[0]}`;
+        const dismissed = localStorage.getItem(dismissedKey) === "1";
+
+        setShowWeeklyBanner(phase === 2 && isMonday && !modifiedThisWeek && !dismissed);
+      } catch (error) {
+        console.error("[Dashboard] exception inattendue:", error);
+        if (isActive) {
+          setProfileError("Impossible de charger ton planning.");
+        }
+      } finally {
+        if (isActive) setLoading(false);
+      }
+    };
+
+    loadProfile();
+
+    return () => {
+      isActive = false;
+    };
   }, [user, navigate]);
 
   // Today's completions
@@ -349,7 +373,7 @@ const Dashboard = () => {
 
   const allDone = dailyTasks.length > 0 && dailyTasks.every((t) => completedTasks.has(t.bloc.id));
 
-  if (!profile || loading)
+  if (loading)
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-3">
@@ -358,6 +382,23 @@ const Dashboard = () => {
         </div>
       </div>
     );
+
+  if (profileError)
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="w-full max-w-sm text-center space-y-4">
+          <div className="space-y-2">
+            <h1 className="text-xl font-semibold">Impossible de charger ton planning</h1>
+            <p className="text-sm text-muted-foreground">La connexion à Supabase répond, mais le profil n’a pas pu être chargé correctement.</p>
+          </div>
+          <Button onClick={() => window.location.reload()} className="w-full sprint-gradient text-primary-foreground">
+            Réessayer
+          </Button>
+        </div>
+      </div>
+    );
+
+  if (!profile) return null;
 
   const completedCount = dailyTasks.filter((t) => completedTasks.has(t.bloc.id)).length;
 
