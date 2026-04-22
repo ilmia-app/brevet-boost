@@ -63,12 +63,14 @@ const Annales = () => {
         .select("id, bloc_id, annale_source, annee, session")
         .not("annale_source", "is", null);
 
-      const likePattern = getBlocIdLikePattern(matiereFilter);
+      const prefixes = getBlocPrefixesForMatiere(matiereFilter);
       if (annaleSource) {
         exercicesQuery = exercicesQuery.eq("annale_source", annaleSource);
       }
-      if (likePattern) {
-        exercicesQuery = exercicesQuery.like("bloc_id", likePattern);
+      if (prefixes && prefixes.length > 0) {
+        exercicesQuery = exercicesQuery.or(
+          prefixes.map((p) => `bloc_id.like.${p}%`).join(","),
+        );
       }
       if (annaleSource) {
         exercicesQuery = exercicesQuery.order("bloc_id");
@@ -229,13 +231,11 @@ const Annales = () => {
               {annaleSource}
             </p>
             {(() => {
-              const likePattern = getBlocIdLikePattern(matiereFilter);
-              const blocPrefix = likePattern?.replace("%", "");
               const filtered = exercices
                 .filter(
                   (e) =>
                     e.annale_source === annaleSource &&
-                    (!blocPrefix || e.bloc_id?.startsWith(blocPrefix)),
+                    blocMatchesMatiere(e.bloc_id, matiereFilter),
                 )
                 .sort((a, b) => (a.bloc_id || "").localeCompare(b.bloc_id || ""));
               console.log("Filtre annale:", annaleSource);
