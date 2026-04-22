@@ -588,30 +588,44 @@ const Dashboard = () => {
 
               <div className="space-y-3 flex-1 flex flex-col justify-center">
                 <button
-                  onClick={() => navigate("/annales?matiere=Maths")}
-                  className="w-full text-left rounded-xl border border-blue-200 bg-blue-50 p-4 hover:bg-blue-100 transition-colors"
+                  onClick={() => navigate("/annales")}
+                  className="w-full text-left rounded-xl border border-primary/20 bg-accent/30 p-4 hover:bg-accent/50 transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-semibold text-blue-900">Annales Maths</p>
-                      <p className="text-xs text-blue-700/80 mt-0.5">Sujets officiels DNB</p>
+                      <p className="font-semibold text-foreground">Toutes les annales</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Tous les sujets officiels DNB</p>
                     </div>
-                    <Badge className="bg-blue-500 text-white">Maths</Badge>
+                    <Badge className="sprint-gradient text-primary-foreground">Tout</Badge>
                   </div>
                 </button>
 
-                <button
-                  onClick={() => navigate("/annales?matiere=Français")}
-                  className="w-full text-left rounded-xl border border-purple-200 bg-purple-50 p-4 hover:bg-purple-100 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-purple-900">Annales Français</p>
-                      <p className="text-xs text-purple-700/80 mt-0.5">Sujets officiels DNB</p>
-                    </div>
-                    <Badge className="bg-purple-500 text-white">Français</Badge>
-                  </div>
-                </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => navigate("/annales?matiere=Maths")}
+                    className="rounded-lg border border-blue-200 bg-blue-50 p-2 text-xs font-medium text-blue-900 hover:bg-blue-100 transition-colors"
+                  >
+                    Maths
+                  </button>
+                  <button
+                    onClick={() => navigate("/annales?matiere=Français")}
+                    className="rounded-lg border border-purple-200 bg-purple-50 p-2 text-xs font-medium text-purple-900 hover:bg-purple-100 transition-colors"
+                  >
+                    Français
+                  </button>
+                  <button
+                    onClick={() => navigate("/annales?matiere=Histoire")}
+                    className="rounded-lg border border-orange-200 bg-orange-50 p-2 text-xs font-medium text-orange-900 hover:bg-orange-100 transition-colors"
+                  >
+                    Histoire-Géo
+                  </button>
+                  <button
+                    onClick={() => navigate("/annales?matiere=Physique")}
+                    className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs font-medium text-red-900 hover:bg-red-100 transition-colors"
+                  >
+                    Sciences
+                  </button>
+                </div>
               </div>
 
               {currentPhase === 3 && (
