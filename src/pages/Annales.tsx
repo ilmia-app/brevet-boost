@@ -260,11 +260,11 @@ const Annales = () => {
                           <Badge variant="outline" className="shrink-0 text-[10px]">À faire</Badge>
                         )}
                       </div>
-                      {ex.enonce && (
-                        <p className="text-sm leading-relaxed text-foreground/85 whitespace-pre-line">
-                          {ex.enonce}
-                        </p>
-                      )}
+                      <p className="text-sm leading-relaxed text-foreground/85 whitespace-pre-wrap break-words">
+                        {ex.enonce && ex.enonce.trim().length > 0
+                          ? ex.enonce
+                          : "Énoncé non disponible pour cette question."}
+                      </p>
                       {ex.bloc_id && (
                         <Button
                           size="sm"
