@@ -361,19 +361,7 @@ const WorkSession = () => {
   return (
     <div className="min-h-screen bg-background pb-8">
       <div className="max-w-lg mx-auto px-4 pt-4 space-y-6">
-        <button
-          onClick={() => {
-            const matiere = matiereForBlocId(blocId);
-            const matiereQuery =
-              matiere && matiere !== "Autre" ? `?matiere=${encodeURIComponent(matiere)}` : "";
-            if (annaleSource) {
-              navigate(`/annales/${encodeURIComponent(annaleSource)}${matiereQuery}`);
-            } else {
-              navigate(`/annales${matiereQuery}`);
-            }
-          }}
-          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="w-4 h-4" /> Retour
         </button>
 
