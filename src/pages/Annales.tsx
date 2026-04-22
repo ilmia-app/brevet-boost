@@ -44,13 +44,19 @@ const SUBJECT_COLORS: Record<string, string> = {
   Techno: "bg-gray-500 text-white",
 };
 
-const inferMatiere = (blocId: string | null, blocsMap: Map<string, Bloc>): string => {
+/**
+ * Returns a normalized matiere "category" used for grouping in the annales list.
+ * We group HIS/GEO/EMC together as "Histoire-Géo" and PHY/SVT/TEC as "Sciences"
+ * so that the dashboard filters (?matiere=Histoire-Géo / Sciences) match.
+ */
+const inferMatiere = (blocId: string | null, _blocsMap: Map<string, Bloc>): string => {
   if (!blocId) return "Autre";
-  const b = blocsMap.get(blocId);
-  if (b) return b.matiere;
   if (blocId.startsWith("MAT")) return "Maths";
   if (blocId.startsWith("FRA")) return "Français";
-  if (blocId.startsWith("HIS")) return "Histoire";
+  if (blocId.startsWith("HIS") || blocId.startsWith("GEO") || blocId.startsWith("EMC"))
+    return "Histoire-Géo";
+  if (blocId.startsWith("PHY") || blocId.startsWith("SVT") || blocId.startsWith("TEC"))
+    return "Sciences";
   return "Autre";
 };
 
