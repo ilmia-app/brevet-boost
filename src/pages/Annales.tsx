@@ -179,84 +179,45 @@ const Annales = () => {
         </div>
 
         {!annaleSource && (
-          <div className="space-y-6">
-            {grouped.length === 0 && (
+          <div className="space-y-3">
+            {groups.length === 0 && (
               <p className="text-center text-muted-foreground text-sm py-12">
-                Aucune annale disponible pour le moment.
+                Aucune annale disponible pour cette matière.
               </p>
             )}
-            {grouped.map(([matiere, list]) => (
-              <section key={matiere} className="space-y-4">
-                <h2 className="text-lg font-semibold flex items-center gap-2">
-                  <Badge className={SUBJECT_COLORS[matiere] || "bg-muted text-foreground"}>
-                    {matiere}
-                  </Badge>
-                </h2>
-                <div className="space-y-5">
-                  {list.map((g) => {
-                    const sortedExs = [...g.exercices].sort((a, b) =>
-                      (a.bloc_id || "").localeCompare(b.bloc_id || "") || a.id.localeCompare(b.id),
-                    );
-                    return (
-                      <div key={g.key} className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm leading-snug">
-                              {g.annee} · {g.session || "Session"}
-                            </p>
-                            <p className="text-xs text-muted-foreground line-clamp-1">
-                              {g.annale_source}
-                            </p>
-                          </div>
-                          <span className="text-[10px] text-muted-foreground shrink-0">
-                            {g.count} ex.
-                          </span>
-                        </div>
-                        <div className="space-y-2">
-                          {sortedExs.map((ex, idx) => {
-                            const done = ex.bloc_id ? completedBlocs.has(ex.bloc_id) : false;
-                            return (
-                              <Card key={ex.id}>
-                                <CardContent className="p-3 space-y-2">
-                                  <div className="flex items-start justify-between gap-2">
-                                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">
-                                      Exercice {idx + 1}
-                                    </p>
-                                    {done && (
-                                      <Badge className="bg-emerald-500 text-white shrink-0 text-[10px] px-1.5 py-0">
-                                        <CheckCircle2 className="w-3 h-3 mr-1" /> Fait
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  {ex.enonce && (
-                                    <p className="text-xs leading-relaxed text-foreground/80 line-clamp-3 whitespace-pre-line">
-                                      {ex.enonce}
-                                    </p>
-                                  )}
-                                  {ex.bloc_id && (
-                                    <Button
-                                      size="sm"
-                                      className="w-full h-8 text-xs rounded-lg sprint-gradient text-primary-foreground"
-                                      onClick={() =>
-                                        navigate(
-                                          `/work?bloc_id=${encodeURIComponent(ex.bloc_id!)}&annale_source=${encodeURIComponent(g.annale_source)}&exercice_id=${encodeURIComponent(ex.id)}`,
-                                        )
-                                      }
-                                    >
-                                      <Play className="w-3 h-3 mr-1" /> Commencer
-                                    </Button>
-                                  )}
-                                </CardContent>
-                              </Card>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
+            {groups.map((g) => (
+              <Card
+                key={g.key}
+                onClick={() =>
+                  navigate(
+                    `/annales/${encodeURIComponent(g.annale_source)}${matiereFilter ? `?matiere=${encodeURIComponent(matiereFilter)}` : ""}`,
+                  )
+                }
+                className="cursor-pointer hover:border-primary/50 hover:shadow-sm transition-all"
+              >
+                <CardContent className="p-4 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <FileText className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge className={`${SUBJECT_COLORS[g.matiere] || "bg-muted text-foreground"} text-[10px] px-1.5 py-0`}>
+                        {g.matiere}
+                      </Badge>
+                      <span className="text-[10px] text-muted-foreground">
+                        {g.count} question{g.count > 1 ? "s" : ""}
+                      </span>
+                    </div>
+                    <p className="font-medium text-sm leading-snug truncate">
+                      {g.annale_source}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {g.annee}{g.session ? ` · ${g.session}` : ""}
+                    </p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}
