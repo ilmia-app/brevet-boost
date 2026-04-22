@@ -586,28 +586,32 @@ const Dashboard = () => {
               </div>
               <p className="text-xs text-muted-foreground -mt-2">Travaille un sujet officiel du brevet DNB</p>
 
-              <div className="space-y-2 flex-1 flex flex-col justify-center">
-                {[
-                  { label: "Maths", btn: "border-blue-200 bg-blue-50 hover:bg-blue-100", text: "text-blue-900", sub: "text-blue-700/80", badge: "bg-blue-500 text-white" },
-                  { label: "Français", btn: "border-purple-200 bg-purple-50 hover:bg-purple-100", text: "text-purple-900", sub: "text-purple-700/80", badge: "bg-purple-500 text-white" },
-                  { label: "Histoire-Géographie", btn: "border-orange-200 bg-orange-50 hover:bg-orange-100", text: "text-orange-900", sub: "text-orange-700/80", badge: "bg-orange-500 text-white" },
-                  { label: "EMC", btn: "border-yellow-200 bg-yellow-50 hover:bg-yellow-100", text: "text-yellow-900", sub: "text-yellow-700/80", badge: "bg-yellow-500 text-white" },
-                  { label: "Sciences", btn: "border-red-200 bg-red-50 hover:bg-red-100", text: "text-red-900", sub: "text-red-700/80", badge: "bg-red-500 text-white" },
-                ].map(({ label, btn, text, sub, badge }) => (
-                  <button
-                    key={label}
-                    onClick={() => navigate(`/annales?matiere=${encodeURIComponent(label)}`)}
-                    className={`w-full text-left rounded-xl border ${btn} p-3 transition-colors`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className={`font-semibold text-sm ${text}`}>Annales {label}</p>
-                        <p className={`text-xs ${sub} mt-0.5`}>Sujets officiels DNB</p>
-                      </div>
-                      <Badge className={badge}>{label}</Badge>
+              <div className="space-y-3 flex-1 flex flex-col justify-center">
+                <button
+                  onClick={() => navigate("/annales?matiere=Maths")}
+                  className="w-full text-left rounded-xl border border-blue-200 bg-blue-50 p-4 hover:bg-blue-100 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-blue-900">Annales Maths</p>
+                      <p className="text-xs text-blue-700/80 mt-0.5">Sujets officiels DNB</p>
                     </div>
-                  </button>
-                ))}
+                    <Badge className="bg-blue-500 text-white">Maths</Badge>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => navigate("/annales?matiere=Français")}
+                  className="w-full text-left rounded-xl border border-purple-200 bg-purple-50 p-4 hover:bg-purple-100 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-purple-900">Annales Français</p>
+                      <p className="text-xs text-purple-700/80 mt-0.5">Sujets officiels DNB</p>
+                    </div>
+                    <Badge className="bg-purple-500 text-white">Français</Badge>
+                  </div>
+                </button>
               </div>
 
               {currentPhase === 3 && (
