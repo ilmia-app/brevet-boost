@@ -6,34 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, CheckCircle2, Loader2, FileText, ChevronRight, BookOpen } from "lucide-react";
-import { getBlocIdOrFilter, blocIdMatchesMatiere } from "@/lib/annales";
+import { getBlocIdOrFilter, blocIdMatchesMatiere, cleanEnonce } from "@/lib/annales";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
 
-/**
- * Removes technical/header lines from the beginning of an énoncé so the
- * student only sees the actual question text. We strip leading lines that
- * look like "Exercice X ...", lines mentioning bloc codes (e.g. MAT-01),
- * or "sélection des questions ...".
- */
-const cleanEnonce = (raw: string | null): string => {
-  if (!raw) return "";
-  const lines = raw.split("\n");
-  let i = 0;
-  const isTechnical = (l: string) => {
-    const t = l.trim();
-    if (!t) return true;
-    if (/^exercice\s/i.test(t)) return true;
-    if (/sélection des questions/i.test(t)) return true;
-    if (/\b[A-Z]{2,4}-\d{2,}\b/.test(t)) return true;
-    return false;
-  };
-  while (i < lines.length && isTechnical(lines[i])) i++;
-  return lines.slice(i).join("\n").trim();
-};
 
 interface Exercice {
   id: string;
