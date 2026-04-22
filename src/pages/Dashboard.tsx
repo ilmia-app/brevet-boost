@@ -614,13 +614,13 @@ const Dashboard = () => {
                     Français
                   </button>
                   <button
-                    onClick={() => navigate("/annales?matiere=Histoire")}
+                    onClick={() => navigate("/annales?matiere=Histoire-Géo")}
                     className="rounded-lg border border-orange-200 bg-orange-50 p-2 text-xs font-medium text-orange-900 hover:bg-orange-100 transition-colors"
                   >
                     Histoire-Géo
                   </button>
                   <button
-                    onClick={() => navigate("/annales?matiere=Physique")}
+                    onClick={() => navigate("/annales?matiere=Sciences")}
                     className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs font-medium text-red-900 hover:bg-red-100 transition-colors"
                   >
                     Sciences
