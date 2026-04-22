@@ -63,3 +63,50 @@ export const blocIdMatchesMatiere = (
   if (!blocId) return false;
   return prefixes.some((p) => blocId.startsWith(p));
 };
+
+/**
+ * Detects "technical" lines that should never be shown to a student in the
+ * énoncé display: exercice headers, bloc codes (e.g. MAT-01), internal
+ * selection notes, point barèmes, etc. Used by `cleanEnonce`.
+ */
+export const isTechnicalEnonceLine = (line: string): boolean => {
+  const t = line.trim();
+  if (!t) return false; // blank lines are handled separately (collapsed)
+  // "Exercice 1 ...", "Exercice 2 – QCM (20 points)"
+  if (/^exercice\s+\d/i.test(t)) return true;
+  // Internal selection notes
+  if (/sélection des questions/i.test(t)) return true;
+  if (/relevant de\s+[A-Z]{2,4}-\d/i.test(t)) return true;
+  // Bare bloc codes: "MAT-01", "MAT-01 / MAT-02", possibly with separators
+  if (/^[A-Z]{2,4}-\d{2,}([\s/,–-]+[A-Z]{2,4}-\d{2,})*\s*[:\-–]?\s*$/.test(t)) return true;
+  // Lines that are essentially just point barèmes: "(20 points)", "20 points"
+  if (/^\(?\s*\d+\s*points?\s*\)?$/i.test(t)) return true;
+  return false;
+};
+
+/**
+ * Cleans an énoncé string for display:
+ *  - removes technical lines (exercice headers, bloc codes, selection notes…)
+ *    anywhere in the text, not only at the start;
+ *  - collapses runs of blank lines created by the removals;
+ *  - trims leading/trailing whitespace.
+ */
+export const cleanEnonce = (raw: string | null | undefined): string => {
+  if (!raw) return "";
+  const kept = raw
+    .split("\n")
+    .filter((line) => !isTechnicalEnonceLine(line));
+  // Collapse 3+ consecutive blank lines into a single blank line
+  const collapsed: string[] = [];
+  let blankRun = 0;
+  for (const line of kept) {
+    if (line.trim() === "") {
+      blankRun++;
+      if (blankRun <= 1) collapsed.push("");
+    } else {
+      blankRun = 0;
+      collapsed.push(line);
+    }
+  }
+  return collapsed.join("\n").trim();
+};
