@@ -275,15 +275,36 @@ const Annales = () => {
                       {ex.bloc_id && (
                         <Button
                           size="sm"
-                          className="w-full h-9 text-xs rounded-lg sprint-gradient text-primary-foreground"
+                          variant="outline"
+                          className="w-full h-9 text-xs rounded-lg"
                           onClick={() =>
-                            navigate(
-                              `/work?bloc_id=${encodeURIComponent(ex.bloc_id!)}&annale_source=${encodeURIComponent(annaleSource)}&exercice_id=${encodeURIComponent(ex.id)}&question=${questionNum}`,
-                            )
+                            setOpenCorriges((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(ex.id)) next.delete(ex.id);
+                              else next.add(ex.id);
+                              return next;
+                            })
                           }
                         >
-                          <Play className="w-3 h-3 mr-1" /> Commencer cette question
+                          <BookOpen className="w-3 h-3 mr-1" />
+                          {openCorriges.has(ex.id) ? "Masquer le corrigé" : "Voir le corrigé"}
                         </Button>
+                      )}
+                      {openCorriges.has(ex.id) && (
+                        <div className="mt-2 p-3 rounded-lg bg-muted/50 border border-border text-sm leading-relaxed prose prose-sm max-w-none break-words">
+                          {ex.corrige && ex.corrige.trim().length > 0 ? (
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm, remarkMath]}
+                              rehypePlugins={[rehypeKatex]}
+                            >
+                              {ex.corrige}
+                            </ReactMarkdown>
+                          ) : (
+                            <p className="text-muted-foreground italic">
+                              Corrigé non disponible pour cette question.
+                            </p>
+                          )}
+                        </div>
                       )}
                     </CardContent>
                   </Card>
