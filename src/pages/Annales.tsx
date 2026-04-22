@@ -237,13 +237,11 @@ const Annales = () => {
               {annaleSource}
             </p>
             {(() => {
-              const likePattern = getBlocIdLikePattern(matiereFilter);
-              const blocPrefix = likePattern?.replace("%", "");
               const filtered = exercices
                 .filter(
                   (e) =>
                     e.annale_source === annaleSource &&
-                    (!blocPrefix || e.bloc_id?.startsWith(blocPrefix)),
+                    blocIdMatchesMatiere(e.bloc_id, matiereFilter),
                 )
                 .sort((a, b) => (a.bloc_id || "").localeCompare(b.bloc_id || ""));
               console.log("Filtre annale:", annaleSource);
