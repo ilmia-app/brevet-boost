@@ -50,6 +50,11 @@ const inferMatiere = (blocId: string | null, blocsMap: Map<string, Bloc>): strin
   if (blocId.startsWith("MAT")) return "Maths";
   if (blocId.startsWith("FRA")) return "Français";
   if (blocId.startsWith("HIS")) return "Histoire";
+  if (blocId.startsWith("GEO")) return "Géographie";
+  if (blocId.startsWith("EMC")) return "EMC";
+  if (blocId.startsWith("PHY")) return "Physique";
+  if (blocId.startsWith("SVT")) return "SVT";
+  if (blocId.startsWith("TEC")) return "Techno";
   return "Autre";
 };
 
@@ -110,14 +115,15 @@ const Annales = () => {
     const m = new Map<string, SubjectGroup>();
     for (const ex of exercices) {
       if (!ex.annale_source || !ex.annee) continue;
-      const key = `${ex.annale_source}|${ex.annee}|${ex.session || ""}`;
+      const matiere = inferMatiere(ex.bloc_id, blocsMap);
+      const key = `${ex.annale_source}|${ex.annee}|${ex.session || ""}|${matiere}`;
       if (!m.has(key)) {
         m.set(key, {
           key,
           annale_source: ex.annale_source,
           annee: ex.annee,
           session: ex.session || "",
-          matiere: inferMatiere(ex.bloc_id, blocsMap),
+          matiere,
           count: 0,
           exercices: [],
         });
