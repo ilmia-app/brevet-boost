@@ -275,7 +275,7 @@ const Annales = () => {
             <p className="text-xs text-muted-foreground italic line-clamp-2">
               {annaleSource}
             </p>
-            {annalePdf?.pdf_url && (
+            {annalePdf?.pdf_url ? (
               <Card className="overflow-hidden">
                 <CardContent className="p-0">
                   <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-border bg-muted/30">
@@ -295,91 +295,15 @@ const Annales = () => {
                   <iframe
                     src={`${annalePdf.pdf_url}#view=FitH`}
                     title={annalePdf.titre}
-                    className="w-full h-[70vh] bg-background"
+                    className="w-full h-[80vh] bg-background"
                   />
                 </CardContent>
               </Card>
+            ) : (
+              <p className="text-center text-muted-foreground text-sm py-12">
+                Sujet PDF non disponible pour cette annale.
+              </p>
             )}
-            {(() => {
-              const filtered = exercices
-                .filter(
-                  (e) =>
-                    e.annale_source === annaleSource &&
-                    blocIdMatchesMatiere(e.bloc_id, matiereFilter),
-                )
-                .sort((a, b) => (a.bloc_id || "").localeCompare(b.bloc_id || ""));
-              if (filtered.length === 0) {
-                return (
-                  <p className="text-center text-muted-foreground text-sm py-12">
-                    Aucune question disponible pour ce sujet
-                  </p>
-                );
-              }
-              return filtered.map((ex, idx) => {
-                const done = ex.bloc_id ? completedBlocs.has(ex.bloc_id) : false;
-                const questionNum = idx + 1;
-                return (
-                  <Card key={ex.id}>
-                    <CardContent className="p-4 space-y-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-xs uppercase tracking-wide text-primary font-semibold">
-                          Question {questionNum}
-                        </p>
-                        {done ? (
-                          <Badge className="bg-emerald-500 text-white shrink-0 text-[10px]">
-                            <CheckCircle2 className="w-3 h-3 mr-1" /> Fait
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="shrink-0 text-[10px]">À faire</Badge>
-                        )}
-                      </div>
-                      <p className="text-sm leading-relaxed text-foreground/85 whitespace-pre-wrap break-words">
-                        {(() => {
-                          const cleaned = cleanEnonce(ex.enonce);
-                          return cleaned.length > 0
-                            ? cleaned
-                            : "Énoncé non disponible pour cette question.";
-                        })()}
-                      </p>
-                      {ex.bloc_id && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="w-full h-9 text-xs rounded-lg"
-                          onClick={() =>
-                            setOpenCorriges((prev) => {
-                              const next = new Set(prev);
-                              if (next.has(ex.id)) next.delete(ex.id);
-                              else next.add(ex.id);
-                              return next;
-                            })
-                          }
-                        >
-                          <BookOpen className="w-3 h-3 mr-1" />
-                          {openCorriges.has(ex.id) ? "Masquer le corrigé" : "Voir le corrigé"}
-                        </Button>
-                      )}
-                      {openCorriges.has(ex.id) && (
-                        <div className="mt-2 p-3 rounded-lg bg-muted/50 border border-border text-sm leading-relaxed prose prose-sm max-w-none break-words">
-                          {ex.corrige && ex.corrige.trim().length > 0 ? (
-                            <ReactMarkdown
-                              remarkPlugins={[remarkGfm, remarkMath]}
-                              rehypePlugins={[rehypeKatex]}
-                            >
-                              {ex.corrige}
-                            </ReactMarkdown>
-                          ) : (
-                            <p className="text-muted-foreground italic">
-                              Corrigé non disponible pour cette question.
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              });
-            })()}
           </div>
         )}
       </div>
