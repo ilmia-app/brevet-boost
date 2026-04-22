@@ -86,12 +86,18 @@ const Dashboard = () => {
       return;
     }
     (async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("users")
         .select("id, prenom, date_examen, volume_quotidien, retard_initial, matieres_faibles, mode_actuel, phase_actuelle, derniere_modif_priorites")
         .eq("id", user.id)
         .maybeSingle();
+      if (error) {
+        console.error("[Dashboard] erreur chargement profil:", error);
+        setLoading(false);
+        return;
+      }
       if (!data) {
+        setLoading(false);
         navigate("/onboarding");
         return;
       }
