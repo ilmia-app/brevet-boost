@@ -580,52 +580,30 @@ const Dashboard = () => {
           {/* CARTE 2 — Annales */}
           <Card className="rounded-2xl flex flex-col">
             <CardContent className="p-5 flex flex-col flex-1 space-y-4">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">📄</span>
-                <h2 className="text-base font-semibold">Passe un vrai sujet</h2>
-              </div>
-              <p className="text-xs text-muted-foreground -mt-2">Travaille un sujet officiel du brevet DNB</p>
-
-              <div className="space-y-3 flex-1 flex flex-col justify-center">
-                <button
-                  onClick={() => navigate("/annales")}
-                  className="w-full text-left rounded-xl border border-primary/20 bg-accent/30 p-4 hover:bg-accent/50 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-foreground">Toutes les annales</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">Tous les sujets officiels DNB</p>
-                    </div>
-                    <Badge className="sprint-gradient text-primary-foreground">Tout</Badge>
-                  </div>
-                </button>
-
-                <div className="flex flex-col gap-2">
-                  <button
-                    onClick={() => navigate("/annales?matiere=Maths")}
-                    className="w-full rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm font-medium text-blue-900 hover:bg-blue-100 transition-colors text-left"
-                  >
-                    Maths
-                  </button>
-                  <button
-                    onClick={() => navigate("/annales?matiere=Français")}
-                    className="w-full rounded-lg border border-purple-200 bg-purple-50 p-3 text-sm font-medium text-purple-900 hover:bg-purple-100 transition-colors text-left"
-                  >
-                    Français
-                  </button>
-                  <button
-                    onClick={() => navigate("/annales?matiere=Histoire-Géo")}
-                    className="w-full rounded-lg border border-orange-200 bg-orange-50 p-3 text-sm font-medium text-orange-900 hover:bg-orange-100 transition-colors text-left"
-                  >
-                    Histoire-Géo
-                  </button>
-                  <button
-                    onClick={() => navigate("/annales?matiere=Sciences")}
-                    className="w-full rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-900 hover:bg-red-100 transition-colors text-left"
-                  >
-                    Sciences
-                  </button>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">📄</span>
+                  <h2 className="text-base font-semibold">Passe un vrai sujet</h2>
                 </div>
+                <p className="text-xs text-muted-foreground">Travaille un sujet officiel du brevet DNB</p>
+              </div>
+
+              <div className="flex flex-col gap-1.5 flex-1">
+                {[
+                  { label: "Maths", matiere: "Maths", classes: "border-blue-200 bg-blue-50 text-blue-900 hover:bg-blue-100" },
+                  { label: "Français", matiere: "Français", classes: "border-purple-200 bg-purple-50 text-purple-900 hover:bg-purple-100" },
+                  { label: "Histoire-Géo", matiere: "Histoire-Géo", classes: "border-orange-200 bg-orange-50 text-orange-900 hover:bg-orange-100" },
+                  { label: "Sciences", matiere: "Sciences", classes: "border-red-200 bg-red-50 text-red-900 hover:bg-red-100" },
+                ].map((m) => (
+                  <button
+                    key={m.matiere}
+                    onClick={() => navigate(`/annales?matiere=${encodeURIComponent(m.matiere)}`)}
+                    className={`w-full flex items-center justify-between rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${m.classes}`}
+                  >
+                    <span>{m.label}</span>
+                    <ChevronRight className="w-4 h-4 opacity-60" />
+                  </button>
+                ))}
               </div>
 
               {currentPhase === 3 && (
