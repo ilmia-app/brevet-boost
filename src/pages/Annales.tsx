@@ -14,6 +14,7 @@ interface Exercice {
   annale_source: string | null;
   annee: number | null;
   session: string | null;
+  enonce: string | null;
 }
 
 interface Bloc {
@@ -69,7 +70,7 @@ const Annales = () => {
     const load = async () => {
       let exercicesQuery = supabase
         .from("exercices")
-        .select("id, bloc_id, annale_source, annee, session")
+        .select("id, bloc_id, annale_source, annee, session, enonce")
         .not("annale_source", "is", null);
 
       if (annaleSource) {
