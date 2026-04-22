@@ -85,6 +85,7 @@ const Annales = () => {
   const [completedBlocs, setCompletedBlocs] = useState<Set<string>>(new Set());
   const [openCorriges, setOpenCorriges] = useState<Set<string>>(new Set());
   const [annalePdf, setAnnalePdf] = useState<Annale | null>(null);
+  const [annalesList, setAnnalesList] = useState<Annale[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -113,6 +114,17 @@ const Annales = () => {
       (blData || []).forEach((b) => map.set(b.id, b as Bloc));
       setBlocsMap(map);
       setExercices((exData || []) as Exercice[]);
+
+      // Load all available annales (PDFs) so we can restrict the list view
+      // to only those that actually have a PDF in Supabase.
+      let allAnnalesQuery = supabase
+        .from("annales")
+        .select("id, titre, annee, session, matiere, pdf_url");
+      if (matiereFilter) {
+        allAnnalesQuery = allAnnalesQuery.eq("matiere", matiereFilter);
+      }
+      const { data: allAnnales } = await allAnnalesQuery;
+      setAnnalesList((allAnnales || []) as Annale[]);
 
       // Fetch matching PDF when viewing a single annale
       if (annaleSource) {
@@ -194,6 +206,24 @@ const Annales = () => {
     return Array.from(byMat.entries());
   }, [groups, matiereFilter]);
 
+  // Only keep groups whose annale_source matches an existing PDF in `annales`.
+  const availableGroups = useMemo(() => {
+    if (annalesList.length === 0) return [] as SubjectGroup[];
+    const norm = (s: string) =>
+      s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const titles = annalesList.map((a) => norm(a.titre || ""));
+    return groups.filter((g) => {
+      const src = norm(g.annale_source);
+      const tokens = src.split(/[^a-z0-9]+/).filter((x) => x.length > 2);
+      return titles.some(
+        (t) =>
+          t.startsWith(src) ||
+          t.includes(src) ||
+          (tokens.length > 0 && tokens.every((tok) => t.includes(tok))),
+      );
+    });
+  }, [groups, annalesList]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -228,12 +258,12 @@ const Annales = () => {
 
         {!annaleSource && (
           <div className="space-y-3">
-            {groups.length === 0 && (
+            {availableGroups.length === 0 && (
               <p className="text-center text-muted-foreground text-sm py-12">
                 Aucune annale disponible pour cette matière.
               </p>
             )}
-            {groups.map((g) => (
+            {availableGroups.map((g) => (
               <Card
                 key={g.key}
                 onClick={() =>
