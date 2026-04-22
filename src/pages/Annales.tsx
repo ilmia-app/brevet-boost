@@ -14,6 +14,7 @@ interface Exercice {
   annale_source: string | null;
   annee: number | null;
   session: string | null;
+  enonce: string | null;
 }
 
 interface Bloc {
@@ -69,7 +70,7 @@ const Annales = () => {
     const load = async () => {
       let exercicesQuery = supabase
         .from("exercices")
-        .select("id, bloc_id, annale_source, annee, session")
+        .select("id, bloc_id, annale_source, annee, session, enonce")
         .not("annale_source", "is", null);
 
       if (annaleSource) {
@@ -183,48 +184,75 @@ const Annales = () => {
               </p>
             )}
             {grouped.map(([matiere, list]) => (
-              <section key={matiere} className="space-y-3">
+              <section key={matiere} className="space-y-4">
                 <h2 className="text-lg font-semibold flex items-center gap-2">
                   <Badge className={SUBJECT_COLORS[matiere] || "bg-muted text-foreground"}>
                     {matiere}
                   </Badge>
                 </h2>
-                <div className="space-y-3">
-                  {list.map((g) => (
-                    <Card key={g.key} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4 space-y-3">
-                        <div className="flex items-start gap-2">
-                          <FileText className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                <div className="space-y-5">
+                  {list.map((g) => {
+                    const sortedExs = [...g.exercices].sort((a, b) =>
+                      (a.bloc_id || "").localeCompare(b.bloc_id || "") || a.id.localeCompare(b.id),
+                    );
+                    return (
+                      <div key={g.key} className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-sm leading-snug">
                               {g.annee} · {g.session || "Session"}
                             </p>
-                            <p className="text-xs text-muted-foreground line-clamp-2">
+                            <p className="text-xs text-muted-foreground line-clamp-1">
                               {g.annale_source}
                             </p>
                           </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">
-                            {g.count} exercice{g.count > 1 ? "s" : ""}
+                          <span className="text-[10px] text-muted-foreground shrink-0">
+                            {g.count} ex.
                           </span>
-                          <Button
-                            size="sm"
-                            className="h-8 text-xs rounded-lg"
-                            onClick={() =>
-                              navigate(
-                                `/annales/${encodeURIComponent(g.annale_source)}${
-                                  matiereFilter ? `?matiere=${encodeURIComponent(matiereFilter)}` : ""
-                                }`,
-                              )
-                            }
-                          >
-                            Travailler ce sujet
-                          </Button>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        <div className="space-y-2">
+                          {sortedExs.map((ex, idx) => {
+                            const done = ex.bloc_id ? completedBlocs.has(ex.bloc_id) : false;
+                            return (
+                              <Card key={ex.id}>
+                                <CardContent className="p-3 space-y-2">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">
+                                      Exercice {idx + 1}
+                                    </p>
+                                    {done && (
+                                      <Badge className="bg-emerald-500 text-white shrink-0 text-[10px] px-1.5 py-0">
+                                        <CheckCircle2 className="w-3 h-3 mr-1" /> Fait
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  {ex.enonce && (
+                                    <p className="text-xs leading-relaxed text-foreground/80 line-clamp-3 whitespace-pre-line">
+                                      {ex.enonce}
+                                    </p>
+                                  )}
+                                  {ex.bloc_id && (
+                                    <Button
+                                      size="sm"
+                                      className="w-full h-8 text-xs rounded-lg sprint-gradient text-primary-foreground"
+                                      onClick={() =>
+                                        navigate(
+                                          `/work?bloc_id=${encodeURIComponent(ex.bloc_id!)}&annale_source=${encodeURIComponent(g.annale_source)}&exercice_id=${encodeURIComponent(ex.id)}`,
+                                        )
+                                      }
+                                    >
+                                      <Play className="w-3 h-3 mr-1" /> Commencer
+                                    </Button>
+                                  )}
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
             ))}
