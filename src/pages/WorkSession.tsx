@@ -184,7 +184,7 @@ const WorkSession = () => {
     return () => {
       cancelled = true;
     };
-  }, [blocId, isAiMode, annaleSource]);
+  }, [blocId, isAiMode, annaleSource, exerciceId]);
 
   // Timer tick
   useEffect(() => {
