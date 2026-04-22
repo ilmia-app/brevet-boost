@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, CheckCircle2, Loader2, FileText, ChevronRight, BookOpen } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, FileText, ChevronRight, BookOpen, ExternalLink } from "lucide-react";
 import { getBlocIdOrFilter, blocIdMatchesMatiere, cleanEnonce } from "@/lib/annales";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -28,6 +28,15 @@ interface Bloc {
   id: string;
   titre: string;
   matiere: string;
+}
+
+interface Annale {
+  id: string;
+  titre: string;
+  annee: number;
+  session: string;
+  matiere: string;
+  pdf_url: string;
 }
 
 interface SubjectGroup {
