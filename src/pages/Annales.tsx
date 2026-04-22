@@ -13,6 +13,28 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
 
+/**
+ * Removes technical/header lines from the beginning of an énoncé so the
+ * student only sees the actual question text. We strip leading lines that
+ * look like "Exercice X ...", lines mentioning bloc codes (e.g. MAT-01),
+ * or "sélection des questions ...".
+ */
+const cleanEnonce = (raw: string | null): string => {
+  if (!raw) return "";
+  const lines = raw.split("\n");
+  let i = 0;
+  const isTechnical = (l: string) => {
+    const t = l.trim();
+    if (!t) return true;
+    if (/^exercice\s/i.test(t)) return true;
+    if (/sélection des questions/i.test(t)) return true;
+    if (/\b[A-Z]{2,4}-\d{2,}\b/.test(t)) return true;
+    return false;
+  };
+  while (i < lines.length && isTechnical(lines[i])) i++;
+  return lines.slice(i).join("\n").trim();
+};
+
 interface Exercice {
   id: string;
   bloc_id: string | null;
@@ -268,9 +290,12 @@ const Annales = () => {
                         )}
                       </div>
                       <p className="text-sm leading-relaxed text-foreground/85 whitespace-pre-wrap break-words">
-                        {ex.enonce && ex.enonce.trim().length > 0
-                          ? ex.enonce
-                          : "Énoncé non disponible pour cette question."}
+                        {(() => {
+                          const cleaned = cleanEnonce(ex.enonce);
+                          return cleaned.length > 0
+                            ? cleaned
+                            : "Énoncé non disponible pour cette question.";
+                        })()}
                       </p>
                       {ex.bloc_id && (
                         <Button
