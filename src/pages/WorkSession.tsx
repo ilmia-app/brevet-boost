@@ -64,6 +64,8 @@ const WorkSession = () => {
   const [searchParams] = useSearchParams();
   const blocId = searchParams.get("bloc_id") || searchParams.get("bloc") || "";
   const annaleSource = searchParams.get("annale_source") || "";
+  const questionNum = searchParams.get("question") || "";
+  const exerciceId = searchParams.get("exercice_id") || "";
   const mode = searchParams.get("mode") || "";
   const isAiMode = mode === "ai";
   console.log("[WorkSession] bloc_id reçu:", blocId, "mode:", mode);
@@ -165,7 +167,9 @@ const WorkSession = () => {
           .select("id, enonce, corrige, annale_source")
           .eq("bloc_id", blocId);
 
-        if (annaleSource) {
+        if (exerciceId) {
+          exerciseQuery = exerciseQuery.eq("id", exerciceId);
+        } else if (annaleSource) {
           exerciseQuery = exerciseQuery.eq("annale_source", annaleSource);
         }
 
@@ -180,7 +184,7 @@ const WorkSession = () => {
     return () => {
       cancelled = true;
     };
-  }, [blocId, isAiMode, annaleSource]);
+  }, [blocId, isAiMode, annaleSource, exerciceId]);
 
   // Timer tick
   useEffect(() => {
@@ -370,7 +374,9 @@ const WorkSession = () => {
             {bloc.matiere}
           </Badge>
           <h1 className="text-xl font-bold leading-tight">
-            {annaleSource || exercise?.annale_source || bloc.titre}
+            {annaleSource || exercise?.annale_source
+              ? `${annaleSource || exercise?.annale_source}${questionNum ? ` — Question ${questionNum}` : ""}`
+              : bloc.titre}
           </h1>
           {(annaleSource || exercise?.annale_source) && (
             <p className="text-sm text-muted-foreground">{bloc.titre}</p>
@@ -458,7 +464,7 @@ const WorkSession = () => {
                   )}
                 </Button>
               </div>
-            ) : (
+            ) : !annaleSource ? (
               <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">
                 <span className="text-xs text-muted-foreground">
                   ✨ Préfères-tu un exercice généré par IA sur ce thème ?
@@ -481,7 +487,7 @@ const WorkSession = () => {
                   )}
                 </Button>
               </div>
-            )}
+            ) : null}
             <p className="text-xs text-muted-foreground text-center italic px-2">
               Suis la méthode ci-dessous étape par étape pendant que tu travailles ✨
             </p>
