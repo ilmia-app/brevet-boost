@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Play, CheckCircle2, Loader2, FileText } from "lucide-react";
-import { getBlocIdLikePattern } from "@/lib/annales";
+import { blocMatchesMatiere, matiereForBlocId, getBlocPrefixesForMatiere } from "@/lib/annales";
 
 interface Exercice {
   id: string;
@@ -35,27 +35,13 @@ interface SubjectGroup {
 const SUBJECT_COLORS: Record<string, string> = {
   Maths: "bg-blue-500 text-white",
   Français: "bg-purple-500 text-white",
-  Histoire: "bg-orange-500 text-white",
-  Géographie: "bg-emerald-500 text-white",
+  "Histoire-Géographie": "bg-orange-500 text-white",
   EMC: "bg-yellow-500 text-white",
-  Physique: "bg-red-500 text-white",
-  SVT: "bg-green-700 text-white",
-  Techno: "bg-gray-500 text-white",
+  Sciences: "bg-red-500 text-white",
 };
 
 const inferMatiere = (blocId: string | null, blocsMap: Map<string, Bloc>): string => {
-  if (!blocId) return "Autre";
-  const b = blocsMap.get(blocId);
-  if (b) return b.matiere;
-  if (blocId.startsWith("MAT")) return "Maths";
-  if (blocId.startsWith("FRA")) return "Français";
-  if (blocId.startsWith("HIS")) return "Histoire";
-  if (blocId.startsWith("GEO")) return "Géographie";
-  if (blocId.startsWith("EMC")) return "EMC";
-  if (blocId.startsWith("PHY")) return "Physique";
-  if (blocId.startsWith("SVT")) return "SVT";
-  if (blocId.startsWith("TEC")) return "Techno";
-  return "Autre";
+  return matiereForBlocId(blocId);
 };
 
 const Annales = () => {
@@ -77,12 +63,14 @@ const Annales = () => {
         .select("id, bloc_id, annale_source, annee, session")
         .not("annale_source", "is", null);
 
-      const likePattern = getBlocIdLikePattern(matiereFilter);
+      const prefixes = getBlocPrefixesForMatiere(matiereFilter);
       if (annaleSource) {
         exercicesQuery = exercicesQuery.eq("annale_source", annaleSource);
       }
-      if (likePattern) {
-        exercicesQuery = exercicesQuery.like("bloc_id", likePattern);
+      if (prefixes && prefixes.length > 0) {
+        exercicesQuery = exercicesQuery.or(
+          prefixes.map((p) => `bloc_id.like.${p}%`).join(","),
+        );
       }
       if (annaleSource) {
         exercicesQuery = exercicesQuery.order("bloc_id");
@@ -243,13 +231,11 @@ const Annales = () => {
               {annaleSource}
             </p>
             {(() => {
-              const likePattern = getBlocIdLikePattern(matiereFilter);
-              const blocPrefix = likePattern?.replace("%", "");
               const filtered = exercices
                 .filter(
                   (e) =>
                     e.annale_source === annaleSource &&
-                    (!blocPrefix || e.bloc_id?.startsWith(blocPrefix)),
+                    blocMatchesMatiere(e.bloc_id, matiereFilter),
                 )
                 .sort((a, b) => (a.bloc_id || "").localeCompare(b.bloc_id || ""));
               console.log("Filtre annale:", annaleSource);
