@@ -369,7 +369,12 @@ const WorkSession = () => {
           <Badge className={SUBJECT_COLORS[bloc.matiere] || "bg-muted text-foreground"}>
             {bloc.matiere}
           </Badge>
-          <h1 className="text-xl font-bold leading-tight">{bloc.titre}</h1>
+          <h1 className="text-xl font-bold leading-tight">
+            {annaleSource || exercise?.annale_source || bloc.titre}
+          </h1>
+          {(annaleSource || exercise?.annale_source) && (
+            <p className="text-sm text-muted-foreground">{bloc.titre}</p>
+          )}
 
           {/* Timer */}
           <div className="flex flex-col items-center gap-3 pt-2">
