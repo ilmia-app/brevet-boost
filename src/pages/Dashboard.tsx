@@ -613,28 +613,28 @@ const Dashboard = () => {
                   </div>
                 </button>
               </div>
-              <div className="space-y-3 flex-1 flex flex-col justify-center">
+              <div className="space-y-2 flex-1 flex flex-col justify-center">
                 {[
-                  { label: "Maths", color: "blue" },
-                  { label: "Français", color: "purple" },
-                  { label: "Histoire", color: "orange" },
-                  { label: "Géographie", color: "emerald" },
-                  { label: "EMC", color: "yellow" },
-                  { label: "Physique", color: "red" },
-                  { label: "SVT", color: "green" },
-                  { label: "Techno", color: "gray" },
-                ].map(({ label, color }) => (
+                  { label: "Maths", btn: "border-blue-200 bg-blue-50 hover:bg-blue-100", text: "text-blue-900", sub: "text-blue-700/80", badge: "bg-blue-500 text-white" },
+                  { label: "Français", btn: "border-purple-200 bg-purple-50 hover:bg-purple-100", text: "text-purple-900", sub: "text-purple-700/80", badge: "bg-purple-500 text-white" },
+                  { label: "Histoire", btn: "border-orange-200 bg-orange-50 hover:bg-orange-100", text: "text-orange-900", sub: "text-orange-700/80", badge: "bg-orange-500 text-white" },
+                  { label: "Géographie", btn: "border-emerald-200 bg-emerald-50 hover:bg-emerald-100", text: "text-emerald-900", sub: "text-emerald-700/80", badge: "bg-emerald-500 text-white" },
+                  { label: "EMC", btn: "border-yellow-200 bg-yellow-50 hover:bg-yellow-100", text: "text-yellow-900", sub: "text-yellow-700/80", badge: "bg-yellow-500 text-white" },
+                  { label: "Physique", btn: "border-red-200 bg-red-50 hover:bg-red-100", text: "text-red-900", sub: "text-red-700/80", badge: "bg-red-500 text-white" },
+                  { label: "SVT", btn: "border-green-200 bg-green-50 hover:bg-green-100", text: "text-green-900", sub: "text-green-700/80", badge: "bg-green-700 text-white" },
+                  { label: "Techno", btn: "border-gray-200 bg-gray-50 hover:bg-gray-100", text: "text-gray-900", sub: "text-gray-700/80", badge: "bg-gray-500 text-white" },
+                ].map(({ label, btn, text, sub, badge }) => (
                   <button
                     key={label}
                     onClick={() => navigate(`/annales?matiere=${encodeURIComponent(label)}`)}
-                    className={`w-full text-left rounded-xl border border-${color}-200 bg-${color}-50 p-4 hover:bg-${color}-100 transition-colors`}
+                    className={`w-full text-left rounded-xl border ${btn} p-3 transition-colors`}
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className={`font-semibold text-${color}-900`}>Annales {label}</p>
-                        <p className={`text-xs text-${color}-700/80 mt-0.5`}>Sujets officiels DNB</p>
+                        <p className={`font-semibold text-sm ${text}`}>Annales {label}</p>
+                        <p className={`text-xs ${sub} mt-0.5`}>Sujets officiels DNB</p>
                       </div>
-                      <Badge className={`bg-${color}-500 text-white`}>{label}</Badge>
+                      <Badge className={badge}>{label}</Badge>
                     </div>
                   </button>
                 ))}
