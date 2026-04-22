@@ -613,6 +613,32 @@ const Dashboard = () => {
                   </div>
                 </button>
               </div>
+              <div className="space-y-3 flex-1 flex flex-col justify-center">
+                {[
+                  { label: "Maths", color: "blue" },
+                  { label: "Français", color: "purple" },
+                  { label: "Histoire", color: "orange" },
+                  { label: "Géographie", color: "emerald" },
+                  { label: "EMC", color: "yellow" },
+                  { label: "Physique", color: "red" },
+                  { label: "SVT", color: "green" },
+                  { label: "Techno", color: "gray" },
+                ].map(({ label, color }) => (
+                  <button
+                    key={label}
+                    onClick={() => navigate(`/annales?matiere=${encodeURIComponent(label)}`)}
+                    className={`w-full text-left rounded-xl border border-${color}-200 bg-${color}-50 p-4 hover:bg-${color}-100 transition-colors`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className={`font-semibold text-${color}-900`}>Annales {label}</p>
+                        <p className={`text-xs text-${color}-700/80 mt-0.5`}>Sujets officiels DNB</p>
+                      </div>
+                      <Badge className={`bg-${color}-500 text-white`}>{label}</Badge>
+                    </div>
+                  </button>
+                ))}
+              </div>
 
               {currentPhase === 3 && (
                 <p className="text-xs text-primary/80 text-center italic">
