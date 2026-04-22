@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Play, CheckCircle2, Loader2, FileText } from "lucide-react";
+import { ArrowLeft, Play, CheckCircle2, Loader2, FileText, ChevronRight } from "lucide-react";
 import { getBlocIdOrFilter, blocIdMatchesMatiere } from "@/lib/annales";
 
 interface Exercice {
