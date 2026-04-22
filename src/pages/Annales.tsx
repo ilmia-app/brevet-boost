@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, CheckCircle2, Loader2, FileText, ChevronRight, BookOpen } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, FileText, ChevronRight, BookOpen, ExternalLink } from "lucide-react";
 import { getBlocIdOrFilter, blocIdMatchesMatiere, cleanEnonce } from "@/lib/annales";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -28,6 +28,15 @@ interface Bloc {
   id: string;
   titre: string;
   matiere: string;
+}
+
+interface Annale {
+  id: string;
+  titre: string;
+  annee: number;
+  session: string;
+  matiere: string;
+  pdf_url: string;
 }
 
 interface SubjectGroup {
@@ -75,6 +84,7 @@ const Annales = () => {
   const [blocsMap, setBlocsMap] = useState<Map<string, Bloc>>(new Map());
   const [completedBlocs, setCompletedBlocs] = useState<Set<string>>(new Set());
   const [openCorriges, setOpenCorriges] = useState<Set<string>>(new Set());
+  const [annalePdf, setAnnalePdf] = useState<Annale | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -103,6 +113,23 @@ const Annales = () => {
       (blData || []).forEach((b) => map.set(b.id, b as Bloc));
       setBlocsMap(map);
       setExercices((exData || []) as Exercice[]);
+
+      // Fetch matching PDF when viewing a single annale
+      if (annaleSource) {
+        let annalesQuery = supabase
+          .from("annales")
+          .select("id, titre, annee, session, matiere, pdf_url");
+        if (matiereFilter) {
+          annalesQuery = annalesQuery.eq("matiere", matiereFilter);
+        }
+        const { data: annData } = await annalesQuery;
+        const match = (annData || []).find((a) =>
+          (a.titre || "").toLowerCase().startsWith(annaleSource.toLowerCase()),
+        );
+        setAnnalePdf((match as Annale) || null);
+      } else {
+        setAnnalePdf(null);
+      }
 
       if (user) {
         const { data: comps } = await supabase
@@ -235,6 +262,31 @@ const Annales = () => {
             <p className="text-xs text-muted-foreground italic line-clamp-2">
               {annaleSource}
             </p>
+            {annalePdf?.pdf_url && (
+              <Card className="overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-border bg-muted/30">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className="w-4 h-4 text-primary shrink-0" />
+                      <p className="text-xs font-medium truncate">{annalePdf.titre}</p>
+                    </div>
+                    <a
+                      href={annalePdf.pdf_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary inline-flex items-center gap-1 shrink-0 hover:underline"
+                    >
+                      Ouvrir <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                  <iframe
+                    src={`${annalePdf.pdf_url}#view=FitH`}
+                    title={annalePdf.titre}
+                    className="w-full h-[70vh] bg-background"
+                  />
+                </CardContent>
+              </Card>
+            )}
             {(() => {
               const filtered = exercices
                 .filter(
