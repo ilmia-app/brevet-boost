@@ -5,8 +5,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Play, CheckCircle2, Loader2, FileText, ChevronRight } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, FileText, ChevronRight, BookOpen } from "lucide-react";
 import { getBlocIdOrFilter, blocIdMatchesMatiere } from "@/lib/annales";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 
 interface Exercice {
   id: string;
@@ -15,6 +20,7 @@ interface Exercice {
   annee: number | null;
   session: string | null;
   enonce: string | null;
+  corrige: string | null;
 }
 
 interface Bloc {
@@ -67,12 +73,13 @@ const Annales = () => {
   const [exercices, setExercices] = useState<Exercice[]>([]);
   const [blocsMap, setBlocsMap] = useState<Map<string, Bloc>>(new Map());
   const [completedBlocs, setCompletedBlocs] = useState<Set<string>>(new Set());
+  const [openCorriges, setOpenCorriges] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const load = async () => {
       let exercicesQuery = supabase
         .from("exercices")
-        .select("id, bloc_id, annale_source, annee, session, enonce")
+        .select("id, bloc_id, annale_source, annee, session, enonce, corrige")
         .not("annale_source", "is", null);
 
       if (annaleSource) {
@@ -268,15 +275,36 @@ const Annales = () => {
                       {ex.bloc_id && (
                         <Button
                           size="sm"
-                          className="w-full h-9 text-xs rounded-lg sprint-gradient text-primary-foreground"
+                          variant="outline"
+                          className="w-full h-9 text-xs rounded-lg"
                           onClick={() =>
-                            navigate(
-                              `/work?bloc_id=${encodeURIComponent(ex.bloc_id!)}&annale_source=${encodeURIComponent(annaleSource)}&exercice_id=${encodeURIComponent(ex.id)}&question=${questionNum}`,
-                            )
+                            setOpenCorriges((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(ex.id)) next.delete(ex.id);
+                              else next.add(ex.id);
+                              return next;
+                            })
                           }
                         >
-                          <Play className="w-3 h-3 mr-1" /> Commencer cette question
+                          <BookOpen className="w-3 h-3 mr-1" />
+                          {openCorriges.has(ex.id) ? "Masquer le corrigé" : "Voir le corrigé"}
                         </Button>
+                      )}
+                      {openCorriges.has(ex.id) && (
+                        <div className="mt-2 p-3 rounded-lg bg-muted/50 border border-border text-sm leading-relaxed prose prose-sm max-w-none break-words">
+                          {ex.corrige && ex.corrige.trim().length > 0 ? (
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm, remarkMath]}
+                              rehypePlugins={[rehypeKatex]}
+                            >
+                              {ex.corrige}
+                            </ReactMarkdown>
+                          ) : (
+                            <p className="text-muted-foreground italic">
+                              Corrigé non disponible pour cette question.
+                            </p>
+                          )}
+                        </div>
                       )}
                     </CardContent>
                   </Card>
