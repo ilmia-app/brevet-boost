@@ -167,7 +167,9 @@ const WorkSession = () => {
           .select("id, enonce, corrige, annale_source")
           .eq("bloc_id", blocId);
 
-        if (annaleSource) {
+        if (exerciceId) {
+          exerciseQuery = exerciseQuery.eq("id", exerciceId);
+        } else if (annaleSource) {
           exerciseQuery = exerciseQuery.eq("annale_source", annaleSource);
         }
 
