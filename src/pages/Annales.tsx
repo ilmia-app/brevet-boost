@@ -258,17 +258,17 @@ const Annales = () => {
 
         {!annaleSource && (
           <div className="space-y-3">
-            {availableGroups.length === 0 && (
+            {annalesList.length === 0 && (
               <p className="text-center text-muted-foreground text-sm py-12">
                 Aucune annale disponible pour cette matière.
               </p>
             )}
-            {availableGroups.map((g) => (
+            {annalesList.map((a) => (
               <Card
-                key={g.key}
+                key={a.id}
                 onClick={() =>
                   navigate(
-                    `/annales/${encodeURIComponent(g.annale_source)}${matiereFilter ? `?matiere=${encodeURIComponent(matiereFilter)}` : ""}`,
+                    `/annales/${encodeURIComponent(a.titre)}${matiereFilter ? `?matiere=${encodeURIComponent(matiereFilter)}` : ""}`,
                   )
                 }
                 className="cursor-pointer hover:border-primary/50 hover:shadow-sm transition-all"
@@ -279,18 +279,15 @@ const Annales = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <Badge className={`${SUBJECT_COLORS[g.matiere] || "bg-muted text-foreground"} text-[10px] px-1.5 py-0`}>
-                        {g.matiere}
+                      <Badge className={`${SUBJECT_COLORS[a.matiere] || "bg-muted text-foreground"} text-[10px] px-1.5 py-0`}>
+                        {a.matiere}
                       </Badge>
-                      <span className="text-[10px] text-muted-foreground">
-                        {g.count} question{g.count > 1 ? "s" : ""}
-                      </span>
                     </div>
                     <p className="font-medium text-sm leading-snug truncate">
-                      {g.annale_source}
+                      {a.titre}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {g.annee}{g.session ? ` · ${g.session}` : ""}
+                      {a.annee}{a.session ? ` · ${a.session}` : ""}
                     </p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
