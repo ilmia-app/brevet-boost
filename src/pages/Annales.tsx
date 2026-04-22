@@ -123,9 +123,19 @@ const Annales = () => {
           annalesQuery = annalesQuery.eq("matiere", matiereFilter);
         }
         const { data: annData } = await annalesQuery;
-        const match = (annData || []).find((a) =>
-          (a.titre || "").toLowerCase().startsWith(annaleSource.toLowerCase()),
-        );
+        const norm = (s: string) =>
+          s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const src = norm(annaleSource);
+        const list = (annData || []) as Annale[];
+        const match =
+          list.find((a) => norm(a.titre || "").startsWith(src)) ||
+          list.find((a) => norm(a.titre || "").includes(src)) ||
+          list.find((a) => {
+            const t = norm(a.titre || "");
+            // Token overlap: every significant token of src present in title
+            const tokens = src.split(/[^a-z0-9]+/).filter((x) => x.length > 2);
+            return tokens.length > 0 && tokens.every((tok) => t.includes(tok));
+          });
         setAnnalePdf((match as Annale) || null);
       } else {
         setAnnalePdf(null);
