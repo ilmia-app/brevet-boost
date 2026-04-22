@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Play, CheckCircle2, Loader2, FileText } from "lucide-react";
-import { getBlocIdLikePattern } from "@/lib/annales";
+import { getBlocIdOrFilter, blocIdMatchesMatiere } from "@/lib/annales";
 
 interface Exercice {
   id: string;
@@ -72,12 +72,12 @@ const Annales = () => {
         .select("id, bloc_id, annale_source, annee, session")
         .not("annale_source", "is", null);
 
-      const likePattern = getBlocIdLikePattern(matiereFilter);
       if (annaleSource) {
         exercicesQuery = exercicesQuery.eq("annale_source", annaleSource);
       }
-      if (likePattern) {
-        exercicesQuery = exercicesQuery.like("bloc_id", likePattern);
+      const orFilter = getBlocIdOrFilter(matiereFilter);
+      if (orFilter) {
+        exercicesQuery = exercicesQuery.or(orFilter);
       }
       if (annaleSource) {
         exercicesQuery = exercicesQuery.order("bloc_id");
