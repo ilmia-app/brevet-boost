@@ -364,10 +364,12 @@ const WorkSession = () => {
         <button
           onClick={() => {
             const matiere = matiereForBlocId(blocId);
-            if (matiere && matiere !== "Autre") {
-              navigate(`/annales?matiere=${encodeURIComponent(matiere)}`);
+            const matiereQuery =
+              matiere && matiere !== "Autre" ? `?matiere=${encodeURIComponent(matiere)}` : "";
+            if (annaleSource) {
+              navigate(`/annales/${encodeURIComponent(annaleSource)}${matiereQuery}`);
             } else {
-              navigate("/annales");
+              navigate(`/annales${matiereQuery}`);
             }
           }}
           className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
