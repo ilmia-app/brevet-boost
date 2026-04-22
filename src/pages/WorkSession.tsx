@@ -64,6 +64,7 @@ const WorkSession = () => {
   const [searchParams] = useSearchParams();
   const blocId = searchParams.get("bloc_id") || searchParams.get("bloc") || "";
   const annaleSource = searchParams.get("annale_source") || "";
+  const questionNum = searchParams.get("question") || "";
   const mode = searchParams.get("mode") || "";
   const isAiMode = mode === "ai";
   console.log("[WorkSession] bloc_id reçu:", blocId, "mode:", mode);
