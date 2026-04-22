@@ -371,7 +371,9 @@ const WorkSession = () => {
             {bloc.matiere}
           </Badge>
           <h1 className="text-xl font-bold leading-tight">
-            {annaleSource || exercise?.annale_source || bloc.titre}
+            {annaleSource || exercise?.annale_source
+              ? `${annaleSource || exercise?.annale_source}${questionNum ? ` — Question ${questionNum}` : ""}`
+              : bloc.titre}
           </h1>
           {(annaleSource || exercise?.annale_source) && (
             <p className="text-sm text-muted-foreground">{bloc.titre}</p>
