@@ -580,29 +580,43 @@ const Dashboard = () => {
           {/* CARTE 2 — Annales */}
           <Card className="rounded-2xl flex flex-col">
             <CardContent className="p-5 flex flex-col flex-1 space-y-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">📄</span>
-                  <h2 className="text-base font-semibold">Passe un vrai sujet</h2>
-                </div>
-                <p className="text-xs text-muted-foreground">Travaille un sujet officiel du brevet DNB</p>
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📄</span>
+                <h2 className="text-base font-semibold">Passe un vrai sujet</h2>
               </div>
 
-              <div className="flex flex-col gap-1.5 flex-1">
+              <div className="space-y-2 flex-1">
                 {[
-                  { label: "Maths", matiere: "Maths", classes: "border-blue-200 bg-blue-50 text-blue-900 hover:bg-blue-100" },
-                  { label: "Français", matiere: "Français", classes: "border-purple-200 bg-purple-50 text-purple-900 hover:bg-purple-100" },
-                  { label: "Histoire-Géo", matiere: "Histoire-Géo", classes: "border-orange-200 bg-orange-50 text-orange-900 hover:bg-orange-100" },
-                  { label: "Sciences", matiere: "Sciences", classes: "border-red-200 bg-red-50 text-red-900 hover:bg-red-100" },
+                  { label: "Maths", matiere: "Maths", desc: "Sujets officiels de mathématiques" },
+                  { label: "Français", matiere: "Français", desc: "Sujets officiels de français" },
+                  { label: "Histoire-Géo", matiere: "Histoire-Géo", desc: "Sujets officiels d'histoire-géo & EMC" },
+                  { label: "Sciences", matiere: "Sciences", desc: "Sujets officiels de SVT, physique & techno" },
                 ].map((m) => (
-                  <button
-                    key={m.matiere}
-                    onClick={() => navigate(`/annales?matiere=${encodeURIComponent(m.matiere)}`)}
-                    className={`w-full flex items-center justify-between rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${m.classes}`}
-                  >
-                    <span>{m.label}</span>
-                    <ChevronRight className="w-4 h-4 opacity-60" />
-                  </button>
+                  <div key={m.matiere} className="rounded-lg border bg-card p-3 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                          <Badge className={`${SUBJECT_COLORS[m.label] || "bg-muted text-foreground"} text-[10px] px-1.5 py-0`}>
+                            {m.label}
+                          </Badge>
+                        </div>
+                        <p className="text-xs leading-snug font-medium">
+                          Annales de {m.label}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground/80 mt-1 flex items-center gap-1">
+                          <Sparkles className="w-2.5 h-2.5 text-primary shrink-0" />
+                          {m.desc}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => navigate(`/annales?matiere=${encodeURIComponent(m.matiere)}`)}
+                      className="w-full h-8 text-xs rounded-lg sprint-gradient text-primary-foreground"
+                    >
+                      <Play className="w-3 h-3 mr-1" /> Commencer
+                    </Button>
+                  </div>
                 ))}
               </div>
 
