@@ -36,21 +36,23 @@ interface SubjectGroup {
 const SUBJECT_COLORS: Record<string, string> = {
   Maths: "bg-blue-500 text-white",
   Français: "bg-purple-500 text-white",
-  Histoire: "bg-orange-500 text-white",
-  Géographie: "bg-emerald-500 text-white",
-  EMC: "bg-yellow-500 text-white",
-  Physique: "bg-red-500 text-white",
-  SVT: "bg-green-700 text-white",
-  Techno: "bg-gray-500 text-white",
+  "Histoire-Géo": "bg-orange-500 text-white",
+  Sciences: "bg-red-500 text-white",
 };
 
-const inferMatiere = (blocId: string | null, blocsMap: Map<string, Bloc>): string => {
+/**
+ * Returns a normalized matiere "category" used for grouping in the annales list.
+ * We group HIS/GEO/EMC together as "Histoire-Géo" and PHY/SVT/TEC as "Sciences"
+ * so that the dashboard filters (?matiere=Histoire-Géo / Sciences) match.
+ */
+const inferMatiere = (blocId: string | null, _blocsMap: Map<string, Bloc>): string => {
   if (!blocId) return "Autre";
-  const b = blocsMap.get(blocId);
-  if (b) return b.matiere;
   if (blocId.startsWith("MAT")) return "Maths";
   if (blocId.startsWith("FRA")) return "Français";
-  if (blocId.startsWith("HIS")) return "Histoire";
+  if (blocId.startsWith("HIS") || blocId.startsWith("GEO") || blocId.startsWith("EMC"))
+    return "Histoire-Géo";
+  if (blocId.startsWith("PHY") || blocId.startsWith("SVT") || blocId.startsWith("TEC"))
+    return "Sciences";
   return "Autre";
 };
 
