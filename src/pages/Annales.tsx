@@ -116,27 +116,30 @@ const Annales = () => {
 
       // Fetch matching PDF when viewing a single annale
       if (annaleSource) {
+        // Build keyword-based ilike filters from annaleSource so we match
+        // partial titles even when wording differs slightly.
+        const keywords = annaleSource
+          .split(/[^A-Za-zÀ-ÿ0-9]+/)
+          .map((k) => k.trim())
+          .filter((k) => k.length > 2);
         let annalesQuery = supabase
           .from("annales")
           .select("id, titre, annee, session, matiere, pdf_url");
         if (matiereFilter) {
           annalesQuery = annalesQuery.eq("matiere", matiereFilter);
         }
-        const { data: annData } = await annalesQuery;
-        const norm = (s: string) =>
-          s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        const src = norm(annaleSource);
-        const list = (annData || []) as Annale[];
-        const match =
-          list.find((a) => norm(a.titre || "").startsWith(src)) ||
-          list.find((a) => norm(a.titre || "").includes(src)) ||
-          list.find((a) => {
-            const t = norm(a.titre || "");
-            // Token overlap: every significant token of src present in title
-            const tokens = src.split(/[^a-z0-9]+/).filter((x) => x.length > 2);
-            return tokens.length > 0 && tokens.every((tok) => t.includes(tok));
-          });
-        setAnnalePdf((match as Annale) || null);
+        for (const kw of keywords) {
+          annalesQuery = annalesQuery.ilike("titre", `%${kw}%`);
+        }
+        const { data: annData, error: annErr } = await annalesQuery;
+        console.log("[Annales] PDF lookup", {
+          annaleSource,
+          matiereFilter,
+          keywords,
+          error: annErr,
+          results: annData,
+        });
+        setAnnalePdf(((annData || [])[0] as Annale) || null);
       } else {
         setAnnalePdf(null);
       }
