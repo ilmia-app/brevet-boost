@@ -235,54 +235,52 @@ const Annales = () => {
                     blocIdMatchesMatiere(e.bloc_id, matiereFilter),
                 )
                 .sort((a, b) => (a.bloc_id || "").localeCompare(b.bloc_id || ""));
-              console.log("Filtre annale:", annaleSource);
-              console.log("Nb exercices:", filtered.length);
               if (filtered.length === 0) {
                 return (
                   <p className="text-center text-muted-foreground text-sm py-12">
-                    Aucun exercice disponible pour ce sujet
+                    Aucune question disponible pour ce sujet
                   </p>
                 );
               }
               return filtered.map((ex, idx) => {
-              const bloc = ex.bloc_id ? blocsMap.get(ex.bloc_id) : null;
-              const done = ex.bloc_id ? completedBlocs.has(ex.bloc_id) : false;
-              return (
-                <Card key={ex.id}>
-                  <CardContent className="p-4 space-y-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs text-muted-foreground mb-1">
-                          Exercice {idx + 1}
+                const done = ex.bloc_id ? completedBlocs.has(ex.bloc_id) : false;
+                const questionNum = idx + 1;
+                return (
+                  <Card key={ex.id}>
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-xs uppercase tracking-wide text-primary font-semibold">
+                          Question {questionNum}
                         </p>
-                        <p className="font-medium text-sm leading-snug">
-                          {bloc?.titre || ex.bloc_id || "Exercice"}
-                        </p>
+                        {done ? (
+                          <Badge className="bg-emerald-500 text-white shrink-0 text-[10px]">
+                            <CheckCircle2 className="w-3 h-3 mr-1" /> Fait
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="shrink-0 text-[10px]">À faire</Badge>
+                        )}
                       </div>
-                      {done ? (
-                        <Badge className="bg-emerald-500 text-white shrink-0">
-                          <CheckCircle2 className="w-3 h-3 mr-1" /> Fait
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="shrink-0">À faire</Badge>
+                      {ex.enonce && (
+                        <p className="text-sm leading-relaxed text-foreground/85 whitespace-pre-line">
+                          {ex.enonce}
+                        </p>
                       )}
-                    </div>
-                    <div className="flex items-center justify-end">
                       {ex.bloc_id && (
                         <Button
                           size="sm"
-                          className="h-8 text-xs rounded-lg sprint-gradient text-primary-foreground"
+                          className="w-full h-9 text-xs rounded-lg sprint-gradient text-primary-foreground"
                           onClick={() =>
-                            navigate(`/work?bloc_id=${encodeURIComponent(ex.bloc_id!)}&annale_source=${encodeURIComponent(annaleSource)}`)
+                            navigate(
+                              `/work?bloc_id=${encodeURIComponent(ex.bloc_id!)}&annale_source=${encodeURIComponent(annaleSource)}&exercice_id=${encodeURIComponent(ex.id)}&question=${questionNum}`,
+                            )
                           }
                         >
-                          <Play className="w-3 h-3 mr-1" /> Commencer
+                          <Play className="w-3 h-3 mr-1" /> Commencer cette question
                         </Button>
                       )}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
+                    </CardContent>
+                  </Card>
+                );
               });
             })()}
           </div>
