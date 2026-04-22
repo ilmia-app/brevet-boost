@@ -84,6 +84,7 @@ const Annales = () => {
   const [blocsMap, setBlocsMap] = useState<Map<string, Bloc>>(new Map());
   const [completedBlocs, setCompletedBlocs] = useState<Set<string>>(new Set());
   const [openCorriges, setOpenCorriges] = useState<Set<string>>(new Set());
+  const [annalePdf, setAnnalePdf] = useState<Annale | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -112,6 +113,23 @@ const Annales = () => {
       (blData || []).forEach((b) => map.set(b.id, b as Bloc));
       setBlocsMap(map);
       setExercices((exData || []) as Exercice[]);
+
+      // Fetch matching PDF when viewing a single annale
+      if (annaleSource) {
+        let annalesQuery = supabase
+          .from("annales")
+          .select("id, titre, annee, session, matiere, pdf_url");
+        if (matiereFilter) {
+          annalesQuery = annalesQuery.eq("matiere", matiereFilter);
+        }
+        const { data: annData } = await annalesQuery;
+        const match = (annData || []).find((a) =>
+          (a.titre || "").toLowerCase().startsWith(annaleSource.toLowerCase()),
+        );
+        setAnnalePdf((match as Annale) || null);
+      } else {
+        setAnnalePdf(null);
+      }
 
       if (user) {
         const { data: comps } = await supabase
