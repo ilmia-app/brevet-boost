@@ -262,6 +262,31 @@ const Annales = () => {
             <p className="text-xs text-muted-foreground italic line-clamp-2">
               {annaleSource}
             </p>
+            {annalePdf?.pdf_url && (
+              <Card className="overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-border bg-muted/30">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className="w-4 h-4 text-primary shrink-0" />
+                      <p className="text-xs font-medium truncate">{annalePdf.titre}</p>
+                    </div>
+                    <a
+                      href={annalePdf.pdf_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary inline-flex items-center gap-1 shrink-0 hover:underline"
+                    >
+                      Ouvrir <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                  <iframe
+                    src={`${annalePdf.pdf_url}#view=FitH`}
+                    title={annalePdf.titre}
+                    className="w-full h-[70vh] bg-background"
+                  />
+                </CardContent>
+              </Card>
+            )}
             {(() => {
               const filtered = exercices
                 .filter(
