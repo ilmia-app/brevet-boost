@@ -110,20 +110,39 @@ const WorkSession = () => {
 
       // 2. Méthode
       if (blocData?.methode_id) {
-        const { data: methData } = await supabase
+        const { data: methData, error: methErr } = await supabase
           .from("methodes")
-          .select("etapes")
+          .select("etapes, titre")
           .eq("id", blocData.methode_id)
           .maybeSingle();
+        if (methErr) console.error("[WorkSession] methode error:", methErr);
         if (cancelled) return;
         if (methData?.etapes) {
+          let steps: string[] = [];
           try {
             const parsed = JSON.parse(methData.etapes);
-            setMethodeSteps(Array.isArray(parsed) ? parsed : methData.etapes.split("\n").filter(Boolean));
+            if (Array.isArray(parsed)) steps = parsed.map(String);
           } catch {
-            setMethodeSteps(methData.etapes.split("\n").filter(Boolean));
+            // Not JSON: split on newlines OR on numbered list separators ("1. ", "2. ")
+            const raw = methData.etapes.trim();
+            if (raw.includes("\n")) {
+              steps = raw.split("\n").map((s) => s.trim()).filter(Boolean);
+            } else {
+              steps = raw
+                .split(/\s*(?=\d+[.)]\s)/)
+                .map((s) => s.trim())
+                .filter(Boolean);
+            }
           }
+          // Strip leading "1. ", "2) " numbering — UI re-numbers steps itself
+          steps = steps.map((s) => s.replace(/^\s*\d+[.)]\s*/, "").trim()).filter(Boolean);
+          console.log("[WorkSession] méthode chargée:", blocData.methode_id, steps.length, "étapes");
+          setMethodeSteps(steps);
+        } else {
+          console.warn("[WorkSession] méthode introuvable pour methode_id:", blocData.methode_id);
         }
+      } else {
+        console.warn("[WorkSession] aucun methode_id pour le bloc:", blocData?.id);
       }
 
       // 3. Exercice
