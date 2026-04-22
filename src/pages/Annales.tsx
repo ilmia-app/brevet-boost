@@ -36,12 +36,8 @@ interface SubjectGroup {
 const SUBJECT_COLORS: Record<string, string> = {
   Maths: "bg-blue-500 text-white",
   Français: "bg-purple-500 text-white",
-  Histoire: "bg-orange-500 text-white",
-  Géographie: "bg-emerald-500 text-white",
-  EMC: "bg-yellow-500 text-white",
-  Physique: "bg-red-500 text-white",
-  SVT: "bg-green-700 text-white",
-  Techno: "bg-gray-500 text-white",
+  "Histoire-Géo": "bg-orange-500 text-white",
+  Sciences: "bg-red-500 text-white",
 };
 
 /**
