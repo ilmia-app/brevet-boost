@@ -448,7 +448,7 @@ const WorkSession = () => {
                   )}
                 </Button>
               </div>
-            ) : (
+            ) : !exercise.annale_source ? (
               <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">
                 <span className="text-xs text-muted-foreground">
                   ✨ Préfères-tu un exercice généré par IA sur ce thème ?
@@ -471,7 +471,7 @@ const WorkSession = () => {
                   )}
                 </Button>
               </div>
-            )}
+            ) : null}
             <p className="text-xs text-muted-foreground text-center italic px-2">
               Suis la méthode ci-dessous étape par étape pendant que tu travailles ✨
             </p>
