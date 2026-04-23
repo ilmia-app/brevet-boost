@@ -64,8 +64,6 @@ const WorkSession = () => {
   const [searchParams] = useSearchParams();
   const blocId = searchParams.get("bloc_id") || searchParams.get("bloc") || "";
   const annaleSource = searchParams.get("annale_source") || "";
-  const questionNum = searchParams.get("question") || "";
-  const exerciceId = searchParams.get("exercice_id") || "";
   const mode = searchParams.get("mode") || "";
   const isAiMode = mode === "ai";
   console.log("[WorkSession] bloc_id reçu:", blocId, "mode:", mode);
@@ -110,39 +108,20 @@ const WorkSession = () => {
 
       // 2. Méthode
       if (blocData?.methode_id) {
-        const { data: methData, error: methErr } = await supabase
+        const { data: methData } = await supabase
           .from("methodes")
-          .select("etapes, titre")
+          .select("etapes")
           .eq("id", blocData.methode_id)
           .maybeSingle();
-        if (methErr) console.error("[WorkSession] methode error:", methErr);
         if (cancelled) return;
         if (methData?.etapes) {
-          let steps: string[] = [];
           try {
             const parsed = JSON.parse(methData.etapes);
-            if (Array.isArray(parsed)) steps = parsed.map(String);
+            setMethodeSteps(Array.isArray(parsed) ? parsed : methData.etapes.split("\n").filter(Boolean));
           } catch {
-            // Not JSON: split on newlines OR on numbered list separators ("1. ", "2. ")
-            const raw = methData.etapes.trim();
-            if (raw.includes("\n")) {
-              steps = raw.split("\n").map((s) => s.trim()).filter(Boolean);
-            } else {
-              steps = raw
-                .split(/\s*(?=\d+[.)]\s)/)
-                .map((s) => s.trim())
-                .filter(Boolean);
-            }
+            setMethodeSteps(methData.etapes.split("\n").filter(Boolean));
           }
-          // Strip leading "1. ", "2) " numbering — UI re-numbers steps itself
-          steps = steps.map((s) => s.replace(/^\s*\d+[.)]\s*/, "").trim()).filter(Boolean);
-          console.log("[WorkSession] méthode chargée:", blocData.methode_id, steps.length, "étapes");
-          setMethodeSteps(steps);
-        } else {
-          console.warn("[WorkSession] méthode introuvable pour methode_id:", blocData.methode_id);
         }
-      } else {
-        console.warn("[WorkSession] aucun methode_id pour le bloc:", blocData?.id);
       }
 
       // 3. Exercice
@@ -161,22 +140,17 @@ const WorkSession = () => {
           });
           if (genErr) throw genErr;
           if (cancelled) return;
-          const enonceOk = gen?.enonce && gen.enonce !== "Impossible de générer l'énoncé.";
-          if (enonceOk) {
-            setExercise({
-              id: `ai-${blocData.id}`,
-              enonce: gen.enonce,
-              corrige: null,
-              annale_source: "Exercice généré par IA ✨",
-              graphique: gen?.graphique || null,
-              questions: gen?.questions || null,
-            });
-            setAiCorrigeCache(gen?.corrige || "");
-          }
-          // Sinon : on laisse exercise à null → la carte "Prends un exercice de ton choix" s'affiche
+          setExercise({
+            id: `ai-${blocData.id}`,
+            enonce: gen?.enonce || "Impossible de générer l'énoncé.",
+            corrige: null,
+            annale_source: "Exercice généré par IA ✨",
+            graphique: gen?.graphique || null,
+            questions: gen?.questions || null,
+          });
+          setAiCorrigeCache(gen?.corrige || "");
         } catch (e) {
           console.error("[WorkSession] erreur génération IA:", e);
-          // exercise reste à null → fallback "Prends un exercice de ton choix"
         } finally {
           if (!cancelled) setAiLoading(false);
         }
@@ -186,9 +160,7 @@ const WorkSession = () => {
           .select("id, enonce, corrige, annale_source")
           .eq("bloc_id", blocId);
 
-        if (exerciceId) {
-          exerciseQuery = exerciseQuery.eq("id", exerciceId);
-        } else if (annaleSource) {
+        if (annaleSource) {
           exerciseQuery = exerciseQuery.eq("annale_source", annaleSource);
         }
 
@@ -203,7 +175,7 @@ const WorkSession = () => {
     return () => {
       cancelled = true;
     };
-  }, [blocId, isAiMode, annaleSource, exerciceId]);
+  }, [blocId, isAiMode, annaleSource]);
 
   // Timer tick
   useEffect(() => {
@@ -392,14 +364,7 @@ const WorkSession = () => {
           <Badge className={SUBJECT_COLORS[bloc.matiere] || "bg-muted text-foreground"}>
             {bloc.matiere}
           </Badge>
-          <h1 className="text-xl font-bold leading-tight">
-            {annaleSource || exercise?.annale_source
-              ? `${annaleSource || exercise?.annale_source}${questionNum ? ` — Question ${questionNum}` : ""}`
-              : bloc.titre}
-          </h1>
-          {(annaleSource || exercise?.annale_source) && (
-            <p className="text-sm text-muted-foreground">{bloc.titre}</p>
-          )}
+          <h1 className="text-xl font-bold leading-tight">{bloc.titre}</h1>
 
           {/* Timer */}
           <div className="flex flex-col items-center gap-3 pt-2">
@@ -483,7 +448,7 @@ const WorkSession = () => {
                   )}
                 </Button>
               </div>
-            ) : !annaleSource ? (
+            ) : (
               <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">
                 <span className="text-xs text-muted-foreground">
                   ✨ Préfères-tu un exercice généré par IA sur ce thème ?
@@ -506,7 +471,7 @@ const WorkSession = () => {
                   )}
                 </Button>
               </div>
-            ) : null}
+            )}
             <p className="text-xs text-muted-foreground text-center italic px-2">
               Suis la méthode ci-dessous étape par étape pendant que tu travailles ✨
             </p>
@@ -520,9 +485,7 @@ const WorkSession = () => {
                   <span className="text-lg">📖</span> Prends ton exercice
                 </h2>
                 <p className="text-sm text-foreground/80 leading-relaxed">
-                  {isAiMode
-                    ? "Prends un exercice de ton choix sur ce thème, puis suis la méthode ci-dessous étape par étape pendant que tu travailles."
-                    : "Choisis un exercice de ton choix sur ce thème puis suis la méthode ci-dessous étape par étape pendant que tu travailles."}
+                  Choisis un exercice de ton choix sur ce thème puis suis la méthode ci-dessous étape par étape pendant que tu travailles.
                 </p>
               </CardContent>
             </Card>

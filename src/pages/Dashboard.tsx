@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Play, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3, Sparkles, Settings, X, ChevronRight } from "lucide-react";
+import { Play, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3, Sparkles, Settings, X } from "lucide-react";
 import EndOfDayModal from "@/components/dashboard/EndOfDayModal";
 
 interface ProfileData {
@@ -66,7 +66,6 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [profileError, setProfileError] = useState<string | null>(null);
   const [blocs, setBlocs] = useState<BlocExamen[]>([]);
   const [feedback, setFeedback] = useState<MessageFeedback | null>(null);
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
@@ -82,76 +81,47 @@ const Dashboard = () => {
 
   // Profile
   useEffect(() => {
-    let isActive = true;
-
-    const loadProfile = async () => {
-      if (!user) {
-        navigate("/", { replace: true });
-        if (isActive) setLoading(false);
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    (async () => {
+      const { data } = await supabase
+        .from("users")
+        .select("id, prenom, date_examen, volume_quotidien, retard_initial, matieres_faibles, mode_actuel, phase_actuelle, derniere_modif_priorites")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!data) {
+        navigate("/onboarding");
         return;
       }
+      setProfile({
+        id: data.id,
+        name: data.prenom || "",
+        examDate: data.date_examen || "",
+        rhythm: data.volume_quotidien || "",
+        level: data.retard_initial || "",
+        subjects: data.matieres_faibles || [],
+        modeActuel: data.mode_actuel || "normal",
+        phaseActuelle: data.phase_actuelle || 1,
+      });
 
-      if (isActive) {
-        setLoading(true);
-        setProfileError(null);
+      // Bandeau hebdo phase 2 : lundi + non modifié cette semaine + non dismissé aujourd'hui
+      const lastModif = (data as any).derniere_modif_priorites as string | null;
+      const phase = data.phase_actuelle || 1;
+      const today = new Date();
+      const isMonday = today.getDay() === 1;
+      const monday = new Date(today);
+      monday.setHours(0, 0, 0, 0);
+      const modifiedThisWeek = lastModif ? new Date(lastModif) >= monday : false;
+      const dismissedKey = `weekly-banner-dismissed-${today.toISOString().split("T")[0]}`;
+      const dismissed = localStorage.getItem(dismissedKey) === "1";
+      if (phase === 2 && isMonday && !modifiedThisWeek && !dismissed) {
+        setShowWeeklyBanner(true);
       }
 
-      try {
-        const { data, error } = await supabase
-          .from("users")
-          .select("id, prenom, date_examen, volume_quotidien, retard_initial, matieres_faibles, mode_actuel, phase_actuelle, derniere_modif_priorites")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        if (error) {
-          console.error("[Dashboard] erreur chargement profil:", error);
-          throw error;
-        }
-
-        if (!data) {
-          navigate("/onboarding", { replace: true });
-          return;
-        }
-
-        if (!isActive) return;
-
-        setProfile({
-          id: data.id,
-          name: data.prenom || "",
-          examDate: data.date_examen || "",
-          rhythm: data.volume_quotidien || "",
-          level: data.retard_initial || "",
-          subjects: data.matieres_faibles || [],
-          modeActuel: data.mode_actuel || "normal",
-          phaseActuelle: data.phase_actuelle || 1,
-        });
-
-        const lastModif = data.derniere_modif_priorites;
-        const phase = data.phase_actuelle || 1;
-        const today = new Date();
-        const isMonday = today.getDay() === 1;
-        const monday = new Date(today);
-        monday.setHours(0, 0, 0, 0);
-        const modifiedThisWeek = lastModif ? new Date(lastModif) >= monday : false;
-        const dismissedKey = `weekly-banner-dismissed-${today.toISOString().split("T")[0]}`;
-        const dismissed = localStorage.getItem(dismissedKey) === "1";
-
-        setShowWeeklyBanner(phase === 2 && isMonday && !modifiedThisWeek && !dismissed);
-      } catch (error) {
-        console.error("[Dashboard] exception inattendue:", error);
-        if (isActive) {
-          setProfileError("Impossible de charger ton planning.");
-        }
-      } finally {
-        if (isActive) setLoading(false);
-      }
-    };
-
-    loadProfile();
-
-    return () => {
-      isActive = false;
-    };
+      setLoading(false);
+    })();
   }, [user, navigate]);
 
   // Today's completions
@@ -373,7 +343,7 @@ const Dashboard = () => {
 
   const allDone = dailyTasks.length > 0 && dailyTasks.every((t) => completedTasks.has(t.bloc.id));
 
-  if (loading)
+  if (!profile || loading)
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-3">
@@ -382,23 +352,6 @@ const Dashboard = () => {
         </div>
       </div>
     );
-
-  if (profileError)
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <div className="w-full max-w-sm text-center space-y-4">
-          <div className="space-y-2">
-            <h1 className="text-xl font-semibold">Impossible de charger ton planning</h1>
-            <p className="text-sm text-muted-foreground">La connexion à Supabase répond, mais le profil n’a pas pu être chargé correctement.</p>
-          </div>
-          <Button onClick={() => window.location.reload()} className="w-full sprint-gradient text-primary-foreground">
-            Réessayer
-          </Button>
-        </div>
-      </div>
-    );
-
-  if (!profile) return null;
 
   const completedCount = dailyTasks.filter((t) => completedTasks.has(t.bloc.id)).length;
 
@@ -584,40 +537,34 @@ const Dashboard = () => {
                 <span className="text-xl">📄</span>
                 <h2 className="text-base font-semibold">Passe un vrai sujet</h2>
               </div>
+              <p className="text-xs text-muted-foreground -mt-2">Travaille un sujet officiel du brevet DNB</p>
 
-              <div className="space-y-2 flex-1">
-                {[
-                  { label: "Maths", matiere: "Maths", desc: "Sujets officiels de mathématiques" },
-                  { label: "Français", matiere: "Français", desc: "Sujets officiels de français" },
-                  { label: "Histoire-Géo", matiere: "Histoire-Géo", desc: "Sujets officiels d'histoire-géo & EMC" },
-                  { label: "Sciences", matiere: "Sciences", desc: "Sujets officiels de SVT, physique & techno" },
-                ].map((m) => (
-                  <div key={m.matiere} className="rounded-lg border bg-card p-3 space-y-2">
-                    <div className="flex items-start gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                          <Badge className={`${SUBJECT_COLORS[m.label] || "bg-muted text-foreground"} text-[10px] px-1.5 py-0`}>
-                            {m.label}
-                          </Badge>
-                        </div>
-                        <p className="text-xs leading-snug font-medium">
-                          Annales de {m.label}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground/80 mt-1 flex items-center gap-1">
-                          <Sparkles className="w-2.5 h-2.5 text-primary shrink-0" />
-                          {m.desc}
-                        </p>
-                      </div>
+              <div className="space-y-3 flex-1 flex flex-col justify-center">
+                <button
+                  onClick={() => navigate("/annales?matiere=Maths")}
+                  className="w-full text-left rounded-xl border border-blue-200 bg-blue-50 p-4 hover:bg-blue-100 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-blue-900">Annales Maths</p>
+                      <p className="text-xs text-blue-700/80 mt-0.5">Sujets officiels DNB</p>
                     </div>
-                    <Button
-                      size="sm"
-                      onClick={() => navigate(`/annales?matiere=${encodeURIComponent(m.matiere)}`)}
-                      className="w-full h-8 text-xs rounded-lg sprint-gradient text-primary-foreground"
-                    >
-                      <Play className="w-3 h-3 mr-1" /> Commencer
-                    </Button>
+                    <Badge className="bg-blue-500 text-white">Maths</Badge>
                   </div>
-                ))}
+                </button>
+
+                <button
+                  onClick={() => navigate("/annales?matiere=Français")}
+                  className="w-full text-left rounded-xl border border-purple-200 bg-purple-50 p-4 hover:bg-purple-100 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-purple-900">Annales Français</p>
+                      <p className="text-xs text-purple-700/80 mt-0.5">Sujets officiels DNB</p>
+                    </div>
+                    <Badge className="bg-purple-500 text-white">Français</Badge>
+                  </div>
+                </button>
               </div>
 
               {currentPhase === 3 && (

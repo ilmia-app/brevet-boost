@@ -5,14 +5,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, CheckCircle2, Loader2, FileText, ChevronRight, BookOpen, ExternalLink } from "lucide-react";
-import { getBlocIdOrFilter, blocIdMatchesMatiere, cleanEnonce } from "@/lib/annales";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
-import "katex/dist/katex.min.css";
-
+import { ArrowLeft, Play, CheckCircle2, Loader2, FileText } from "lucide-react";
+import { getBlocIdLikePattern } from "@/lib/annales";
 
 interface Exercice {
   id: string;
@@ -20,23 +14,12 @@ interface Exercice {
   annale_source: string | null;
   annee: number | null;
   session: string | null;
-  enonce: string | null;
-  corrige: string | null;
 }
 
 interface Bloc {
   id: string;
   titre: string;
   matiere: string;
-}
-
-interface Annale {
-  id: string;
-  titre: string;
-  annee: number;
-  session: string;
-  matiere: string;
-  pdf_url: string;
 }
 
 interface SubjectGroup {
@@ -52,23 +35,21 @@ interface SubjectGroup {
 const SUBJECT_COLORS: Record<string, string> = {
   Maths: "bg-blue-500 text-white",
   Français: "bg-purple-500 text-white",
-  "Histoire-Géo": "bg-orange-500 text-white",
-  Sciences: "bg-red-500 text-white",
+  Histoire: "bg-orange-500 text-white",
+  Géographie: "bg-emerald-500 text-white",
+  EMC: "bg-yellow-500 text-white",
+  Physique: "bg-red-500 text-white",
+  SVT: "bg-green-700 text-white",
+  Techno: "bg-gray-500 text-white",
 };
 
-/**
- * Returns a normalized matiere "category" used for grouping in the annales list.
- * We group HIS/GEO/EMC together as "Histoire-Géo" and PHY/SVT/TEC as "Sciences"
- * so that the dashboard filters (?matiere=Histoire-Géo / Sciences) match.
- */
-const inferMatiere = (blocId: string | null, _blocsMap: Map<string, Bloc>): string => {
+const inferMatiere = (blocId: string | null, blocsMap: Map<string, Bloc>): string => {
   if (!blocId) return "Autre";
+  const b = blocsMap.get(blocId);
+  if (b) return b.matiere;
   if (blocId.startsWith("MAT")) return "Maths";
   if (blocId.startsWith("FRA")) return "Français";
-  if (blocId.startsWith("HIS") || blocId.startsWith("GEO") || blocId.startsWith("EMC"))
-    return "Histoire-Géo";
-  if (blocId.startsWith("PHY") || blocId.startsWith("SVT") || blocId.startsWith("TEC"))
-    return "Sciences";
+  if (blocId.startsWith("HIS")) return "Histoire";
   return "Autre";
 };
 
@@ -83,23 +64,20 @@ const Annales = () => {
   const [exercices, setExercices] = useState<Exercice[]>([]);
   const [blocsMap, setBlocsMap] = useState<Map<string, Bloc>>(new Map());
   const [completedBlocs, setCompletedBlocs] = useState<Set<string>>(new Set());
-  const [openCorriges, setOpenCorriges] = useState<Set<string>>(new Set());
-  const [annalePdf, setAnnalePdf] = useState<Annale | null>(null);
-  const [annalesList, setAnnalesList] = useState<Annale[]>([]);
 
   useEffect(() => {
     const load = async () => {
       let exercicesQuery = supabase
         .from("exercices")
-        .select("id, bloc_id, annale_source, annee, session, enonce, corrige")
+        .select("id, bloc_id, annale_source, annee, session")
         .not("annale_source", "is", null);
 
+      const likePattern = getBlocIdLikePattern(matiereFilter);
       if (annaleSource) {
         exercicesQuery = exercicesQuery.eq("annale_source", annaleSource);
       }
-      const orFilter = getBlocIdOrFilter(matiereFilter);
-      if (orFilter) {
-        exercicesQuery = exercicesQuery.or(orFilter);
+      if (likePattern) {
+        exercicesQuery = exercicesQuery.like("bloc_id", likePattern);
       }
       if (annaleSource) {
         exercicesQuery = exercicesQuery.order("bloc_id");
@@ -114,47 +92,6 @@ const Annales = () => {
       (blData || []).forEach((b) => map.set(b.id, b as Bloc));
       setBlocsMap(map);
       setExercices((exData || []) as Exercice[]);
-
-      // Load all available annales (PDFs) so we can restrict the list view
-      // to only those that actually have a PDF in Supabase.
-      let allAnnalesQuery = supabase
-        .from("annales")
-        .select("id, titre, annee, session, matiere, pdf_url");
-      if (matiereFilter) {
-        allAnnalesQuery = allAnnalesQuery.eq("matiere", matiereFilter);
-      }
-      const { data: allAnnales } = await allAnnalesQuery;
-      setAnnalesList((allAnnales || []) as Annale[]);
-
-      // Fetch matching PDF when viewing a single annale
-      if (annaleSource) {
-        // Build keyword-based ilike filters from annaleSource so we match
-        // partial titles even when wording differs slightly.
-        const keywords = annaleSource
-          .split(/[^A-Za-zÀ-ÿ0-9]+/)
-          .map((k) => k.trim())
-          .filter((k) => k.length > 2);
-        let annalesQuery = supabase
-          .from("annales")
-          .select("id, titre, annee, session, matiere, pdf_url");
-        if (matiereFilter) {
-          annalesQuery = annalesQuery.eq("matiere", matiereFilter);
-        }
-        for (const kw of keywords) {
-          annalesQuery = annalesQuery.ilike("titre", `%${kw}%`);
-        }
-        const { data: annData, error: annErr } = await annalesQuery;
-        console.log("[Annales] PDF lookup", {
-          annaleSource,
-          matiereFilter,
-          keywords,
-          error: annErr,
-          results: annData,
-        });
-        setAnnalePdf(((annData || [])[0] as Annale) || null);
-      } else {
-        setAnnalePdf(null);
-      }
 
       if (user) {
         const { data: comps } = await supabase
@@ -206,24 +143,6 @@ const Annales = () => {
     return Array.from(byMat.entries());
   }, [groups, matiereFilter]);
 
-  // Only keep groups whose annale_source matches an existing PDF in `annales`.
-  const availableGroups = useMemo(() => {
-    if (annalesList.length === 0) return [] as SubjectGroup[];
-    const norm = (s: string) =>
-      s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const titles = annalesList.map((a) => norm(a.titre || ""));
-    return groups.filter((g) => {
-      const src = norm(g.annale_source);
-      const tokens = src.split(/[^a-z0-9]+/).filter((x) => x.length > 2);
-      return titles.some(
-        (t) =>
-          t.startsWith(src) ||
-          t.includes(src) ||
-          (tokens.length > 0 && tokens.every((tok) => t.includes(tok))),
-      );
-    });
-  }, [groups, annalesList]);
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -257,42 +176,57 @@ const Annales = () => {
         </div>
 
         {!annaleSource && (
-          <div className="space-y-3">
-            {annalesList.length === 0 && (
+          <div className="space-y-6">
+            {grouped.length === 0 && (
               <p className="text-center text-muted-foreground text-sm py-12">
-                Aucune annale disponible pour cette matière.
+                Aucune annale disponible pour le moment.
               </p>
             )}
-            {annalesList.map((a) => (
-              <Card
-                key={a.id}
-                onClick={() =>
-                  navigate(
-                    `/annales/${encodeURIComponent(a.titre)}${matiereFilter ? `?matiere=${encodeURIComponent(matiereFilter)}` : ""}`,
-                  )
-                }
-                className="cursor-pointer hover:border-primary/50 hover:shadow-sm transition-all"
-              >
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <FileText className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge className={`${SUBJECT_COLORS[a.matiere] || "bg-muted text-foreground"} text-[10px] px-1.5 py-0`}>
-                        {a.matiere}
-                      </Badge>
-                    </div>
-                    <p className="font-medium text-sm leading-snug truncate">
-                      {a.titre}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {a.annee}{a.session ? ` · ${a.session}` : ""}
-                    </p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                </CardContent>
-              </Card>
+            {grouped.map(([matiere, list]) => (
+              <section key={matiere} className="space-y-3">
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <Badge className={SUBJECT_COLORS[matiere] || "bg-muted text-foreground"}>
+                    {matiere}
+                  </Badge>
+                </h2>
+                <div className="space-y-3">
+                  {list.map((g) => (
+                    <Card key={g.key} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-start gap-2">
+                          <FileText className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm leading-snug">
+                              {g.annee} · {g.session || "Session"}
+                            </p>
+                            <p className="text-xs text-muted-foreground line-clamp-2">
+                              {g.annale_source}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">
+                            {g.count} exercice{g.count > 1 ? "s" : ""}
+                          </span>
+                          <Button
+                            size="sm"
+                            className="h-8 text-xs rounded-lg"
+                            onClick={() =>
+                              navigate(
+                                `/annales/${encodeURIComponent(g.annale_source)}${
+                                  matiereFilter ? `?matiere=${encodeURIComponent(matiereFilter)}` : ""
+                                }`,
+                              )
+                            }
+                          >
+                            Travailler ce sujet
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </section>
             ))}
           </div>
         )}
@@ -302,35 +236,66 @@ const Annales = () => {
             <p className="text-xs text-muted-foreground italic line-clamp-2">
               {annaleSource}
             </p>
-            {annalePdf?.pdf_url ? (
-              <Card className="overflow-hidden">
-                <CardContent className="p-0">
-                  <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-border bg-muted/30">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <FileText className="w-4 h-4 text-primary shrink-0" />
-                      <p className="text-xs font-medium truncate">{annalePdf.titre}</p>
+            {(() => {
+              const likePattern = getBlocIdLikePattern(matiereFilter);
+              const blocPrefix = likePattern?.replace("%", "");
+              const filtered = exercices
+                .filter(
+                  (e) =>
+                    e.annale_source === annaleSource &&
+                    (!blocPrefix || e.bloc_id?.startsWith(blocPrefix)),
+                )
+                .sort((a, b) => (a.bloc_id || "").localeCompare(b.bloc_id || ""));
+              console.log("Filtre annale:", annaleSource);
+              console.log("Nb exercices:", filtered.length);
+              if (filtered.length === 0) {
+                return (
+                  <p className="text-center text-muted-foreground text-sm py-12">
+                    Aucun exercice disponible pour ce sujet
+                  </p>
+                );
+              }
+              return filtered.map((ex, idx) => {
+              const bloc = ex.bloc_id ? blocsMap.get(ex.bloc_id) : null;
+              const done = ex.bloc_id ? completedBlocs.has(ex.bloc_id) : false;
+              return (
+                <Card key={ex.id}>
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground mb-1">
+                          Exercice {idx + 1}
+                        </p>
+                        <p className="font-medium text-sm leading-snug">
+                          {bloc?.titre || ex.bloc_id || "Exercice"}
+                        </p>
+                      </div>
+                      {done ? (
+                        <Badge className="bg-emerald-500 text-white shrink-0">
+                          <CheckCircle2 className="w-3 h-3 mr-1" /> Fait
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="shrink-0">À faire</Badge>
+                      )}
                     </div>
-                    <a
-                      href={annalePdf.pdf_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-primary inline-flex items-center gap-1 shrink-0 hover:underline"
-                    >
-                      Ouvrir <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
-                  <iframe
-                    src={`${annalePdf.pdf_url}#view=FitH`}
-                    title={annalePdf.titre}
-                    className="w-full h-[80vh] bg-background"
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <p className="text-center text-muted-foreground text-sm py-12">
-                Sujet PDF non disponible pour cette annale.
-              </p>
-            )}
+                    <div className="flex items-center justify-end">
+                      {ex.bloc_id && (
+                        <Button
+                          size="sm"
+                          className="h-8 text-xs rounded-lg sprint-gradient text-primary-foreground"
+                          onClick={() =>
+                            navigate(`/work?bloc_id=${encodeURIComponent(ex.bloc_id!)}&annale_source=${encodeURIComponent(annaleSource)}`)
+                          }
+                        >
+                          <Play className="w-3 h-3 mr-1" /> Commencer
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+              });
+            })()}
           </div>
         )}
       </div>

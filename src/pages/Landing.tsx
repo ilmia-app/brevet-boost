@@ -1,9 +1,4 @@
-import { Target, Calendar, BookOpen, ClipboardList, Sparkles, X } from "lucide-react";
-
-interface LandingProps {
-  asModal?: boolean;
-  onClose?: () => void;
-}
+import { Target, Calendar, BookOpen, ClipboardList, Sparkles } from "lucide-react";
 
 const features = [
   { icon: Calendar, title: "Planning personnalisé", desc: "adapté à ta date d'examen" },
@@ -12,18 +7,13 @@ const features = [
   { icon: Sparkles, title: "Exercices générés", desc: "par IA" },
 ];
 
-const Landing = ({ asModal = false, onClose }: LandingProps = {}) => {
-  const content = (
-    <div className="w-full max-w-md mx-auto flex flex-col items-center text-center text-white relative">
-      {asModal && onClose && (
-        <button
-          onClick={onClose}
-          aria-label="Fermer"
-          className="absolute -top-2 -right-2 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white transition"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      )}
+const Landing = () => {
+  return (
+    <main
+      className="min-h-screen w-full flex items-center justify-center px-6 py-10"
+      style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)" }}
+    >
+      <div className="w-full max-w-md mx-auto flex flex-col items-center text-center text-white">
         {/* Logo */}
         <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-500 to-emerald-500 flex items-center justify-center shadow-2xl mb-5">
           <Target className="w-11 h-11 text-white" strokeWidth={2.5} />
@@ -81,33 +71,7 @@ const Landing = ({ asModal = false, onClose }: LandingProps = {}) => {
         <p className="text-xs text-blue-100/70">
           Par une maman CNED pour les familles CNED 💙
         </p>
-    </div>
-  );
-
-  if (asModal) {
-    return (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 overflow-y-auto"
-        style={{ background: "rgba(0,0,0,0.6)" }}
-        onClick={onClose}
-      >
-        <div
-          className="rounded-3xl p-6 shadow-2xl max-h-[95vh] overflow-y-auto"
-          style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)" }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {content}
-        </div>
       </div>
-    );
-  }
-
-  return (
-    <main
-      className="min-h-screen w-full flex items-center justify-center px-6 py-10"
-      style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)" }}
-    >
-      {content}
     </main>
   );
 };

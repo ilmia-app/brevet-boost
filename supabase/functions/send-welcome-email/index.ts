@@ -30,7 +30,7 @@ const buildHtml = (prenom: string) => `<!DOCTYPE html>
 
     <p style="margin-top:24px;">Pour commencer, rendez-vous sur le <strong>"Sprint du jour"</strong> dans le tableau de bord — le planning s'adapte automatiquement à la date d'examen.</p>
 
-    <p>Une question ou un retour ? Écrivez-nous à <a href="mailto:contact@sprintdnb.fr" style="color:#16a34a;">contact@sprintdnb.fr</a></p>
+    <p>Une question ou un retour ? Écrivez-nous à <a href="mailto:sprintdnb@gmail.com" style="color:#16a34a;">sprintdnb@gmail.com</a></p>
 
     <p style="margin-top:24px;">Bon courage pour cette dernière ligne droite 💪</p>
 
@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Sprint DNB <contact@sprintdnb.fr>",
+        from: "Sprint DNB <onboarding@resend.dev>",
         to: [email],
         subject: "Bienvenue sur Sprint DNB 🎯",
         html: buildHtml(typeof prenom === "string" ? prenom : ""),

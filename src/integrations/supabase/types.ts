@@ -14,33 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      annales: {
-        Row: {
-          annee: number
-          id: string
-          matiere: string
-          pdf_url: string
-          session: string
-          titre: string
-        }
-        Insert: {
-          annee: number
-          id: string
-          matiere: string
-          pdf_url: string
-          session: string
-          titre: string
-        }
-        Update: {
-          annee?: number
-          id?: string
-          matiere?: string
-          pdf_url?: string
-          session?: string
-          titre?: string
-        }
-        Relationships: []
-      }
       blocs_examen: {
         Row: {
           bareme_points_estimes: string | null

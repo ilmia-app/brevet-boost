@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import Landing from "./Landing";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -21,7 +20,6 @@ const Index = () => {
   const [regPassword, setRegPassword] = useState("");
   const [regConfirm, setRegConfirm] = useState("");
   const [regLoading, setRegLoading] = useState(false);
-  const [showLanding, setShowLanding] = useState(true);
 
   useEffect(() => {
     if (authLoading || !user) return;
@@ -84,7 +82,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-8">
-      {showLanding && <Landing asModal onClose={() => setShowLanding(false)} />}
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center space-y-4">
           <div className="w-16 h-16 rounded-2xl sprint-gradient mx-auto flex items-center justify-center shadow-lg">
