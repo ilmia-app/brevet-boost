@@ -26,7 +26,7 @@ const reactRouterDomPath = resolveBunPackage("react-router-dom");
 const remixRouterPath = resolveBunPackage("@remix-run/router");
 
 export default defineConfig(({ mode }) => ({
-  base: mode === "production" ? "/sprint-dnb/" : "/",
+  base: "/",
   server: {
     host: "::",
     port: 8080,
