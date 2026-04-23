@@ -62,6 +62,25 @@ const TASK_LABELS: Record<string, string> = {
 
 const DAYS = ["L", "M", "M", "J", "V", "S", "D"];
 
+const SUBJECT_TO_PREFIX: Record<string, string> = {
+  maths: "MAT-",
+  mathématiques: "MAT-",
+  français: "FRA-",
+  francais: "FRA-",
+  histoire: "HIS-",
+  géographie: "GEO-",
+  geographie: "GEO-",
+  emc: "EMC-",
+  physique: "PHY-",
+  "physique-chimie": "PHY-",
+  svt: "SVT-",
+  techno: "TEC-",
+  technologie: "TEC-",
+};
+
+const subjectToPrefix = (subject: string): string | null =>
+  SUBJECT_TO_PREFIX[subject.trim().toLowerCase()] || null;
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -78,6 +97,8 @@ const Dashboard = () => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [yesterdayBlocIds, setYesterdayBlocIds] = useState<Set<string>>(new Set());
   const [showWeeklyBanner, setShowWeeklyBanner] = useState(false);
+  const [completedBlocIdsAll, setCompletedBlocIdsAll] = useState<Set<string>>(new Set());
+  const [dailyTasks, setDailyTasks] = useState<Array<{ bloc: BlocExamen; weight: "heavy" | "medium" | "light"; exerciceId: string }>>([]);
 
   // Profile
   useEffect(() => {
