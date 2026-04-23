@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Loader2, Rocket, AlertTriangle } from "lucide-react";
+import { Loader2, Rocket } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -20,17 +20,6 @@ const Index = () => {
   const [regPassword, setRegPassword] = useState("");
   const [regConfirm, setRegConfirm] = useState("");
   const [regLoading, setRegLoading] = useState(false);
-
-  const [loadTimeout, setLoadTimeout] = useState(false);
-
-  useEffect(() => {
-    if (!authLoading) {
-      setLoadTimeout(false);
-      return;
-    }
-    const t = setTimeout(() => setLoadTimeout(true), 8000);
-    return () => clearTimeout(t);
-  }, [authLoading]);
 
   useEffect(() => {
     if (authLoading || !user) return;
@@ -84,29 +73,6 @@ const Index = () => {
   };
 
   if (authLoading || user) {
-    if (loadTimeout) {
-      return (
-        <div className="min-h-screen bg-background flex items-center justify-center px-4">
-          <div className="w-full max-w-sm text-center space-y-6">
-            <div className="w-16 h-16 rounded-2xl bg-destructive/10 mx-auto flex items-center justify-center">
-              <AlertTriangle className="w-8 h-8 text-destructive" />
-            </div>
-            <div className="space-y-2">
-              <h1 className="text-xl font-bold">Le chargement prend plus de temps que prévu</h1>
-              <p className="text-sm text-muted-foreground">
-                Vérifie ta connexion internet, puis réessaie.
-              </p>
-            </div>
-            <Button
-              onClick={() => window.location.reload()}
-              className="w-full h-12 sprint-gradient text-primary-foreground font-semibold rounded-xl hover:opacity-90 transition-opacity"
-            >
-              Réessayer
-            </Button>
-          </div>
-        </div>
-      );
-    }
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
