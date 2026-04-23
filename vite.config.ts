@@ -21,8 +21,6 @@ export default defineConfig(({ mode }) => ({
       "react-dom": path.resolve(__dirname, "./node_modules/react-dom"),
       "react/jsx-runtime": path.resolve(__dirname, "./node_modules/react/jsx-runtime.js"),
       "react/jsx-dev-runtime": path.resolve(__dirname, "./node_modules/react/jsx-dev-runtime.js"),
-      "react-router": path.resolve(__dirname, "./node_modules/react-router"),
-      "react-router-dom": path.resolve(__dirname, "./node_modules/react-router-dom"),
     },
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "react-router", "react-router-dom", "@tanstack/react-query", "@tanstack/query-core"],
     preserveSymlinks: true,
