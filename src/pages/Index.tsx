@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ const Index = () => {
     setLoginLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPassword });
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast.error("Erreur", { description: error.message });
       setLoginLoading(false);
       return;
     }
@@ -49,11 +49,11 @@ const Index = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (regPassword !== regConfirm) {
-      toast({ title: "Erreur", description: "Les mots de passe ne correspondent pas.", variant: "destructive" });
+      toast.error("Erreur", { description: "Les mots de passe ne correspondent pas." });
       return;
     }
     if (regPassword.length < 6) {
-      toast({ title: "Erreur", description: "Le mot de passe doit contenir au moins 6 caractères.", variant: "destructive" });
+      toast.error("Erreur", { description: "Le mot de passe doit contenir au moins 6 caractères." });
       return;
     }
     setRegLoading(true);
@@ -63,13 +63,12 @@ const Index = () => {
       options: { emailRedirectTo: window.location.origin },
     });
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast.error("Erreur", { description: error.message });
       setRegLoading(false);
       return;
     }
     setRegLoading(false);
-    toast({
-      title: "Vérifie ta boîte mail 📩",
+    toast("Vérifie ta boîte mail 📩", {
       description: `Un email de confirmation a été envoyé à ${regEmail}. Clique sur le lien pour activer ton compte avant de te connecter.`,
       duration: 10000,
     });
