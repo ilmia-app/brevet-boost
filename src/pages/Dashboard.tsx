@@ -176,6 +176,19 @@ const Dashboard = () => {
     })();
   }, [user]);
 
+  // All completed bloc_ids (toutes dates) — pour exclure les exos déjà faits
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from("completions")
+        .select("bloc_id")
+        .eq("user_id", user.id)
+        .eq("completed", true);
+      if (data) setCompletedBlocIdsAll(new Set(data.map((c) => c.bloc_id)));
+    })();
+  }, [user]);
+
   // All blocs
   useEffect(() => {
     (async () => {
