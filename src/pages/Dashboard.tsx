@@ -62,6 +62,25 @@ const TASK_LABELS: Record<string, string> = {
 
 const DAYS = ["L", "M", "M", "J", "V", "S", "D"];
 
+const SUBJECT_TO_PREFIX: Record<string, string> = {
+  maths: "MAT-",
+  mathématiques: "MAT-",
+  français: "FRA-",
+  francais: "FRA-",
+  histoire: "HIS-",
+  géographie: "GEO-",
+  geographie: "GEO-",
+  emc: "EMC-",
+  physique: "PHY-",
+  "physique-chimie": "PHY-",
+  svt: "SVT-",
+  techno: "TEC-",
+  technologie: "TEC-",
+};
+
+const subjectToPrefix = (subject: string): string | null =>
+  SUBJECT_TO_PREFIX[subject.trim().toLowerCase()] || null;
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -78,6 +97,8 @@ const Dashboard = () => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [yesterdayBlocIds, setYesterdayBlocIds] = useState<Set<string>>(new Set());
   const [showWeeklyBanner, setShowWeeklyBanner] = useState(false);
+  const [completedBlocIdsAll, setCompletedBlocIdsAll] = useState<Set<string>>(new Set());
+  const [dailyTasks, setDailyTasks] = useState<Array<{ bloc: BlocExamen; weight: "heavy" | "medium" | "light"; exerciceId: string }>>([]);
 
   // Profile
   useEffect(() => {
@@ -155,6 +176,19 @@ const Dashboard = () => {
     })();
   }, [user]);
 
+  // All completed bloc_ids (toutes dates) — pour exclure les exos déjà faits
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from("completions")
+        .select("bloc_id")
+        .eq("user_id", user.id)
+        .eq("completed", true);
+      if (data) setCompletedBlocIdsAll(new Set(data.map((c) => c.bloc_id)));
+    })();
+  }, [user]);
+
   // All blocs
   useEffect(() => {
     (async () => {
@@ -201,78 +235,129 @@ const Dashboard = () => {
     })();
   }, [profile, currentPhase]);
 
-  // Daily tasks — 3 tâches : Défi du jour (matière faible) + rotation HG/EMC + rotation Sciences
-  const dailyTasks = useMemo(() => {
-    const mode = profile?.modeActuel || "normal";
-    const userSubjects = (profile?.subjects || []).map((s) => s.toLowerCase());
-    const priorityBlocs = blocs.filter((b) => b.priorite === 1);
+  // Daily tasks — sélection d'EXERCICES via préfixe bloc_id et matieres_faibles
+  // Tâche 1 : exercice aléatoire dont bloc_id commence par le préfixe de la 1re matière faible
+  // Tâches 2 & 3 : rotation HIS/GEO/EMC et PHY/SVT/TEC selon dayOfYear % 3
+  // Exclut les bloc_id déjà complétés (table completions)
+  useEffect(() => {
+    if (!profile || blocs.length === 0) return;
+    const blocsById = new Map(blocs.map((b) => [b.id, b]));
+    const mode = profile.modeActuel || "normal";
+    const faibles = profile.subjects || [];
 
-    const matches = (bm: string, s: string) => bm.toLowerCase() === s.toLowerCase();
-    const pickBloc = (subject: string, used: Set<string>) =>
-      priorityBlocs.find((b) => !used.has(b.id) && matches(b.matiere, subject));
-
-    // Rotation cyclique basée sur le jour de l'année
     const start = new Date(new Date().getFullYear(), 0, 0);
-    const dayOfYear = Math.floor((new Date().getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const dayOfYear = Math.floor((Date.now() - start.getTime()) / (1000 * 60 * 60 * 24));
 
-    const rotationHGE = ["Histoire", "Géographie", "EMC"];
-    const rotationSci = ["Physique", "SVT", "Techno"];
+    const rotationHGE = ["HIS-", "GEO-", "EMC-"];
+    const rotationSci = ["PHY-", "SVT-", "TEC-"];
 
-    const pickRotation = (rotation: string[], used: Set<string>, faibles: string[]) => {
-      // Si une matière de la rotation est dans les faibles → avance d'un cran
-      for (let offset = 0; offset < rotation.length; offset++) {
-        const subject = rotation[(dayOfYear + offset) % rotation.length];
-        if (faibles.includes(subject.toLowerCase())) continue;
-        const bloc = pickBloc(subject, used);
-        if (bloc) return bloc;
+    const pickRandom = <T,>(arr: T[]): T | null =>
+      arr.length === 0 ? null : arr[Math.floor(Math.random() * arr.length)];
+
+    const fetchExoForPrefix = async (
+      prefix: string,
+      usedExoIds: Set<string>,
+      usedBlocIds: Set<string>,
+    ) => {
+      const { data, error } = await supabase
+        .from("exercices")
+        .select("id, bloc_id")
+        .like("bloc_id", `${prefix}%`)
+        .not("bloc_id", "is", null);
+      if (error) {
+        console.error("[Dashboard] erreur fetch exercices", prefix, error);
+        return null;
       }
-      // fallback : n'importe quel bloc de la rotation non utilisé
-      for (const subject of rotation) {
-        const bloc = pickBloc(subject, used);
-        if (bloc) return bloc;
+      const candidates = (data || []).filter(
+        (e) =>
+          e.bloc_id &&
+          !completedBlocIdsAll.has(e.bloc_id) &&
+          !usedBlocIds.has(e.bloc_id) &&
+          !usedExoIds.has(e.id) &&
+          blocsById.has(e.bloc_id),
+      );
+      return pickRandom(candidates);
+    };
+
+    const pickRotationExo = async (
+      rotation: string[],
+      usedExoIds: Set<string>,
+      usedBlocIds: Set<string>,
+      faiblesPrefixes: Set<string>,
+    ) => {
+      // Décale d'un cran si la matière du jour est dans les faibles (déjà couvert par tâche 1)
+      for (let offset = 0; offset < rotation.length; offset++) {
+        const prefix = rotation[(dayOfYear + offset) % rotation.length];
+        if (faiblesPrefixes.has(prefix)) continue;
+        const exo = await fetchExoForPrefix(prefix, usedExoIds, usedBlocIds);
+        if (exo) return exo;
+      }
+      // fallback : n'importe quel préfixe de la rotation
+      for (const prefix of rotation) {
+        const exo = await fetchExoForPrefix(prefix, usedExoIds, usedBlocIds);
+        if (exo) return exo;
       }
       return null;
     };
 
-    const used = new Set<string>();
-    const slots: Array<{ bloc: BlocExamen; weight: "heavy" | "medium" | "light" }> = [];
+    let cancelled = false;
+    (async () => {
+      const usedExoIds = new Set<string>();
+      const usedBlocIds = new Set<string>();
+      const slots: Array<{ bloc: BlocExamen; weight: "heavy" | "medium" | "light"; exerciceId: string }> = [];
 
-    // TÂCHE 1 — Défi du jour (matière faible prioritaire)
-    let defiBloc: BlocExamen | null = null;
-    for (const subject of userSubjects) {
-      const bloc = priorityBlocs.find((b) => !used.has(b.id) && matches(b.matiere, subject));
-      if (bloc) {
-        defiBloc = bloc;
-        break;
+      const faiblesPrefixes = new Set(
+        faibles.map((s) => subjectToPrefix(s)).filter((p): p is string => !!p),
+      );
+
+      // TÂCHE 1 — Défi du jour : 1re matière faible
+      const firstFaible = faibles[0];
+      const firstPrefix = firstFaible ? subjectToPrefix(firstFaible) : null;
+      console.log("[Dashboard] matieres_faibles:", faibles, "→ prefix tâche 1:", firstPrefix);
+      if (firstPrefix) {
+        const exo = await fetchExoForPrefix(firstPrefix, usedExoIds, usedBlocIds);
+        if (exo && exo.bloc_id) {
+          const bloc = blocsById.get(exo.bloc_id)!;
+          usedExoIds.add(exo.id);
+          usedBlocIds.add(exo.bloc_id);
+          slots.push({ bloc, weight: "heavy", exerciceId: exo.id });
+        } else {
+          console.warn("[Dashboard] aucun exercice dispo pour préfixe", firstPrefix);
+        }
       }
-    }
-    if (defiBloc) {
-      used.add(defiBloc.id);
-      slots.push({ bloc: defiBloc, weight: "heavy" });
-    }
 
-    // Mode reset_doux : seulement le défi
-    if (mode === "reset_doux") return slots;
+      if (mode !== "reset_doux") {
+        // TÂCHE 2 — Entraînement HIS/GEO/EMC
+        const exo2 = await pickRotationExo(rotationHGE, usedExoIds, usedBlocIds, faiblesPrefixes);
+        if (exo2 && exo2.bloc_id) {
+          const bloc = blocsById.get(exo2.bloc_id)!;
+          usedExoIds.add(exo2.id);
+          usedBlocIds.add(exo2.bloc_id);
+          slots.push({ bloc, weight: "medium", exerciceId: exo2.id });
+        }
 
-    // TÂCHE 2 — Entraînement (rotation Histoire/Géo/EMC)
-    const entrainement = pickRotation(rotationHGE, used, userSubjects);
-    if (entrainement) {
-      used.add(entrainement.id);
-      slots.push({ bloc: entrainement, weight: "medium" });
-    }
+        if (mode !== "allegement") {
+          // TÂCHE 3 — Sprint final PHY/SVT/TEC
+          const exo3 = await pickRotationExo(rotationSci, usedExoIds, usedBlocIds, faiblesPrefixes);
+          if (exo3 && exo3.bloc_id) {
+            const bloc = blocsById.get(exo3.bloc_id)!;
+            usedExoIds.add(exo3.id);
+            usedBlocIds.add(exo3.bloc_id);
+            slots.push({ bloc, weight: "light", exerciceId: exo3.id });
+          }
+        }
+      }
 
-    // Mode allegement : seulement 2 tâches
-    if (mode === "allegement") return slots;
+      if (!cancelled) {
+        console.log("[Dashboard] sprint généré:", slots.map((s) => `${s.bloc.matiere}/${s.exerciceId}`));
+        setDailyTasks(slots);
+      }
+    })();
 
-    // TÂCHE 3 — Sprint final (rotation Sciences)
-    const sprint = pickRotation(rotationSci, used, userSubjects);
-    if (sprint) {
-      used.add(sprint.id);
-      slots.push({ bloc: sprint, weight: "light" });
-    }
-
-    return slots;
-  }, [blocs, profile, yesterdayBlocIds]);
+    return () => {
+      cancelled = true;
+    };
+  }, [blocs, profile, completedBlocIdsAll]);
 
   const todayDayIndex = new Date().getDay();
   const dayIndexMondayBased = todayDayIndex === 0 ? 6 : todayDayIndex - 1;
