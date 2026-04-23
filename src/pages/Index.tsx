@@ -57,7 +57,7 @@ const Index = () => {
       return;
     }
     setRegLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: regEmail,
       password: regPassword,
       options: { emailRedirectTo: window.location.origin },
@@ -67,8 +67,16 @@ const Index = () => {
       setRegLoading(false);
       return;
     }
-    toast({ title: "Compte créé !", description: "Bienvenue dans ton sprint." });
     setRegLoading(false);
+    if (!data.session) {
+      toast({
+        title: "Vérifie ta boîte mail 📩",
+        description: `Un email de confirmation a été envoyé à ${regEmail}. Clique sur le lien pour activer ton compte avant de te connecter.`,
+        duration: 10000,
+      });
+      return;
+    }
+    toast({ title: "Compte créé !", description: "Bienvenue dans ton sprint." });
     navigate("/onboarding");
   };
 
