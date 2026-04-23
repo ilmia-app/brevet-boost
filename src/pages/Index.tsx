@@ -68,7 +68,8 @@ const Index = () => {
       return;
     }
     setRegLoading(false);
-    if (!data.session) {
+    const needsConfirmation = !data.session || (data.user && !data.user.email_confirmed_at);
+    if (needsConfirmation) {
       toast({
         title: "Vérifie ta boîte mail 📩",
         description: `Un email de confirmation a été envoyé à ${regEmail}. Clique sur le lien pour activer ton compte avant de te connecter.`,
