@@ -143,21 +143,6 @@ export type Database = {
           },
         ]
       }
-      config: {
-        Row: {
-          cle: string
-          valeur: string | null
-        }
-        Insert: {
-          cle: string
-          valeur?: string | null
-        }
-        Update: {
-          cle?: string
-          valeur?: string | null
-        }
-        Relationships: []
-      }
       exercices: {
         Row: {
           annale_source: string | null
@@ -204,30 +189,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      exercices_vus: {
-        Row: {
-          bloc_id: string
-          exercice_id: string
-          id: string
-          user_id: string
-          vu_at: string
-        }
-        Insert: {
-          bloc_id: string
-          exercice_id: string
-          id?: string
-          user_id: string
-          vu_at?: string
-        }
-        Update: {
-          bloc_id?: string
-          exercice_id?: string
-          id?: string
-          user_id?: string
-          vu_at?: string
-        }
-        Relationships: []
       }
       messages_feedback: {
         Row: {
@@ -319,30 +280,6 @@ export type Database = {
         }
         Relationships: []
       }
-      parametres_eleve_schema: {
-        Row: {
-          champ: string
-          description_ux: string | null
-          obligatoire: boolean | null
-          type_supabase: string | null
-          valeurs_possibles: string | null
-        }
-        Insert: {
-          champ: string
-          description_ux?: string | null
-          obligatoire?: boolean | null
-          type_supabase?: string | null
-          valeurs_possibles?: string | null
-        }
-        Update: {
-          champ?: string
-          description_ux?: string | null
-          obligatoire?: boolean | null
-          type_supabase?: string | null
-          valeurs_possibles?: string | null
-        }
-        Relationships: []
-      }
       users: {
         Row: {
           created_at: string | null
@@ -397,24 +334,6 @@ export type Database = {
           retard_cumule_min?: number | null
           retard_initial?: string | null
           volume_quotidien?: string | null
-        }
-        Relationships: []
-      }
-      waitlist: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id?: string
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
         }
         Relationships: []
       }
