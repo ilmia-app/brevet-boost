@@ -23,6 +23,7 @@ const Index = () => {
 
   useEffect(() => {
     if (authLoading || !user) return;
+    if (!user.email_confirmed_at) return;
     (async () => {
       const { data } = await supabase.from("users").select("id").eq("id", user.id).maybeSingle();
       navigate(data ? "/dashboard" : "/onboarding", { replace: true });
