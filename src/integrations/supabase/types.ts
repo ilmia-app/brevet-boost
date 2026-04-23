@@ -288,7 +288,7 @@ export type Database = {
           derniere_modif_priorites: string | null
           email: string | null
           id: string
-          jours_travailles: string[] | null
+          jours_travailles: number[] | null
           matieres_faibles: string[] | null
           matieres_fortes: string[] | null
           mode_actuel: string | null
@@ -305,8 +305,8 @@ export type Database = {
           derniere_activite?: string | null
           derniere_modif_priorites?: string | null
           email?: string | null
-          id: string
-          jours_travailles?: string[] | null
+          id?: string
+          jours_travailles?: number[] | null
           matieres_faibles?: string[] | null
           matieres_fortes?: string[] | null
           mode_actuel?: string | null
@@ -324,7 +324,7 @@ export type Database = {
           derniere_modif_priorites?: string | null
           email?: string | null
           id?: string
-          jours_travailles?: string[] | null
+          jours_travailles?: number[] | null
           matieres_faibles?: string[] | null
           matieres_fortes?: string[] | null
           mode_actuel?: string | null

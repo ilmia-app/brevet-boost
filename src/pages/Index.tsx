@@ -74,10 +74,10 @@ const Index = () => {
       return;
     }
     toast({
-      title: "Vérifie ta boîte mail 📬",
-      description: "Un email de confirmation t'a été envoyé. Clique sur le lien pour accéder à ton sprint.",
-      duration: 8000,
+      title: "Compte créé !",
+      description: "Vérifie ta boîte mail et clique sur le lien de confirmation pour accéder à ton sprint.",
     });
+    setRegLoading(false);
   };
 
   if (authLoading || user) {
