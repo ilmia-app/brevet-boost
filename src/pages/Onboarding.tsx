@@ -87,12 +87,14 @@ const Onboarding = () => {
       return;
     }
 
-    // Envoi de l'email de bienvenue (non bloquant)
-    if (user.email) {
-      console.log("Envoi email bienvenue à:", user.email);
+    // Envoi de l'email de bienvenue (non bloquant) — email récupéré depuis supabase.auth
+    const { data: authData } = await supabase.auth.getUser();
+    const authEmail = authData?.user?.email;
+    if (authEmail) {
+      console.log("Envoi email bienvenue à:", authEmail);
       supabase.functions
         .invoke("send-welcome-email", {
-          body: { email: user.email, prenom: name },
+          body: { email: authEmail, prenom: name },
         })
         .then(({ data, error: fnErr }) => {
           if (fnErr) {
@@ -102,6 +104,8 @@ const Onboarding = () => {
           }
         })
         .catch((err) => console.error("send-welcome-email failed", err));
+    } else {
+      console.warn("Aucun email auth trouvé pour l'utilisateur courant");
     }
 
     navigate("/dashboard");
