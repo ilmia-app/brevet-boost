@@ -38,9 +38,7 @@ const Index = () => {
       setLoginLoading(false);
       return;
     }
-    const {
-      data: { user: u },
-    } = await supabase.auth.getUser();
+    const { data: { user: u } } = await supabase.auth.getUser();
     if (u) {
       const { data } = await supabase.from("users").select("id").eq("id", u.id).maybeSingle();
       navigate(data ? "/dashboard" : "/onboarding", { replace: true });
@@ -55,11 +53,7 @@ const Index = () => {
       return;
     }
     if (regPassword.length < 6) {
-      toast({
-        title: "Erreur",
-        description: "Le mot de passe doit contenir au moins 6 caractères.",
-        variant: "destructive",
-      });
+      toast({ title: "Erreur", description: "Le mot de passe doit contenir au moins 6 caractères.", variant: "destructive" });
       return;
     }
     setRegLoading(true);
@@ -73,11 +67,9 @@ const Index = () => {
       setRegLoading(false);
       return;
     }
-    toast({
-      title: "Compte créé !",
-      description: "Vérifie ta boîte mail et clique sur le lien de confirmation pour accéder à ton sprint.",
-    });
+    toast({ title: "Compte créé !", description: "Bienvenue dans ton sprint." });
     setRegLoading(false);
+    navigate("/onboarding");
   };
 
   if (authLoading || user) {
@@ -103,12 +95,8 @@ const Index = () => {
 
         <Tabs defaultValue="login" className="w-full">
           <TabsList className="grid w-full grid-cols-2 h-12 rounded-xl">
-            <TabsTrigger value="login" className="rounded-lg">
-              Se connecter
-            </TabsTrigger>
-            <TabsTrigger value="register" className="rounded-lg">
-              Créer mon compte
-            </TabsTrigger>
+            <TabsTrigger value="login" className="rounded-lg">Se connecter</TabsTrigger>
+            <TabsTrigger value="register" className="rounded-lg">Créer mon compte</TabsTrigger>
           </TabsList>
 
           <TabsContent value="login" className="mt-6">
