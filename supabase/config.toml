@@ -5,6 +5,3 @@ verify_jwt = false
 
 [functions.send-welcome-email]
 verify_jwt = false
-
-[functions.batch-generate-corrige]
-verify_jwt = false
