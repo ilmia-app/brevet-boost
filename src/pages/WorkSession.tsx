@@ -65,6 +65,7 @@ const WorkSession = () => {
   const blocId = searchParams.get("bloc_id") || searchParams.get("bloc") || "";
   const annaleSource = searchParams.get("annale_source") || "";
   const mode = searchParams.get("mode") || "";
+  const initialSessionId = searchParams.get("session_id") || "";
   const isAiMode = mode === "ai";
   console.log("[WorkSession] bloc_id reçu:", blocId, "mode:", mode);
 
@@ -82,6 +83,11 @@ const WorkSession = () => {
   const [regenLoading, setRegenLoading] = useState(false);
   const [switchAiLoading, setSwitchAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string>("");
+
+  // Persistance session de travail (historique)
+  const [sessionId, setSessionId] = useState<string>(initialSessionId);
+  const sessionLoadedRef = useRef(false);
+  const skipNextAutosaveRef = useRef(false);
 
   // Méthode : explications des étapes
   const [openStep, setOpenStep] = useState<number | null>(null);
@@ -206,6 +212,93 @@ const WorkSession = () => {
     };
   }, [blocId, isAiMode, annaleSource]);
 
+  // Charger une session existante (reprise depuis l'historique)
+  useEffect(() => {
+    if (!user) return;
+    if (!initialSessionId) {
+      sessionLoadedRef.current = true;
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("sessions_travail")
+        .select("id, bloc_id, bloc_titre, bloc_matiere, enonce, questions, answers, validated, notes, duration_seconds, is_ai_generated, completed_at")
+        .eq("id", initialSessionId)
+        .maybeSingle();
+      if (cancelled) return;
+      if (error || !data) {
+        console.warn("[WorkSession] session introuvable:", error);
+        sessionLoadedRef.current = true;
+        return;
+      }
+      skipNextAutosaveRef.current = true;
+      setSessionId(data.id);
+      if (data.notes) setNotes(data.notes);
+      if (data.answers && typeof data.answers === "object") {
+        setQuestionAnswers(data.answers as Record<number, string>);
+      }
+      if (data.validated && typeof data.validated === "object") {
+        setValidatedQuestions(data.validated as Record<number, boolean>);
+      }
+      if (typeof data.duration_seconds === "number") setElapsedSeconds(data.duration_seconds);
+      // Restaurer l'énoncé si dispo (utile pour les exos IA)
+      if (data.enonce && (!exercise || !exercise.enonce)) {
+        setExercise({
+          id: `restored-${data.id}`,
+          enonce: data.enonce,
+          corrige: null,
+          annale_source: null,
+          questions: Array.isArray(data.questions) ? (data.questions as string[]) : null,
+        });
+      }
+      sessionLoadedRef.current = true;
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, initialSessionId]);
+
+  // Autosave : créer / mettre à jour la session de travail
+  useEffect(() => {
+    if (!user || !blocId || !bloc) return;
+    if (!sessionLoadedRef.current) return;
+    if (skipNextAutosaveRef.current) {
+      skipNextAutosaveRef.current = false;
+      return;
+    }
+    const t = setTimeout(async () => {
+      const payload: any = {
+        user_id: user.id,
+        bloc_id: blocId,
+        bloc_titre: bloc.titre,
+        bloc_matiere: bloc.matiere,
+        enonce: exercise?.enonce ?? null,
+        questions: exercise?.questions ?? null,
+        answers: questionAnswers,
+        validated: validatedQuestions,
+        notes,
+        duration_seconds: elapsedSeconds,
+        is_ai_generated: isAiMode || (exercise?.id?.startsWith("ai-") ?? false),
+      };
+      if (sessionId) {
+        const { error } = await supabase
+          .from("sessions_travail")
+          .update(payload)
+          .eq("id", sessionId);
+        if (error) console.warn("[WorkSession] autosave update error:", error);
+      } else {
+        const { data, error } = await supabase
+          .from("sessions_travail")
+          .insert(payload)
+          .select("id")
+          .maybeSingle();
+        if (error) console.warn("[WorkSession] autosave insert error:", error);
+        if (data?.id) setSessionId(data.id);
+      }
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [user, blocId, bloc, exercise, questionAnswers, validatedQuestions, notes, elapsedSeconds, sessionId, isAiMode]);
+
   // Timer tick
   useEffect(() => {
     if (timerRunning) {
@@ -264,6 +357,13 @@ const WorkSession = () => {
         { user_id: user.id, bloc_id: blocId, date_completion: today, completed: true },
         { onConflict: "user_id,bloc_id,date_completion" }
       );
+      // Marquer la session de travail comme terminée (historique)
+      if (sessionId) {
+        await supabase
+          .from("sessions_travail")
+          .update({ completed_at: new Date().toISOString(), duration_seconds: elapsedSeconds } as any)
+          .eq("id", sessionId);
+      }
     }
 
     // Ouvrir la modale de corrigé
@@ -299,7 +399,7 @@ const WorkSession = () => {
         setCorrigeLoading(false);
       }
     }
-  }, [user, blocId, exercise, bloc, methodeSteps, isAiMode, aiCorrigeCache]);
+  }, [user, blocId, exercise, bloc, methodeSteps, isAiMode, aiCorrigeCache, sessionId, elapsedSeconds]);
 
   const handleCloseAndReturn = useCallback(() => {
     setCorrigeOpen(false);

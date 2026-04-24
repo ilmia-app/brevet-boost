@@ -345,6 +345,60 @@ export type Database = {
         }
         Relationships: []
       }
+      sessions_travail: {
+        Row: {
+          answers: Json | null
+          bloc_id: string
+          bloc_matiere: string | null
+          bloc_titre: string | null
+          completed_at: string | null
+          created_at: string
+          duration_seconds: number | null
+          enonce: string | null
+          id: string
+          is_ai_generated: boolean | null
+          notes: string | null
+          questions: Json | null
+          updated_at: string
+          user_id: string
+          validated: Json | null
+        }
+        Insert: {
+          answers?: Json | null
+          bloc_id: string
+          bloc_matiere?: string | null
+          bloc_titre?: string | null
+          completed_at?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          enonce?: string | null
+          id?: string
+          is_ai_generated?: boolean | null
+          notes?: string | null
+          questions?: Json | null
+          updated_at?: string
+          user_id: string
+          validated?: Json | null
+        }
+        Update: {
+          answers?: Json | null
+          bloc_id?: string
+          bloc_matiere?: string | null
+          bloc_titre?: string | null
+          completed_at?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          enonce?: string | null
+          id?: string
+          is_ai_generated?: boolean | null
+          notes?: string | null
+          questions?: Json | null
+          updated_at?: string
+          user_id?: string
+          validated?: Json | null
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string | null
