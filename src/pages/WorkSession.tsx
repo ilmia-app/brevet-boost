@@ -281,65 +281,82 @@ const WorkSession = () => {
   const handleGenerateAlternative = useCallback(async () => {
     if (!bloc) return;
     setRegenLoading(true);
-    try {
-      const { data: gen, error: genErr } = await supabase.functions.invoke("generate-exercice", {
-        body: {
-          bloc_id: bloc.id,
-          titre: bloc.titre,
-          matiere: bloc.matiere,
-          objectifs: bloc.objectifs_pedagogiques,
-          etapes: methodeSteps.join("\n"),
-        },
-      });
-      if (genErr) throw genErr;
+    setAiError("");
+    let gen: any = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const { data, error: genErr } = await supabase.functions.invoke("generate-exercice", {
+          body: {
+            bloc_id: bloc.id,
+            titre: bloc.titre,
+            matiere: bloc.matiere,
+            objectifs: bloc.objectifs_pedagogiques,
+            etapes: methodeSteps.join("\n"),
+          },
+        });
+        if (genErr) throw genErr;
+        if (data?.enonce && data?.corrige) { gen = data; break; }
+      } catch (e) {
+        console.error(`[WorkSession] alternative tentative ${attempt + 1}:`, e);
+      }
+      await new Promise((r) => setTimeout(r, 800 * (attempt + 1)));
+    }
+    if (gen) {
       setExercise({
         id: `ai-${bloc.id}-${Date.now()}`,
-        enonce: gen?.enonce || "Impossible de générer l'énoncé.",
+        enonce: gen.enonce,
         corrige: null,
         annale_source: "Exercice généré par IA ✨",
-        graphique: gen?.graphique || null,
-        questions: gen?.questions || null,
+        graphique: gen.graphique || null,
+        questions: gen.questions || null,
       });
-      setAiCorrigeCache(gen?.corrige || "");
-    } catch (e) {
-      console.error("[WorkSession] erreur génération alternative:", e);
-    } finally {
-      setRegenLoading(false);
+      setAiCorrigeCache(gen.corrige || "");
+    } else {
+      setAiError("La génération a échoué. Réessaye dans un instant.");
     }
+    setRegenLoading(false);
   }, [bloc, methodeSteps]);
 
   const handleSwitchToAi = useCallback(async () => {
     if (!bloc) return;
     setSwitchAiLoading(true);
-    try {
-      const { data: gen, error: genErr } = await supabase.functions.invoke("generate-exercice", {
-        body: {
-          bloc_id: bloc.id,
-          titre: bloc.titre,
-          matiere: bloc.matiere,
-          objectifs: bloc.objectifs_pedagogiques,
-          etapes: methodeSteps.join("\n"),
-        },
-      });
-      if (genErr) throw genErr;
+    setAiError("");
+    let gen: any = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const { data, error: genErr } = await supabase.functions.invoke("generate-exercice", {
+          body: {
+            bloc_id: bloc.id,
+            titre: bloc.titre,
+            matiere: bloc.matiere,
+            objectifs: bloc.objectifs_pedagogiques,
+            etapes: methodeSteps.join("\n"),
+          },
+        });
+        if (genErr) throw genErr;
+        if (data?.enonce && data?.corrige) { gen = data; break; }
+      } catch (e) {
+        console.error(`[WorkSession] switch IA tentative ${attempt + 1}:`, e);
+      }
+      await new Promise((r) => setTimeout(r, 800 * (attempt + 1)));
+    }
+    if (gen) {
       setExercise({
         id: `ai-${bloc.id}-${Date.now()}`,
-        enonce: gen?.enonce || "Impossible de générer l'énoncé.",
+        enonce: gen.enonce,
         corrige: null,
         annale_source: "Exercice généré par IA ✨",
-        graphique: gen?.graphique || null,
-        questions: gen?.questions || null,
+        graphique: gen.graphique || null,
+        questions: gen.questions || null,
       });
-      setAiCorrigeCache(gen?.corrige || "");
-      // Met à jour l'URL pour refléter le mode IA (sans recharger)
+      setAiCorrigeCache(gen.corrige || "");
       const url = new URL(window.location.href);
       url.searchParams.set("mode", "ai");
       window.history.replaceState({}, "", url.toString());
-    } catch (e) {
-      console.error("[WorkSession] erreur bascule IA:", e);
-    } finally {
-      setSwitchAiLoading(false);
+    } else {
+      setAiError("La génération a échoué. Réessaye dans un instant.");
     }
+    setSwitchAiLoading(false);
   }, [bloc, methodeSteps]);
 
   if (!blocId) {
