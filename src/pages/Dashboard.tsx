@@ -549,7 +549,7 @@ const Dashboard = () => {
                           </p>
                           <p className="text-[10px] text-muted-foreground/80 mt-1 flex items-center gap-1">
                             <Sparkles className="w-2.5 h-2.5 text-primary shrink-0" />
-                            L'IA va générer un exercice sur ce thème
+                            Je prépare ton exercice.
                           </p>
                         </div>
                       </div>
