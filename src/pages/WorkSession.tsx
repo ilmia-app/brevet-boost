@@ -78,6 +78,7 @@ const WorkSession = () => {
   const [aiCorrigeCache, setAiCorrigeCache] = useState<string>("");
   const [regenLoading, setRegenLoading] = useState(false);
   const [switchAiLoading, setSwitchAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string>("");
 
   // Timer
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
