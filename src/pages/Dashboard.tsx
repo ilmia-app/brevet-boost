@@ -625,7 +625,7 @@ const Dashboard = () => {
                 <span className="text-xl">📄</span>
                 <h2 className="text-base font-semibold">Passe un vrai sujet</h2>
               </div>
-              <p className="text-xs text-muted-foreground -mt-2">Travaille un sujet officiel du brevet DNB</p>
+              <p className="text-xs text-muted-foreground -mt-2">Entraîne toi sur un sujet officiel du DNB</p>
 
               <div className="space-y-3 flex-1 flex flex-col justify-center">
                 <button
