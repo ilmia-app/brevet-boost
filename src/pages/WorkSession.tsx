@@ -422,7 +422,7 @@ const WorkSession = () => {
               <CardContent className="p-6 flex flex-col items-center justify-center gap-3">
                 <Loader2 className="w-8 h-8 text-primary animate-spin" />
                 <p className="text-sm text-muted-foreground text-center">
-                  L'IA prépare un exercice personnalisé pour toi…
+                  Je te prépare un exercice personnalisé !
                 </p>
               </CardContent>
             </Card>
