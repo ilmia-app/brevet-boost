@@ -427,6 +427,23 @@ const WorkSession = () => {
               </CardContent>
             </Card>
           </section>
+        ) : aiError && !exercise ? (
+          <section className="space-y-3">
+            <Card className="border-l-4 border-l-destructive">
+              <CardContent className="p-6 flex flex-col items-center justify-center gap-3 text-center">
+                <p className="text-sm text-foreground font-medium">{aiError}</p>
+                <Button
+                  size="sm"
+                  onClick={handleGenerateAlternative}
+                  disabled={regenLoading}
+                  className="gap-1.5"
+                >
+                  {regenLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                  Réessayer
+                </Button>
+              </CardContent>
+            </Card>
+          </section>
         ) : exercise ? (
           <section className="space-y-3">
             <h2 className="text-lg font-semibold flex items-center gap-2">
