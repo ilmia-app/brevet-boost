@@ -190,6 +190,68 @@ export type Database = {
           },
         ]
       }
+      exercices_generes: {
+        Row: {
+          bloc_id: string
+          corrige: string
+          created_at: string
+          created_by: string | null
+          enonce: string
+          graphique: Json | null
+          id: string
+          questions: Json | null
+        }
+        Insert: {
+          bloc_id: string
+          corrige: string
+          created_at?: string
+          created_by?: string | null
+          enonce: string
+          graphique?: Json | null
+          id?: string
+          questions?: Json | null
+        }
+        Update: {
+          bloc_id?: string
+          corrige?: string
+          created_at?: string
+          created_by?: string | null
+          enonce?: string
+          graphique?: Json | null
+          id?: string
+          questions?: Json | null
+        }
+        Relationships: []
+      }
+      exercices_vus: {
+        Row: {
+          exercice_id: string
+          id: string
+          user_id: string
+          vu_at: string
+        }
+        Insert: {
+          exercice_id: string
+          id?: string
+          user_id: string
+          vu_at?: string
+        }
+        Update: {
+          exercice_id?: string
+          id?: string
+          user_id?: string
+          vu_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercices_vus_exercice_id_fkey"
+            columns: ["exercice_id"]
+            isOneToOne: false
+            referencedRelation: "exercices_generes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages_feedback: {
         Row: {
           action_associee: string | null

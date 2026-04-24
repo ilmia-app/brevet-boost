@@ -34,8 +34,62 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { titre, matiere, objectifs, etapes, theme, bloc_id } = await req.json();
+    const userId = userData.user.id;
+    const body = await req.json();
+    const { titre, matiere, objectifs, etapes, theme, bloc_id, force_new } = body;
     const isChartBloc = bloc_id === "MAT-04";
+
+    // Client avec privilèges service_role pour bypass RLS sur lecture du pool
+    // (et écriture côté system) tout en gardant created_by = userId.
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    // 1) Si on a un bloc_id et qu'on n'est PAS en mode "force_new",
+    //    on tente de piocher dans le pool partagé un exercice que l'user n'a jamais vu.
+    if (bloc_id && !force_new) {
+      try {
+        const { data: seen } = await supabaseAdmin
+          .from("exercices_vus")
+          .select("exercice_id")
+          .eq("user_id", userId);
+        const seenIds = (seen || []).map((s: { exercice_id: string }) => s.exercice_id);
+
+        let query = supabaseAdmin
+          .from("exercices_generes")
+          .select("id, enonce, corrige, graphique, questions")
+          .eq("bloc_id", bloc_id)
+          .limit(50);
+        if (seenIds.length > 0) {
+          query = query.not("id", "in", `(${seenIds.join(",")})`);
+        }
+        const { data: pool } = await query;
+
+        if (pool && pool.length > 0) {
+          const picked = pool[Math.floor(Math.random() * pool.length)];
+          // Marquer comme vu (ignore conflit unique)
+          await supabaseAdmin
+            .from("exercices_vus")
+            .insert({ user_id: userId, exercice_id: picked.id });
+
+          return new Response(
+            JSON.stringify({
+              enonce: picked.enonce,
+              corrige: picked.corrige,
+              graphique: picked.graphique || null,
+              questions: picked.questions || null,
+              source: "pool",
+              exercice_id: picked.id,
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+      } catch (e) {
+        console.error("[generate-exercice] pool lookup failed:", e);
+        // on continue vers la génération IA
+      }
+    }
 
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     if (!ANTHROPIC_API_KEY) {
@@ -205,6 +259,36 @@ Dans le corrigé uniquement, le markdown peut utiliser : ### titres, **gras**, l
         corrige: parsed.corrige,
         graphique: parsed.graphique || null,
         questions: parsed.questions || null,
+        source: "ai",
+        exercice_id: await (async () => {
+          // 2) On enregistre le nouvel exercice dans le pool + dans l'historique de l'user
+          if (!bloc_id) return null;
+          try {
+            const { data: inserted, error: insErr } = await supabaseAdmin
+              .from("exercices_generes")
+              .insert({
+                bloc_id,
+                enonce: parsed.enonce,
+                corrige: parsed.corrige,
+                graphique: parsed.graphique || null,
+                questions: parsed.questions || null,
+                created_by: userId,
+              })
+              .select("id")
+              .single();
+            if (insErr || !inserted) {
+              console.error("[generate-exercice] insert pool failed:", insErr);
+              return null;
+            }
+            await supabaseAdmin
+              .from("exercices_vus")
+              .insert({ user_id: userId, exercice_id: inserted.id });
+            return inserted.id;
+          } catch (e) {
+            console.error("[generate-exercice] save pool failed:", e);
+            return null;
+          }
+        })(),
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
