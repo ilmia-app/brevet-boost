@@ -74,6 +74,7 @@ const WorkSession = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const [notes, setNotes] = useState("");
+  const [questionAnswers, setQuestionAnswers] = useState<Record<number, string>>({});
   const [completed, setCompleted] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiCorrigeCache, setAiCorrigeCache] = useState<string>("");
