@@ -17,6 +17,7 @@ const Index = () => {
   const [loginLoading, setLoginLoading] = useState(false);
 
   const [regEmail, setRegEmail] = useState("");
+  const [regEmailConfirm, setRegEmailConfirm] = useState("");
   const [regPassword, setRegPassword] = useState("");
   const [regConfirm, setRegConfirm] = useState("");
   const [regLoading, setRegLoading] = useState(false);
@@ -48,6 +49,10 @@ const Index = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (regEmail.trim().toLowerCase() !== regEmailConfirm.trim().toLowerCase()) {
+      toast.error("Erreur", { description: "Les adresses email ne correspondent pas." });
+      return;
+    }
     if (regPassword !== regConfirm) {
       toast.error("Erreur", { description: "Les mots de passe ne correspondent pas." });
       return;
@@ -147,6 +152,18 @@ const Index = () => {
                 className="h-12 rounded-xl"
                 required
               />
+              <Input
+                type="email"
+                placeholder="Confirme ton adresse email"
+                value={regEmailConfirm}
+                onChange={(e) => setRegEmailConfirm(e.target.value)}
+                className="h-12 rounded-xl"
+                required
+              />
+              {regEmailConfirm.length > 0 &&
+                regEmail.trim().toLowerCase() !== regEmailConfirm.trim().toLowerCase() && (
+                  <p className="text-sm text-destructive">Les adresses email ne correspondent pas.</p>
+                )}
               <Input
                 type="password"
                 placeholder="Mot de passe"
