@@ -499,9 +499,19 @@ const WorkSession = () => {
                     </div>
                   )}
                   {exercise.questions && exercise.questions.length > 0 && (
-                    <ol className="mt-4 space-y-2 text-sm leading-relaxed list-decimal list-inside marker:text-primary marker:font-semibold">
+                    <ol className="mt-4 space-y-4 text-sm leading-relaxed list-decimal list-outside ml-5 marker:text-primary marker:font-semibold">
                       {exercise.questions.map((q, i) => (
-                        <li key={i}>{q}</li>
+                        <li key={i} className="space-y-2">
+                          <div>{q}</div>
+                          <Textarea
+                            value={questionAnswers[i] || ""}
+                            onChange={(e) =>
+                              setQuestionAnswers((prev) => ({ ...prev, [i]: e.target.value }))
+                            }
+                            placeholder="Écris ta réponse ici…"
+                            className="min-h-[80px] bg-background"
+                          />
+                        </li>
                       ))}
                     </ol>
                   )}
