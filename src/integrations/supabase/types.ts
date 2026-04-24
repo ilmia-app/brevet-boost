@@ -290,6 +290,7 @@ export type Database = {
           blocs_associes: string | null
           duree_lecture_min: number | null
           etapes: string | null
+          explications_etapes: Json | null
           id: string
           matiere: string | null
           titre: string
@@ -298,6 +299,7 @@ export type Database = {
           blocs_associes?: string | null
           duree_lecture_min?: number | null
           etapes?: string | null
+          explications_etapes?: Json | null
           id: string
           matiere?: string | null
           titre: string
@@ -306,6 +308,7 @@ export type Database = {
           blocs_associes?: string | null
           duree_lecture_min?: number | null
           etapes?: string | null
+          explications_etapes?: Json | null
           id?: string
           matiere?: string | null
           titre?: string
