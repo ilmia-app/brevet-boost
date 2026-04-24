@@ -80,6 +80,11 @@ const WorkSession = () => {
   const [switchAiLoading, setSwitchAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string>("");
 
+  // Méthode : explications des étapes
+  const [openStep, setOpenStep] = useState<number | null>(null);
+  const [stepExplanations, setStepExplanations] = useState<Record<number, string>>({});
+  const [stepLoading, setStepLoading] = useState<number | null>(null);
+
   // Timer
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
@@ -225,6 +230,42 @@ const WorkSession = () => {
     const sec = s % 60;
     return `${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
   };
+
+  const handleStepClick = useCallback(async (i: number) => {
+    setCurrentStep(i);
+    // Toggle ouverture
+    if (openStep === i) {
+      setOpenStep(null);
+      return;
+    }
+    setOpenStep(i);
+    if (stepExplanations[i] || stepLoading === i) return;
+    setStepLoading(i);
+    try {
+      const { data, error } = await supabase.functions.invoke("explain-methode-step", {
+        body: {
+          step: methodeSteps[i],
+          titre: bloc?.titre,
+          matiere: bloc?.matiere,
+          stepIndex: i + 1,
+          totalSteps: methodeSteps.length,
+        },
+      });
+      if (error) throw error;
+      setStepExplanations((prev) => ({
+        ...prev,
+        [i]: data?.explanation || "Pas d'explication disponible.",
+      }));
+    } catch (e) {
+      console.error("[WorkSession] erreur explication étape:", e);
+      setStepExplanations((prev) => ({
+        ...prev,
+        [i]: "Impossible de charger l'explication. Réessaie dans un instant.",
+      }));
+    } finally {
+      setStepLoading((prev) => (prev === i ? null : prev));
+    }
+  }, [openStep, stepExplanations, stepLoading, methodeSteps, bloc]);
 
   const handleComplete = useCallback(async () => {
     setTimerRunning(false);
@@ -548,28 +589,56 @@ const WorkSession = () => {
         {methodeSteps.length > 0 && (
           <section className="space-y-3">
             <h2 className="text-lg font-semibold">Ta méthode</h2>
+            <p className="text-xs text-muted-foreground">
+              Clique sur une étape pour comprendre son but.
+            </p>
             <Progress value={((currentStep + 1) / methodeSteps.length) * 100} className="h-2 rounded-full" />
             <div className="space-y-2">
               {methodeSteps.map((step, i) => (
                 <Card
                   key={i}
-                  onClick={() => i !== currentStep && setCurrentStep(i)}
                   className={`transition-all ${
                     i === currentStep
                       ? "border-primary shadow-md"
                       : i < currentStep
-                      ? "opacity-60 cursor-pointer hover:opacity-90"
-                      : "opacity-40 cursor-pointer hover:opacity-70"
+                      ? "opacity-80"
+                      : "opacity-70"
                   }`}
                 >
-                  <CardContent className="p-3 flex items-start gap-3">
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                      i === currentStep ? "sprint-gradient text-primary-foreground" : i < currentStep ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
-                    }`}>
-                      {i + 1}
-                    </span>
-                    <p className="text-sm leading-relaxed">{step}</p>
-                  </CardContent>
+                  <button
+                    type="button"
+                    onClick={() => handleStepClick(i)}
+                    aria-expanded={openStep === i}
+                    className="w-full text-left hover:bg-accent/40 transition-colors rounded-lg"
+                  >
+                    <CardContent className="p-3 flex items-start gap-3">
+                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                        i === currentStep ? "sprint-gradient text-primary-foreground" : i < currentStep ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
+                      }`}>
+                        {i + 1}
+                      </span>
+                      <p className="text-sm leading-relaxed flex-1">{step}</p>
+                      <span className="text-xs text-muted-foreground shrink-0 mt-0.5">
+                        {openStep === i ? "▾" : "▸"}
+                      </span>
+                    </CardContent>
+                  </button>
+                  {openStep === i && (
+                    <div className="px-3 pb-3 pl-12 -mt-1">
+                      <div className="rounded-md bg-accent/40 border border-primary/20 p-3">
+                        {stepLoading === i ? (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            Je t'explique le but de cette étape…
+                          </div>
+                        ) : (
+                          <p className="text-xs leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                            {stepExplanations[i]}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </Card>
               ))}
             </div>
