@@ -503,15 +503,48 @@ const WorkSession = () => {
                     <ol className="mt-4 space-y-4 text-sm leading-relaxed list-decimal list-outside ml-5 marker:text-primary marker:font-semibold">
                       {exercise.questions.map((q, i) => (
                         <li key={i} className="space-y-2">
-                          <div>{q}</div>
+                          <div className="flex items-start gap-2">
+                            <span className="flex-1">{q}</span>
+                            {validatedQuestions[i] && (
+                              <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                            )}
+                          </div>
                           <Textarea
                             value={questionAnswers[i] || ""}
                             onChange={(e) =>
                               setQuestionAnswers((prev) => ({ ...prev, [i]: e.target.value }))
                             }
+                            disabled={validatedQuestions[i]}
                             placeholder="Écris ta réponse ici…"
-                            className="min-h-[80px] bg-background"
+                            className="min-h-[80px] bg-background disabled:opacity-100 disabled:cursor-default"
                           />
+                          <div className="flex justify-end">
+                            {validatedQuestions[i] ? (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  setValidatedQuestions((prev) => ({ ...prev, [i]: false }))
+                                }
+                                className="h-7 text-xs"
+                              >
+                                Modifier
+                              </Button>
+                            ) : (
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() =>
+                                  setValidatedQuestions((prev) => ({ ...prev, [i]: true }))
+                                }
+                                disabled={!questionAnswers[i]?.trim()}
+                                className="h-7 text-xs"
+                              >
+                                Valider
+                              </Button>
+                            )}
+                          </div>
                         </li>
                       ))}
                     </ol>
