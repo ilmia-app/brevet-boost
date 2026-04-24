@@ -153,6 +153,18 @@ const Index = () => {
                 required
               />
               <Input
+                type="email"
+                placeholder="Confirme ton adresse email"
+                value={regEmailConfirm}
+                onChange={(e) => setRegEmailConfirm(e.target.value)}
+                className="h-12 rounded-xl"
+                required
+              />
+              {regEmailConfirm.length > 0 &&
+                regEmail.trim().toLowerCase() !== regEmailConfirm.trim().toLowerCase() && (
+                  <p className="text-sm text-destructive">Les adresses email ne correspondent pas.</p>
+                )}
+              <Input
                 type="password"
                 placeholder="Mot de passe"
                 value={regPassword}
