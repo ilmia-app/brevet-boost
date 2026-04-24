@@ -65,6 +65,7 @@ const WorkSession = () => {
   const blocId = searchParams.get("bloc_id") || searchParams.get("bloc") || "";
   const annaleSource = searchParams.get("annale_source") || "";
   const mode = searchParams.get("mode") || "";
+  const initialSessionId = searchParams.get("session_id") || "";
   const isAiMode = mode === "ai";
   console.log("[WorkSession] bloc_id reçu:", blocId, "mode:", mode);
 
@@ -82,6 +83,11 @@ const WorkSession = () => {
   const [regenLoading, setRegenLoading] = useState(false);
   const [switchAiLoading, setSwitchAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string>("");
+
+  // Persistance session de travail (historique)
+  const [sessionId, setSessionId] = useState<string>(initialSessionId);
+  const sessionLoadedRef = useRef(false);
+  const skipNextAutosaveRef = useRef(false);
 
   // Méthode : explications des étapes
   const [openStep, setOpenStep] = useState<number | null>(null);
