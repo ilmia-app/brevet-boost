@@ -253,6 +253,35 @@ Dans le corrigé uniquement, le markdown peut utiliser : ### titres, **gras**, l
       });
     }
 
+    // Enregistrer le nouvel exercice dans le pool partagé + historique user
+    let exerciceId: string | null = null;
+    if (bloc_id) {
+      try {
+        const { data: inserted, error: insErr } = await supabaseAdmin
+          .from("exercices_generes")
+          .insert({
+            bloc_id,
+            enonce: parsed.enonce,
+            corrige: parsed.corrige,
+            graphique: parsed.graphique || null,
+            questions: parsed.questions || null,
+            created_by: userId,
+          })
+          .select("id")
+          .single();
+        if (insErr || !inserted) {
+          console.error("[generate-exercice] insert pool failed:", insErr);
+        } else {
+          exerciceId = inserted.id;
+          await supabaseAdmin
+            .from("exercices_vus")
+            .insert({ user_id: userId, exercice_id: inserted.id });
+        }
+      } catch (e) {
+        console.error("[generate-exercice] save pool failed:", e);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         enonce: parsed.enonce,
@@ -260,35 +289,7 @@ Dans le corrigé uniquement, le markdown peut utiliser : ### titres, **gras**, l
         graphique: parsed.graphique || null,
         questions: parsed.questions || null,
         source: "ai",
-        exercice_id: await (async () => {
-          // 2) On enregistre le nouvel exercice dans le pool + dans l'historique de l'user
-          if (!bloc_id) return null;
-          try {
-            const { data: inserted, error: insErr } = await supabaseAdmin
-              .from("exercices_generes")
-              .insert({
-                bloc_id,
-                enonce: parsed.enonce,
-                corrige: parsed.corrige,
-                graphique: parsed.graphique || null,
-                questions: parsed.questions || null,
-                created_by: userId,
-              })
-              .select("id")
-              .single();
-            if (insErr || !inserted) {
-              console.error("[generate-exercice] insert pool failed:", insErr);
-              return null;
-            }
-            await supabaseAdmin
-              .from("exercices_vus")
-              .insert({ user_id: userId, exercice_id: inserted.id });
-            return inserted.id;
-          } catch (e) {
-            console.error("[generate-exercice] save pool failed:", e);
-            return null;
-          }
-        })(),
+        exercice_id: exerciceId,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
