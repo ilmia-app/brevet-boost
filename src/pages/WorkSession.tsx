@@ -70,6 +70,7 @@ const WorkSession = () => {
 
   const [bloc, setBloc] = useState<BlocData | null>(null);
   const [methodeSteps, setMethodeSteps] = useState<string[]>([]);
+  const [methodeExplications, setMethodeExplications] = useState<Record<string, string>>({});
   const [currentStep, setCurrentStep] = useState(0);
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const [notes, setNotes] = useState("");
@@ -116,7 +117,7 @@ const WorkSession = () => {
       if (blocData?.methode_id) {
         const { data: methData } = await supabase
           .from("methodes")
-          .select("etapes")
+          .select("etapes, explications_etapes")
           .eq("id", blocData.methode_id)
           .maybeSingle();
         if (cancelled) return;
@@ -127,6 +128,9 @@ const WorkSession = () => {
           } catch {
             setMethodeSteps(methData.etapes.split("\n").filter(Boolean));
           }
+        }
+        if (methData?.explications_etapes && typeof methData.explications_etapes === "object") {
+          setMethodeExplications(methData.explications_etapes as Record<string, string>);
         }
       }
 
