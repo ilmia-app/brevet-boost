@@ -357,6 +357,13 @@ const WorkSession = () => {
         { user_id: user.id, bloc_id: blocId, date_completion: today, completed: true },
         { onConflict: "user_id,bloc_id,date_completion" }
       );
+      // Marquer la session de travail comme terminée (historique)
+      if (sessionId) {
+        await supabase
+          .from("sessions_travail")
+          .update({ completed_at: new Date().toISOString(), duration_seconds: elapsedSeconds } as any)
+          .eq("id", sessionId);
+      }
     }
 
     // Ouvrir la modale de corrigé
