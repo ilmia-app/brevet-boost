@@ -158,8 +158,8 @@ const Annales = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(-1)}
-            aria-label="Retour"
+            onClick={() => navigate("/dashboard")}
+            aria-label="Retour au tableau de bord"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
