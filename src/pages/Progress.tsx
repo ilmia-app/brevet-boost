@@ -170,7 +170,7 @@ const ProgressPage = () => {
       <div className="max-w-lg mx-auto px-4 pt-6 space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label="Retour">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} aria-label="Retour au tableau de bord">
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="text-2xl font-bold">Ta progression</h1>
