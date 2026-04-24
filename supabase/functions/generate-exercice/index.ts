@@ -112,7 +112,8 @@ Dans le corrigé uniquement, le markdown peut utiliser : ### titres, **gras**, l
 
     const systemPrompt = isChartBloc ? chartPrompt : standardPrompt;
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    // Appel Anthropic avec retry exponentiel pour forcer la génération
+    const callAnthropic = async () => fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "x-api-key": ANTHROPIC_API_KEY,
@@ -121,13 +122,34 @@ Dans le corrigé uniquement, le markdown peut utiliser : ### titres, **gras**, l
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 1024,
+        max_tokens: 2048,
         system: systemPrompt,
         messages: [
           { role: "user", content: `Génère l'exercice + corrigé pour : ${titre}. Réponds UNIQUEMENT avec un objet JSON strict {"enonce": "...", "corrige": "..."} sans aucun texte autour.` },
         ],
       }),
     });
+
+    let response: Response | null = null;
+    let lastErr = "";
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        response = await callAnthropic();
+        if (response.ok) break;
+        if (response.status === 429 || response.status === 402) break; // surfaced below
+        lastErr = `status ${response.status}`;
+      } catch (e) {
+        lastErr = String(e);
+      }
+      await new Promise((r) => setTimeout(r, 500 * Math.pow(2, attempt)));
+    }
+    if (!response) {
+      console.error("[generate-exercice] no response after retries:", lastErr);
+      return new Response(JSON.stringify({ error: "Service IA injoignable. Réessaye." }), {
+        status: 503,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (response!.status === 429) {
       return new Response(JSON.stringify({ error: "Trop de requêtes, réessaye dans un instant." }), {
@@ -167,10 +189,20 @@ Dans le corrigé uniquement, le markdown peut utiliser : ### titres, **gras**, l
       }
     }
 
+    // Si l'IA n'a pas renvoyé d'énoncé exploitable, on renvoie une erreur 502
+    // pour que le client puisse réessayer plutôt que d'afficher un texte de fallback.
+    if (!parsed.enonce || !parsed.corrige) {
+      console.error("[generate-exercice] parsing failed, raw:", raw.slice(0, 500));
+      return new Response(JSON.stringify({ error: "Réponse IA invalide, réessaye." }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(
       JSON.stringify({
-        enonce: parsed.enonce || "Impossible de générer l'énoncé.",
-        corrige: parsed.corrige || "Impossible de générer le corrigé.",
+        enonce: parsed.enonce,
+        corrige: parsed.corrige,
         graphique: parsed.graphique || null,
         questions: parsed.questions || null,
       }),
