@@ -399,7 +399,7 @@ const WorkSession = () => {
         setCorrigeLoading(false);
       }
     }
-  }, [user, blocId, exercise, bloc, methodeSteps, isAiMode, aiCorrigeCache]);
+  }, [user, blocId, exercise, bloc, methodeSteps, isAiMode, aiCorrigeCache, sessionId, elapsedSeconds]);
 
   const handleCloseAndReturn = useCallback(() => {
     setCorrigeOpen(false);
