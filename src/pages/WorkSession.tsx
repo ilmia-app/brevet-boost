@@ -267,15 +267,15 @@ const WorkSession = () => {
       return;
     }
     const t = setTimeout(async () => {
-      const payload = {
+      const payload: any = {
         user_id: user.id,
         bloc_id: blocId,
         bloc_titre: bloc.titre,
         bloc_matiere: bloc.matiere,
         enonce: exercise?.enonce ?? null,
         questions: exercise?.questions ?? null,
-        answers: questionAnswers as unknown as Record<string, unknown>,
-        validated: validatedQuestions as unknown as Record<string, unknown>,
+        answers: questionAnswers,
+        validated: validatedQuestions,
         notes,
         duration_seconds: elapsedSeconds,
         is_ai_generated: isAiMode || (exercise?.id?.startsWith("ai-") ?? false),
