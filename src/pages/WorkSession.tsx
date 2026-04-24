@@ -235,7 +235,7 @@ const WorkSession = () => {
     return `${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
   };
 
-  const handleStepClick = useCallback(async (i: number) => {
+  const handleStepClick = useCallback((i: number) => {
     setCurrentStep(i);
     // Toggle ouverture
     if (openStep === i) {
@@ -243,40 +243,15 @@ const WorkSession = () => {
       return;
     }
     setOpenStep(i);
-    if (stepExplanations[i] || stepLoading === i) return;
-    setStepLoading(i);
-    try {
-      const { data, error } = await supabase.functions.invoke("explain-methode-step", {
-        body: {
-          step: methodeSteps[i],
-          titre: bloc?.titre,
-          matiere: bloc?.matiere,
-          stepIndex: i + 1,
-          totalSteps: methodeSteps.length,
-        },
-      });
-      // Récupérer le message d'erreur structuré renvoyé par l'edge function (402, 429, etc.)
-      const errMsg = (data && (data as any).error) || (error as any)?.context?.error;
-      if (errMsg) {
-        setStepExplanations((prev) => ({ ...prev, [i]: `⚠️ ${errMsg}` }));
-      } else if (error) {
-        throw error;
-      } else {
-        setStepExplanations((prev) => ({
-          ...prev,
-          [i]: data?.explanation || "Pas d'explication disponible.",
-        }));
-      }
-    } catch (e) {
-      console.warn("[WorkSession] explication étape indisponible:", e);
-      setStepExplanations((prev) => ({
-        ...prev,
-        [i]: "Explication indisponible pour le moment. Réessaie dans un instant.",
-      }));
-    } finally {
-      setStepLoading((prev) => (prev === i ? null : prev));
-    }
-  }, [openStep, stepExplanations, stepLoading, methodeSteps, bloc]);
+    if (stepExplanations[i]) return;
+    // Lecture directe depuis explications_etapes (clés '1', '2', '3'...)
+    const key = String(i + 1);
+    const explanation =
+      methodeExplications?.[key] ??
+      methodeExplications?.[String(i)] ??
+      "Pas d'explication disponible pour cette étape.";
+    setStepExplanations((prev) => ({ ...prev, [i]: explanation }));
+  }, [openStep, stepExplanations, methodeExplications]);
 
   const handleComplete = useCallback(async () => {
     setTimerRunning(false);
