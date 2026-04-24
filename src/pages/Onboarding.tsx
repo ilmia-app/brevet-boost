@@ -2,10 +2,18 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import ProgressBar from "@/components/onboarding/ProgressBar";
 import SelectableCard from "@/components/onboarding/SelectableCard";
 import SubjectChip from "@/components/onboarding/SubjectChip";
-import { Rocket, ArrowRight, ArrowLeft, Sparkles } from "lucide-react";
+import { Rocket, ArrowRight, ArrowLeft, Sparkles, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
@@ -31,6 +39,8 @@ const Onboarding = () => {
   const [rhythm, setRhythm] = useState("");
   const [level, setLevel] = useState("");
   const [subjects, setSubjects] = useState<string[]>([]);
+  const [showEmailConfirm, setShowEmailConfirm] = useState(false);
+  const [confirmEmail, setConfirmEmail] = useState<string>("");
 
   const toggleSubject = (s: string) => {
     setSubjects(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
@@ -108,7 +118,8 @@ const Onboarding = () => {
       console.warn("Aucun email auth trouvé pour l'utilisateur courant");
     }
 
-    navigate("/dashboard");
+    setConfirmEmail(authEmail ?? "");
+    setShowEmailConfirm(true);
   };
 
   return (
@@ -273,6 +284,41 @@ const Onboarding = () => {
           )}
         </div>
       </div>
+
+      <Dialog
+        open={showEmailConfirm}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowEmailConfirm(false);
+            navigate("/dashboard");
+          }
+        }}
+      >
+        <DialogContent className="rounded-2xl max-w-sm">
+          <DialogHeader className="items-center text-center space-y-3">
+            <div className="w-14 h-14 rounded-2xl sprint-gradient flex items-center justify-center shadow-lg">
+              <Mail className="w-7 h-7 text-primary-foreground" />
+            </div>
+            <DialogTitle className="text-xl">Vérifie ta boîte mail 📬</DialogTitle>
+            <DialogDescription className="text-base">
+              On vient de t'envoyer un email de confirmation
+              {confirmEmail ? <> à <span className="font-semibold text-foreground">{confirmEmail}</span></> : null}.
+              Clique sur le lien à l'intérieur pour valider ton inscription et lancer ton sprint !
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              className="w-full sprint-gradient text-primary-foreground font-semibold rounded-xl h-12 hover:opacity-90 transition-opacity"
+              onClick={() => {
+                setShowEmailConfirm(false);
+                navigate("/dashboard");
+              }}
+            >
+              J'ai compris <ArrowRight className="ml-2 w-4 h-4" />
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
