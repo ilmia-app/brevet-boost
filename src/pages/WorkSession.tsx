@@ -251,16 +251,23 @@ const WorkSession = () => {
           totalSteps: methodeSteps.length,
         },
       });
-      if (error) throw error;
-      setStepExplanations((prev) => ({
-        ...prev,
-        [i]: data?.explanation || "Pas d'explication disponible.",
-      }));
+      // Récupérer le message d'erreur structuré renvoyé par l'edge function (402, 429, etc.)
+      const errMsg = (data && (data as any).error) || (error as any)?.context?.error;
+      if (errMsg) {
+        setStepExplanations((prev) => ({ ...prev, [i]: `⚠️ ${errMsg}` }));
+      } else if (error) {
+        throw error;
+      } else {
+        setStepExplanations((prev) => ({
+          ...prev,
+          [i]: data?.explanation || "Pas d'explication disponible.",
+        }));
+      }
     } catch (e) {
-      console.error("[WorkSession] erreur explication étape:", e);
+      console.warn("[WorkSession] explication étape indisponible:", e);
       setStepExplanations((prev) => ({
         ...prev,
-        [i]: "Impossible de charger l'explication. Réessaie dans un instant.",
+        [i]: "Explication indisponible pour le moment. Réessaie dans un instant.",
       }));
     } finally {
       setStepLoading((prev) => (prev === i ? null : prev));
