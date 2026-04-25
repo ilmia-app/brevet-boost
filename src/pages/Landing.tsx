@@ -85,10 +85,10 @@ const Landing = () => {
           Je m'inscris maintenant — gratuit jusqu'au 30 avril
         </Link>
 
-        {/* Secondary login link */}
+        {/* Secondary login button */}
         <Link
           to="/login"
-          className="text-sm text-blue-100/90 underline-offset-4 hover:underline mb-3"
+          className="w-full rounded-2xl px-5 py-4 mb-3 border border-white/30 bg-white/5 text-white text-base font-semibold text-center hover:bg-white/10 transition-colors"
         >
           J'ai déjà un compte
         </Link>
