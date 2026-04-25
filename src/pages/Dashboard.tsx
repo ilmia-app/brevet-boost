@@ -627,28 +627,32 @@ const Dashboard = () => {
               </div>
               <p className="text-xs text-muted-foreground -mt-2">Entraîne toi sur un sujet officiel du DNB</p>
 
-              <div className="grid grid-cols-2 gap-2 flex-1 content-center">
-                {[
-                  { label: "Maths", badge: "bg-blue-500", border: "border-blue-200", bg: "bg-blue-50 hover:bg-blue-100", text: "text-blue-900" },
-                  { label: "Français", badge: "bg-purple-500", border: "border-purple-200", bg: "bg-purple-50 hover:bg-purple-100", text: "text-purple-900" },
-                  { label: "Histoire", badge: "bg-orange-500", border: "border-orange-200", bg: "bg-orange-50 hover:bg-orange-100", text: "text-orange-900" },
-                  { label: "Géographie", badge: "bg-emerald-500", border: "border-emerald-200", bg: "bg-emerald-50 hover:bg-emerald-100", text: "text-emerald-900" },
-                  { label: "EMC", badge: "bg-yellow-500", border: "border-yellow-200", bg: "bg-yellow-50 hover:bg-yellow-100", text: "text-yellow-900" },
-                  { label: "Physique", badge: "bg-red-500", border: "border-red-200", bg: "bg-red-50 hover:bg-red-100", text: "text-red-900" },
-                  { label: "SVT", badge: "bg-green-700", border: "border-green-200", bg: "bg-green-50 hover:bg-green-100", text: "text-green-900" },
-                  { label: "Techno", badge: "bg-gray-500", border: "border-gray-200", bg: "bg-gray-50 hover:bg-gray-100", text: "text-gray-900" },
-                ].map((m) => (
-                  <button
-                    key={m.label}
-                    onClick={() => navigate(`/annales?matiere=${encodeURIComponent(m.label)}`)}
-                    className={`text-left rounded-xl border ${m.border} ${m.bg} p-3 transition-colors`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <p className={`font-semibold text-sm ${m.text} truncate`}>{m.label}</p>
-                      <Badge className={`${m.badge} text-white text-[10px] shrink-0`}>DNB</Badge>
+              <div className="space-y-3 flex-1 flex flex-col justify-center">
+                <button
+                  onClick={() => navigate("/annales?matiere=Maths")}
+                  className="w-full text-left rounded-xl border border-blue-200 bg-blue-50 p-4 hover:bg-blue-100 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-blue-900">Annales Maths</p>
+                      <p className="text-xs text-blue-700/80 mt-0.5">Sujets officiels DNB</p>
                     </div>
-                  </button>
-                ))}
+                    <Badge className="bg-blue-500 text-white">Maths</Badge>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => navigate("/annales?matiere=Français")}
+                  className="w-full text-left rounded-xl border border-purple-200 bg-purple-50 p-4 hover:bg-purple-100 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-purple-900">Annales Français</p>
+                      <p className="text-xs text-purple-700/80 mt-0.5">Sujets officiels DNB</p>
+                    </div>
+                    <Badge className="bg-purple-500 text-white">Français</Badge>
+                  </div>
+                </button>
               </div>
 
               {currentPhase === 3 && (

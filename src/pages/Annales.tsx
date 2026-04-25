@@ -50,11 +50,6 @@ const inferMatiere = (blocId: string | null, blocsMap: Map<string, Bloc>): strin
   if (blocId.startsWith("MAT")) return "Maths";
   if (blocId.startsWith("FRA")) return "Français";
   if (blocId.startsWith("HIS")) return "Histoire";
-  if (blocId.startsWith("GEO")) return "Géographie";
-  if (blocId.startsWith("EMC")) return "EMC";
-  if (blocId.startsWith("PHY")) return "Physique";
-  if (blocId.startsWith("SVT")) return "SVT";
-  if (blocId.startsWith("TEC")) return "Techno";
   return "Autre";
 };
 
