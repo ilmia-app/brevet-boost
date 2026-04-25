@@ -215,7 +215,7 @@ const Annales = () => {
                             onClick={() =>
                               navigate(
                                 `/annales/${encodeURIComponent(g.annale_source)}${
-                                  matiereFilter ? `?matiere=${encodeURIComponent(matiereFilter)}` : ""
+                                  `?matiere=${encodeURIComponent(matiereFilter || g.matiere)}`
                                 }`,
                               )
                             }
