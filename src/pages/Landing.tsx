@@ -7,7 +7,7 @@ const features = [
   { icon: Calendar, title: "Planning personnalisé", desc: "adapté à ta date d'examen" },
   { icon: BookOpen, title: "Méthode pas-à-pas", desc: "sur chaque exercice" },
   { icon: ClipboardList, title: "Vraies annales", desc: "avec corrigés détaillés" },
-  { icon: Sparkles, title: "Exercices générés", desc: "par IA" },
+  { icon: Sparkles, title: "Exercices personnalisés", desc: "selon les besoins" },
 ];
 
 const Landing = () => {
