@@ -155,6 +155,7 @@ export type Database = {
           explication_ia: string | null
           id: string
           session: string | null
+          titre: string | null
         }
         Insert: {
           annale_source?: string | null
@@ -167,6 +168,7 @@ export type Database = {
           explication_ia?: string | null
           id: string
           session?: string | null
+          titre?: string | null
         }
         Update: {
           annale_source?: string | null
@@ -179,6 +181,7 @@ export type Database = {
           explication_ia?: string | null
           id?: string
           session?: string | null
+          titre?: string | null
         }
         Relationships: [
           {
