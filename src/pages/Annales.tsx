@@ -14,6 +14,7 @@ interface Exercice {
   annale_source: string | null;
   annee: number | null;
   session: string | null;
+  titre: string | null;
 }
 
 interface Bloc {
@@ -69,7 +70,7 @@ const Annales = () => {
     const load = async () => {
       let exercicesQuery = supabase
         .from("exercices")
-        .select("id, bloc_id, annale_source, annee, session")
+        .select("id, bloc_id, annale_source, annee, session, titre")
         .not("annale_source", "is", null);
 
       const likePattern = getBlocIdLikePattern(matiereFilter);
@@ -267,7 +268,7 @@ const Annales = () => {
                           Exercice {idx + 1}
                         </p>
                         <p className="font-medium text-sm leading-snug">
-                          {bloc?.titre || ex.bloc_id || "Exercice"}
+                          {ex.titre || bloc?.titre || ex.bloc_id || "Exercice"}
                         </p>
                       </div>
                       {done ? (
