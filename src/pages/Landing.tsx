@@ -1,4 +1,7 @@
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Target, Calendar, BookOpen, ClipboardList, Sparkles } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const features = [
   { icon: Calendar, title: "Planning personnalisé", desc: "adapté à ta date d'examen" },
@@ -8,6 +11,15 @@ const features = [
 ];
 
 const Landing = () => {
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user, loading, navigate]);
+
   return (
     <main
       className="min-h-screen w-full flex items-center justify-center px-6 py-10"
@@ -56,6 +68,22 @@ const Landing = () => {
             puis 9,90€ jusqu'au brevet !
           </div>
         </div>
+
+        {/* Primary CTA button */}
+        <Link
+          to="/login?tab=register"
+          className="w-full rounded-2xl px-5 py-4 mb-3 shadow-xl bg-gradient-to-br from-blue-500 to-emerald-500 text-white text-base font-bold text-center hover:opacity-95 transition-opacity"
+        >
+          Commencer gratuitement
+        </Link>
+
+        {/* Secondary login link */}
+        <Link
+          to="/login"
+          className="text-sm text-blue-100/90 underline-offset-4 hover:underline mb-3"
+        >
+          J'ai déjà un compte
+        </Link>
 
         {/* Discrete payment info */}
         <p className="w-full text-xs text-white/80 mb-3 leading-relaxed">
