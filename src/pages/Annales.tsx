@@ -110,14 +110,15 @@ const Annales = () => {
     const m = new Map<string, SubjectGroup>();
     for (const ex of exercices) {
       if (!ex.annale_source || !ex.annee) continue;
-      const key = `${ex.annale_source}|${ex.annee}|${ex.session || ""}`;
+      const matiere = inferMatiere(ex.bloc_id, blocsMap);
+      const key = `${ex.annale_source}|${ex.annee}|${ex.session || ""}|${matiere}`;
       if (!m.has(key)) {
         m.set(key, {
           key,
           annale_source: ex.annale_source,
           annee: ex.annee,
           session: ex.session || "",
-          matiere: inferMatiere(ex.bloc_id, blocsMap),
+          matiere,
           count: 0,
           exercices: [],
         });
@@ -214,7 +215,7 @@ const Annales = () => {
                             onClick={() =>
                               navigate(
                                 `/annales/${encodeURIComponent(g.annale_source)}${
-                                  matiereFilter ? `?matiere=${encodeURIComponent(matiereFilter)}` : ""
+                                  `?matiere=${encodeURIComponent(matiereFilter || g.matiere)}`
                                 }`,
                               )
                             }
