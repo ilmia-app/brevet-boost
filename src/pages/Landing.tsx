@@ -37,6 +37,14 @@ const Landing = () => {
           Le coach brevet des élèves du CNED
         </p>
 
+        {/* Top CTA button */}
+        <Link
+          to="/login?tab=register"
+          className="w-full rounded-2xl px-5 py-4 mb-6 shadow-xl bg-gradient-to-br from-blue-500 to-emerald-500 text-white text-base font-bold text-center hover:opacity-95 transition-opacity"
+        >
+          Commencer gratuitement
+        </Link>
+
         {/* Features grid 2x2 */}
         <div className="grid grid-cols-2 gap-3 w-full mb-7">
           {features.map((f) => {
@@ -74,7 +82,7 @@ const Landing = () => {
           to="/login?tab=register"
           className="w-full rounded-2xl px-5 py-4 mb-3 shadow-xl bg-gradient-to-br from-blue-500 to-emerald-500 text-white text-base font-bold text-center hover:opacity-95 transition-opacity"
         >
-          Commencer gratuitement
+          Je m'inscris maintenant — gratuit jusqu'au 30 avril
         </Link>
 
         {/* Secondary login link */}
