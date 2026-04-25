@@ -30,9 +30,9 @@ const App = () => (
         <BrowserRouter basename={import.meta.env.BASE_URL}>
           <ContactButton />
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Navigate to="/" replace />} />
-            <Route path="/register" element={<Navigate to="/" replace />} />
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Index />} />
+            <Route path="/register" element={<Navigate to="/login?tab=register" replace />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
@@ -43,7 +43,7 @@ const App = () => (
             <Route path="/annales/:annaleSource" element={<ProtectedRoute><Annales /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
-            <Route path="/landing" element={<Landing />} />
+            <Route path="/landing" element={<Navigate to="/" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
