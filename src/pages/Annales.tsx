@@ -159,7 +159,7 @@ const Annales = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate(annaleSource ? "/annales" : "/dashboard")}
             aria-label="Retour au tableau de bord"
           >
             <ArrowLeft className="w-5 h-5" />
