@@ -34,7 +34,7 @@ const Landing = () => {
         {/* Title */}
         <h1 className="text-5xl font-extrabold tracking-tight mb-2">Sprint DNB</h1>
         <p className="text-base text-blue-100/90 mb-8">
-          Le coach brevet des élèves du CNED
+          Le coach digital qui organise ta révision jusqu'au brevet
         </p>
 
         {/* Top CTA button */}
