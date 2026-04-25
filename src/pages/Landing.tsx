@@ -105,7 +105,7 @@ const Landing = () => {
 
         {/* Footer mention */}
         <p className="text-xs text-blue-100/70">
-          Par une maman CNED pour les familles CNED 💙
+          Créé par une maman concernée 💙
         </p>
       </div>
     </main>
