@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2, Rocket } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,8 @@ import { toast } from "sonner";
 const Index = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") === "register" ? "register" : "login";
 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -100,7 +102,7 @@ const Index = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="login" className="w-full">
+        <Tabs defaultValue={initialTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 h-12 rounded-xl">
             <TabsTrigger value="login" className="rounded-lg">Se connecter</TabsTrigger>
             <TabsTrigger value="register" className="rounded-lg">Créer mon compte</TabsTrigger>
