@@ -628,31 +628,30 @@ const Dashboard = () => {
               <p className="text-xs text-muted-foreground -mt-2">Entraîne toi sur un sujet officiel du DNB</p>
 
               <div className="space-y-3 flex-1 flex flex-col justify-center">
-                <button
-                  onClick={() => navigate("/annales?matiere=Maths")}
-                  className="w-full text-left rounded-xl border border-blue-200 bg-blue-50 p-4 hover:bg-blue-100 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-blue-900">Annales Maths</p>
-                      <p className="text-xs text-blue-700/80 mt-0.5">Sujets officiels DNB</p>
+                {[
+                  { matiere: "Maths", border: "border-blue-200", bg: "bg-blue-50", hover: "hover:bg-blue-100", text: "text-blue-900", sub: "text-blue-700/80" },
+                  { matiere: "Français", border: "border-purple-200", bg: "bg-purple-50", hover: "hover:bg-purple-100", text: "text-purple-900", sub: "text-purple-700/80" },
+                  { matiere: "Histoire", border: "border-orange-200", bg: "bg-orange-50", hover: "hover:bg-orange-100", text: "text-orange-900", sub: "text-orange-700/80" },
+                  { matiere: "Géographie", border: "border-emerald-200", bg: "bg-emerald-50", hover: "hover:bg-emerald-100", text: "text-emerald-900", sub: "text-emerald-700/80" },
+                  { matiere: "EMC", border: "border-yellow-200", bg: "bg-yellow-50", hover: "hover:bg-yellow-100", text: "text-yellow-900", sub: "text-yellow-700/80" },
+                  { matiere: "Physique", border: "border-red-200", bg: "bg-red-50", hover: "hover:bg-red-100", text: "text-red-900", sub: "text-red-700/80" },
+                  { matiere: "SVT", border: "border-green-200", bg: "bg-green-50", hover: "hover:bg-green-100", text: "text-green-900", sub: "text-green-700/80" },
+                  { matiere: "Techno", border: "border-gray-200", bg: "bg-gray-50", hover: "hover:bg-gray-100", text: "text-gray-900", sub: "text-gray-700/80" },
+                ].map((m) => (
+                  <button
+                    key={m.matiere}
+                    onClick={() => navigate(`/annales?matiere=${encodeURIComponent(m.matiere)}`)}
+                    className={`w-full text-left rounded-xl border ${m.border} ${m.bg} p-4 ${m.hover} transition-colors`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className={`font-semibold ${m.text}`}>Annales {m.matiere}</p>
+                        <p className={`text-xs ${m.sub} mt-0.5`}>Sujets officiels DNB</p>
+                      </div>
+                      <Badge className={SUBJECT_COLORS[m.matiere]}>{m.matiere}</Badge>
                     </div>
-                    <Badge className="bg-blue-500 text-white">Maths</Badge>
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => navigate("/annales?matiere=Français")}
-                  className="w-full text-left rounded-xl border border-purple-200 bg-purple-50 p-4 hover:bg-purple-100 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-purple-900">Annales Français</p>
-                      <p className="text-xs text-purple-700/80 mt-0.5">Sujets officiels DNB</p>
-                    </div>
-                    <Badge className="bg-purple-500 text-white">Français</Badge>
-                  </div>
-                </button>
+                  </button>
+                ))}
               </div>
 
               {currentPhase === 3 && (
