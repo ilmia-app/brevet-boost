@@ -33,9 +33,17 @@ const Landing = () => {
 
         {/* Title */}
         <h1 className="text-5xl font-extrabold tracking-tight mb-2">Sprint DNB</h1>
-        <p className="text-base text-blue-100/90 mb-8">
+        <p className="text-base text-blue-100/90 mb-5">
           Le coach brevet des élèves du CNED
         </p>
+
+        {/* Top CTA — visible above the fold */}
+        <Link
+          to="/login?tab=register"
+          className="w-full rounded-2xl px-5 py-3.5 mb-6 shadow-xl bg-gradient-to-br from-blue-500 to-emerald-500 text-white text-base font-bold text-center hover:opacity-95 transition-opacity"
+        >
+          Commencer gratuitement
+        </Link>
 
         {/* Features grid 2x2 */}
         <div className="grid grid-cols-2 gap-3 w-full mb-7">
