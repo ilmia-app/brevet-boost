@@ -13,13 +13,46 @@ import {
 import ProgressBar from "@/components/onboarding/ProgressBar";
 import SelectableCard from "@/components/onboarding/SelectableCard";
 import SubjectChip from "@/components/onboarding/SubjectChip";
-import { Rocket, ArrowRight, ArrowLeft, Sparkles, Mail } from "lucide-react";
+import { Rocket, ArrowRight, ArrowLeft, Sparkles, Mail, User, Calendar, Clock, GaugeCircle, BookOpen, AlertCircle, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
-const TOTAL_STEPS = 5;
+const RecapRow = ({
+  icon,
+  label,
+  value,
+  onEdit,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  onEdit: () => void;
+}) => (
+  <div className="flex items-center justify-between p-4">
+    <div className="flex items-center gap-3 min-w-0">
+      <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-sm font-semibold text-foreground truncate">{value}</p>
+      </div>
+    </div>
+    <button
+      type="button"
+      onClick={onEdit}
+      className="text-xs font-semibold text-primary hover:underline shrink-0 ml-3"
+    >
+      Modifier
+    </button>
+  </div>
+);
+
+const TOTAL_STEPS = 6;
 const SUBJECTS = ["Maths", "Français", "Histoire", "Géographie", "EMC", "Physique", "SVT", "Techno"];
+const MAX_SUBJECTS = 5;
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -56,10 +89,27 @@ const Onboarding = () => {
       case 2: return name.trim().length > 0 && examDate.length > 0;
       case 3: return rhythm.length > 0;
       case 4: return level.length > 0;
-      case 5: return subjects.length > 0;
+      case 5: return subjects.length > 0 && subjects.length <= MAX_SUBJECTS;
+      case 6: return subjects.length > 0 && subjects.length <= MAX_SUBJECTS;
       default: return false;
     }
   };
+
+  const rhythmLabel = (() => {
+    const map: Record<string, string> = { "1h30": "1h30 — Léger", "2h30": "2h30 — Moyen", "3h30": "3h30 — Intensif" };
+    return map[rhythm] ?? "—";
+  })();
+  const levelLabel = (() => {
+    const map: Record<string, string> = {
+      on_track: "À jour",
+      slightly_behind: "Un peu en retard",
+      behind: "Assez en retard",
+    };
+    return map[level] ?? "—";
+  })();
+  const formattedExamDate = examDate
+    ? new Date(examDate).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
+    : "—";
 
   const handleFinish = async () => {
     // Map rhythm to volume_quotidien values
@@ -244,7 +294,9 @@ const Onboarding = () => {
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-400">
               <div className="space-y-2">
                 <h2 className="text-2xl font-bold">Quelles matières veux-tu booster en priorité ?</h2>
-                <p className="text-muted-foreground">Sélectionne toutes celles qui s'appliquent</p>
+                <p className="text-muted-foreground">
+                  Sélectionne entre 1 et {MAX_SUBJECTS} matières
+                </p>
               </div>
               <div className="flex flex-wrap gap-3">
                 {SUBJECTS.map(s => (
@@ -252,10 +304,96 @@ const Onboarding = () => {
                     key={s}
                     label={s}
                     selected={subjects.includes(s)}
-                    onClick={() => toggleSubject(s)}
+                    onClick={() => {
+                      if (!subjects.includes(s) && subjects.length >= MAX_SUBJECTS) {
+                        toast({
+                          title: `Maximum ${MAX_SUBJECTS} matières`,
+                          description: "Concentre-toi sur tes priorités 💪",
+                        });
+                        return;
+                      }
+                      toggleSubject(s);
+                    }}
                   />
                 ))}
               </div>
+              <div
+                className={cn(
+                  "flex items-center gap-2 text-sm rounded-lg px-3 py-2 border",
+                  subjects.length === 0
+                    ? "border-destructive/30 bg-destructive/5 text-destructive"
+                    : "border-primary/20 bg-primary/5 text-primary"
+                )}
+              >
+                {subjects.length === 0 ? (
+                  <AlertCircle className="w-4 h-4" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4" />
+                )}
+                <span className="font-medium">
+                  {subjects.length === 0
+                    ? "Choisis au moins 1 matière"
+                    : `${subjects.length} matière${subjects.length > 1 ? "s" : ""} sélectionnée${subjects.length > 1 ? "s" : ""}`}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Step 6 — Recap */}
+          {step === 6 && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-400">
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold">Récapitulatif de ton sprint</h2>
+                <p className="text-muted-foreground">Vérifie tes infos avant de lancer ton plan</p>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-card divide-y divide-border overflow-hidden">
+                <RecapRow icon={<User className="w-4 h-4" />} label="Prénom" value={name || "—"} onEdit={() => setStep(2)} />
+                <RecapRow
+                  icon={<Calendar className="w-4 h-4" />}
+                  label="Date d'examen"
+                  value={formattedExamDate + (daysUntilExam !== null ? ` (J-${daysUntilExam})` : "")}
+                  onEdit={() => setStep(2)}
+                />
+                <RecapRow icon={<Clock className="w-4 h-4" />} label="Rythme quotidien" value={rhythmLabel} onEdit={() => setStep(3)} />
+                <RecapRow icon={<GaugeCircle className="w-4 h-4" />} label="Niveau actuel" value={levelLabel} onEdit={() => setStep(4)} />
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <BookOpen className="w-4 h-4" />
+                      <span>Matières prioritaires</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setStep(5)}
+                      className="text-xs font-semibold text-primary hover:underline"
+                    >
+                      Modifier
+                    </button>
+                  </div>
+                  {subjects.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {subjects.map(s => (
+                        <span
+                          key={s}
+                          className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium"
+                        >
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-destructive">Aucune matière sélectionnée</p>
+                  )}
+                </div>
+              </div>
+
+              {subjects.length === 0 && (
+                <div className="flex items-center gap-2 text-sm text-destructive rounded-lg px-3 py-2 border border-destructive/30 bg-destructive/5">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>Sélectionne au moins une matière pour continuer</span>
+                </div>
+              )}
             </div>
           )}
 
@@ -275,7 +413,7 @@ const Onboarding = () => {
                 onClick={step === TOTAL_STEPS ? handleFinish : () => setStep(s => s + 1)}
               >
                 {step === TOTAL_STEPS ? (
-                  <>Lancer mon sprint <Sparkles className="ml-2 w-5 h-5" /></>
+                  <>Créer mon sprint <Sparkles className="ml-2 w-5 h-5" /></>
                 ) : (
                   <>Suivant <ArrowRight className="ml-2 w-4 h-4" /></>
                 )}
