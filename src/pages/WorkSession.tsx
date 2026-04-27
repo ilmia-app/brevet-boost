@@ -518,13 +518,13 @@ const WorkSession = () => {
 
   return (
     <div className="min-h-screen bg-background pb-8">
-      <div className="max-w-lg mx-auto px-4 pt-4 space-y-6">
+      <div className="max-w-5xl mx-auto px-4 pt-4 space-y-6">
         <button onClick={() => navigate("/dashboard")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="w-4 h-4" /> Retour au tableau de bord
         </button>
 
         {/* Header */}
-        <section className="space-y-3">
+        <section className="space-y-3 max-w-lg mx-auto">
           <Badge className={SUBJECT_COLORS[bloc.matiere] || "bg-muted text-foreground"}>
             {bloc.matiere}
           </Badge>
@@ -544,7 +544,9 @@ const WorkSession = () => {
           </div>
         </section>
 
-        {/* Exercise section - conditionnel */}
+        {/* Exercise + Notes côte à côte sur desktop */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] gap-6 items-start">
+        <div className="space-y-6 min-w-0">
         {aiLoading ? (
           <section className="space-y-3">
             <Card className="border-l-4 border-l-primary">
@@ -715,10 +717,28 @@ const WorkSession = () => {
             </Card>
           </section>
         )}
+        </div>
+
+        {/* Tes notes — à droite de l'énoncé sur desktop, en dessous sur mobile */}
+        <aside className="lg:sticky lg:top-4 space-y-1.5">
+          <label className="text-sm font-medium flex items-center gap-1.5">
+            📝 Tes notes
+          </label>
+          <Textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Écris ici tes réponses, brouillons ou notes — sauvegarde automatique."
+            className="min-h-[260px] lg:min-h-[420px] bg-background"
+          />
+          <p className="text-[11px] text-muted-foreground italic">
+            Tes notes sont enregistrées automatiquement.
+          </p>
+        </aside>
+        </div>
 
         {/* Méthode */}
         {methodeSteps.length > 0 && (
-          <section className="space-y-3">
+          <section className="space-y-3 max-w-lg mx-auto">
             <h2 className="text-lg font-semibold">Ta méthode</h2>
             <p className="text-xs text-muted-foreground">
               Clique sur une étape pour comprendre son but.
@@ -778,7 +798,7 @@ const WorkSession = () => {
 
         {/* Consigne / objectifs / notes */}
         {(bloc.consigne_eleve || bloc.objectifs_pedagogiques) && (
-          <section className="space-y-3">
+          <section className="space-y-3 max-w-lg mx-auto">
             {bloc.consigne_eleve && (
               <Card>
                 <CardContent className="p-4">
@@ -797,18 +817,8 @@ const WorkSession = () => {
           </section>
         )}
 
-        <section className="space-y-1.5">
-          <label className="text-sm font-medium">Tes notes</label>
-          <Textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Écris tes notes, brouillons ou réponses ici…"
-            className="min-h-[120px]"
-          />
-        </section>
-
         {/* Validation */}
-        <section className="pb-4">
+        <section className="pb-4 max-w-lg mx-auto">
           <Button
             onClick={handleComplete}
             className="w-full h-12 text-base font-semibold sprint-gradient text-primary-foreground rounded-xl gap-2"
