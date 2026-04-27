@@ -175,8 +175,8 @@ Dans le corrigé uniquement, le markdown peut utiliser : ### titres, **gras**, l
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 2048,
+        model: "claude-haiku-4-5",
+        max_tokens: 1536,
         system: systemPrompt,
         messages: [
           { role: "user", content: `Génère l'exercice + corrigé pour : ${titre}. Réponds UNIQUEMENT avec un objet JSON strict {"enonce": "...", "corrige": "..."} sans aucun texte autour.` },
