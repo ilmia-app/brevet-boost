@@ -17,6 +17,38 @@ import { Rocket, ArrowRight, ArrowLeft, Sparkles, Mail, User, Calendar, Clock, G
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+
+const RecapRow = ({
+  icon,
+  label,
+  value,
+  onEdit,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  onEdit: () => void;
+}) => (
+  <div className="flex items-center justify-between p-4">
+    <div className="flex items-center gap-3 min-w-0">
+      <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-sm font-semibold text-foreground truncate">{value}</p>
+      </div>
+    </div>
+    <button
+      type="button"
+      onClick={onEdit}
+      className="text-xs font-semibold text-primary hover:underline shrink-0 ml-3"
+    >
+      Modifier
+    </button>
+  </div>
+);
 
 const TOTAL_STEPS = 6;
 const SUBJECTS = ["Maths", "Français", "Histoire", "Géographie", "EMC", "Physique", "SVT", "Techno"];
