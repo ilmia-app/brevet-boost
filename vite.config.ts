@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import fs from "fs";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
 const resolveBunPackage = (pkg: string) => {
@@ -34,7 +35,59 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  plugins: [
+    react(),
+    mode === "development" && componentTagger(),
+    VitePWA({
+      registerType: "autoUpdate",
+      // Don't activate the SW in dev — Lovable preview runs in an iframe and
+      // a SW would cache stale builds + intercept navigation.
+      devOptions: { enabled: false },
+      includeAssets: [
+        "favicon.png",
+        "apple-touch-icon.png",
+        "robots.txt",
+      ],
+      manifest: {
+        name: "Sprint DNB",
+        short_name: "Sprint DNB",
+        description: "Planifie et réussis ton brevet des collèges",
+        start_url: "/",
+        scope: "/",
+        display: "standalone",
+        orientation: "portrait",
+        background_color: "#ffffff",
+        theme_color: "#2F6FDB",
+        lang: "fr",
+        icons: [
+          {
+            src: "/pwa-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "any",
+          },
+          {
+            src: "/pwa-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any",
+          },
+          {
+            src: "/pwa-maskable-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
+        ],
+      },
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        navigateFallback: "/index.html",
+        navigateFallbackDenylist: [/^\/~oauth/, /^\/api/, /^\/functions/],
+        cleanupOutdatedCaches: true,
+      },
+    }),
+  ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
