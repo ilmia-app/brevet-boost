@@ -541,6 +541,17 @@ const WorkSession = () => {
               {timerRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               {timerRunning ? "Pause" : "Démarrer"}
             </Button>
+            <p className="text-xs text-muted-foreground text-center italic px-2 max-w-sm">
+              Lance le chrono pour savoir comment tu gères ton temps. C'est très important pour l'examen&nbsp;!
+            </p>
+            {bloc.objectifs_pedagogiques && (
+              <Card className="border-primary/20 bg-accent/30 w-full">
+                <CardContent className="p-4 space-y-1">
+                  <p className="text-xs font-semibold text-primary">Objectifs</p>
+                  <p className="text-sm leading-relaxed text-foreground/80">{bloc.objectifs_pedagogiques}</p>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </section>
 
@@ -796,24 +807,14 @@ const WorkSession = () => {
           </section>
         )}
 
-        {/* Consigne / objectifs / notes */}
-        {(bloc.consigne_eleve || bloc.objectifs_pedagogiques) && (
+        {/* Consigne élève */}
+        {bloc.consigne_eleve && (
           <section className="space-y-3 max-w-lg mx-auto">
-            {bloc.consigne_eleve && (
-              <Card>
-                <CardContent className="p-4">
-                  <p className="text-sm leading-relaxed">{bloc.consigne_eleve}</p>
-                </CardContent>
-              </Card>
-            )}
-            {bloc.objectifs_pedagogiques && (
-              <Card className="border-primary/20 bg-accent/30">
-                <CardContent className="p-4 space-y-1">
-                  <p className="text-xs font-semibold text-primary">Objectifs</p>
-                  <p className="text-sm leading-relaxed text-foreground/80">{bloc.objectifs_pedagogiques}</p>
-                </CardContent>
-              </Card>
-            )}
+            <Card>
+              <CardContent className="p-4">
+                <p className="text-sm leading-relaxed">{bloc.consigne_eleve}</p>
+              </CardContent>
+            </Card>
           </section>
         )}
 
