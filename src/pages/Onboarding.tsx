@@ -413,7 +413,7 @@ const Onboarding = () => {
                 onClick={step === TOTAL_STEPS ? handleFinish : () => setStep(s => s + 1)}
               >
                 {step === TOTAL_STEPS ? (
-                  <>Lancer mon sprint <Sparkles className="ml-2 w-5 h-5" /></>
+                  <>Créer mon sprint <Sparkles className="ml-2 w-5 h-5" /></>
                 ) : (
                   <>Suivant <ArrowRight className="ml-2 w-4 h-4" /></>
                 )}
