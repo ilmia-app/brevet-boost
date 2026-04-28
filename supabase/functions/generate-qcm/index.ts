@@ -100,9 +100,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY non configurée" }), {
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ANTHROPIC_API_KEY) {
+      return new Response(JSON.stringify({ error: "ANTHROPIC_API_KEY non configurée" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -126,59 +126,55 @@ CONTRAINTES STRICTES :
 - "explication" : 1-2 phrases expliquant pourquoi c'est la bonne réponse.
 - Pas de markdown, pas de LaTeX, du texte brut.`;
 
-    const tools = [
-      {
-        type: "function",
-        function: {
-          name: "return_qcm",
-          description: "Retourne un QCM de 5 questions",
-          parameters: {
-            type: "object",
-            properties: {
-              questions: {
-                type: "array",
-                minItems: 5,
-                maxItems: 5,
-                items: {
-                  type: "object",
-                  properties: {
-                    question: { type: "string" },
-                    choix: {
-                      type: "array",
-                      minItems: 4,
-                      maxItems: 4,
-                      items: { type: "string" },
-                    },
-                    bonne_reponse: { type: "integer", minimum: 0, maximum: 3 },
-                    explication: { type: "string" },
-                  },
-                  required: ["question", "choix", "bonne_reponse", "explication"],
-                  additionalProperties: false,
+    // Anthropic tool use pour forcer une sortie JSON structurée
+    const anthropicTool = {
+      name: "return_qcm",
+      description: "Retourne un QCM de 5 questions",
+      input_schema: {
+        type: "object",
+        properties: {
+          questions: {
+            type: "array",
+            minItems: 5,
+            maxItems: 5,
+            items: {
+              type: "object",
+              properties: {
+                question: { type: "string" },
+                choix: {
+                  type: "array",
+                  minItems: 4,
+                  maxItems: 4,
+                  items: { type: "string" },
                 },
+                bonne_reponse: { type: "integer", minimum: 0, maximum: 3 },
+                explication: { type: "string" },
               },
+              required: ["question", "choix", "bonne_reponse", "explication"],
             },
-            required: ["questions"],
-            additionalProperties: false,
           },
         },
+        required: ["questions"],
       },
-    ];
+    };
 
-    const callGateway = async () =>
-      fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const callAnthropic = async () =>
+      fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
+          "x-api-key": ANTHROPIC_API_KEY,
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
+          model: "claude-haiku-4-5",
+          max_tokens: 2048,
+          system: systemPrompt,
+          tools: [anthropicTool],
+          tool_choice: { type: "tool", name: "return_qcm" },
           messages: [
-            { role: "system", content: systemPrompt },
             { role: "user", content: "Génère le QCM maintenant en appelant l'outil return_qcm." },
           ],
-          tools,
-          tool_choice: { type: "function", function: { name: "return_qcm" } },
         }),
       });
 
@@ -186,7 +182,7 @@ CONTRAINTES STRICTES :
     let lastErr = "";
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        response = await callGateway();
+        response = await callAnthropic();
         if (response.ok) break;
         if (response.status === 429 || response.status === 402) break;
         lastErr = `status ${response.status}`;
@@ -217,7 +213,7 @@ CONTRAINTES STRICTES :
     }
     if (!response.ok) {
       const errText = await response.text();
-      console.error("[generate-qcm] gateway error:", response.status, errText);
+      console.error("[generate-qcm] anthropic error:", response.status, errText);
       return new Response(JSON.stringify({ error: "Le service IA est temporairement indisponible." }), {
         status: 503,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -225,15 +221,11 @@ CONTRAINTES STRICTES :
     }
 
     const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    let parsed: { questions?: QcmQuestion[] } = {};
-    if (toolCall?.function?.arguments) {
-      try {
-        parsed = JSON.parse(toolCall.function.arguments);
-      } catch (e) {
-        console.error("[generate-qcm] JSON parse failed:", e);
-      }
-    }
+    // Anthropic renvoie le résultat de l'outil dans content[].input
+    const toolUse = (data.content as Array<{ type: string; name?: string; input?: unknown }> | undefined)
+      ?.find((c) => c.type === "tool_use" && c.name === "return_qcm");
+    const parsed: { questions?: QcmQuestion[] } =
+      (toolUse?.input as { questions?: QcmQuestion[] }) || {};
 
     const questions = parsed.questions;
     if (!Array.isArray(questions) || questions.length === 0) {
