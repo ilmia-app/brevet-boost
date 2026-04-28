@@ -263,8 +263,19 @@ const Dashboard = () => {
     const rotationHGE = ["HIS-", "GEO-", "EMC-"];
     const rotationSci = ["PHY-", "SVT-", "TEC-"];
 
-    const pickRandom = <T,>(arr: T[]): T | null =>
-      arr.length === 0 ? null : arr[Math.floor(Math.random() * arr.length)];
+    // Sélection déterministe par jour + user pour que les tâches du jour restent stables
+    // (et donc qu'un bloc complété aujourd'hui réapparaisse coché au lieu d'être remplacé).
+    const todayStr = new Date().toISOString().split("T")[0];
+    const seedStr = `${todayStr}-${profile?.id ?? ""}`;
+    let seedHash = 0;
+    for (let i = 0; i < seedStr.length; i++) {
+      seedHash = (seedHash * 31 + seedStr.charCodeAt(i)) >>> 0;
+    }
+    const pickRandom = <T,>(arr: T[]): T | null => {
+      if (arr.length === 0) return null;
+      seedHash = (seedHash * 1103515245 + 12345) >>> 0;
+      return arr[seedHash % arr.length];
+    };
 
     const fetchExoForPrefix = async (
       prefix: string,
