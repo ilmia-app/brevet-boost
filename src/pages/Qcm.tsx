@@ -51,7 +51,7 @@ const Qcm = () => {
   const [finished, setFinished] = useState(false);
   const [completionWritten, setCompletionWritten] = useState(false);
 
-  // Charge profil + thèmes des matières faibles, puis génère le QCM
+  // Charge les 3 bloc_id complétés aujourd'hui par l'utilisateur, puis génère le QCM
   const loadQcm = async (forceNew = false) => {
     if (!user) return;
     setGenerating(true);
@@ -63,25 +63,39 @@ const Qcm = () => {
     setCompletionWritten(false);
 
     try {
-      // Priorité : 3 blocs des tâches du jour passés depuis le Dashboard
-      const stateBlocs = (location.state as { blocs?: BlocLite[] } | null)?.blocs || [];
-      let dailyBlocs: BlocLite[] = stateBlocs;
+      // Source unique : les bloc_id complétés aujourd'hui par l'utilisateur connecté
+      const today = new Date().toISOString().split("T")[0];
+      const { data: completionsRows, error: completionsErr } = await supabase
+        .from("completions")
+        .select("bloc_id")
+        .eq("user_id", user.id)
+        .eq("date_completion", today)
+        .eq("completed", true);
+      if (completionsErr) throw new Error(completionsErr.message);
 
-      // Fallback : si pas de state (rechargement direct), retomber sur matières faibles
+      const blocIds = Array.from(
+        new Set(
+          (completionsRows || [])
+            .map((c) => c.bloc_id)
+            .filter((id): id is string => !!id && id !== "QCM-DAILY"),
+        ),
+      );
+
+      if (blocIds.length === 0) {
+        throw new Error(
+          "Tu dois d'abord terminer tes 3 tâches du jour avant de lancer le QCM.",
+        );
+      }
+
+      const { data: blocsRows, error: blocsErr } = await supabase
+        .from("blocs_examen")
+        .select("id, matiere, titre, theme")
+        .in("id", blocIds);
+      if (blocsErr) throw new Error(blocsErr.message);
+      const dailyBlocs: BlocLite[] = (blocsRows as BlocLite[] | null) || [];
+
       if (dailyBlocs.length === 0) {
-        const { data: profileRow } = await supabase
-          .from("users")
-          .select("matieres_faibles")
-          .eq("id", user.id)
-          .maybeSingle();
-        const faibles: string[] = profileRow?.matieres_faibles || [];
-        const finalSubjects = faibles.length > 0 ? faibles.slice(0, 3) : ["Maths", "Français"];
-        const { data: blocsRows } = await supabase
-          .from("blocs_examen")
-          .select("id, matiere, titre, theme")
-          .in("matiere", finalSubjects)
-          .limit(3);
-        dailyBlocs = (blocsRows as BlocLite[] | null) || [];
+        throw new Error("Impossible de retrouver les blocs complétés aujourd'hui.");
       }
 
       const finalSubjects = Array.from(new Set(dailyBlocs.map((b) => b.matiere))).slice(0, 3);
