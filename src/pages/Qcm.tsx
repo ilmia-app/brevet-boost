@@ -75,15 +75,18 @@ const Qcm = () => {
       }
 
       const picked = shuffle(rows).slice(0, 5).map<QcmQuestion>((r) => {
-        const lettre = (r.reponse_correcte || "A").trim().toUpperCase();
-        const idx = Math.max(0, LETTERS.indexOf(lettre));
+        const lettre = (r.reponse_correcte || "").trim().toUpperCase();
+        const idx = LETTERS.indexOf(lettre);
+        if (idx === -1) {
+          console.warn("[Qcm] reponse_correcte invalide pour question", r.id, "=", r.reponse_correcte);
+        }
         return {
           id: r.id,
           bloc_id: r.bloc_id,
           question: r.question,
           choix: [r.option_a, r.option_b, r.option_c, r.option_d],
-          bonne_reponse: idx,
-          reponse_correcte_lettre: LETTERS[idx],
+          bonne_reponse: idx >= 0 ? idx : 0,
+          reponse_correcte_lettre: lettre,
           explication: r.explication,
         };
       });
@@ -122,7 +125,7 @@ const Qcm = () => {
     if (!user) return;
     try {
       const reponse_choisie = LETTERS[chosenIdx];
-      const est_correcte = chosenIdx === q.bonne_reponse;
+      const est_correcte = reponse_choisie === q.reponse_correcte_lettre;
       await supabase.from("qcm_results").insert({
         user_id: user.id,
         bloc_id: q.bloc_id,
