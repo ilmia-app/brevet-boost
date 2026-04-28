@@ -8,6 +8,8 @@ import { Progress as ProgressBar } from "@/components/ui/progress";
 import { Loader2, ArrowLeft, Calendar, CheckCircle2, Flame, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useTrophies } from "@/hooks/useTrophies";
+import TrophyCard from "@/components/trophies/TrophyCard";
 
 const SUBJECT_COLORS: Record<string, string> = {
   Maths: "bg-blue-500",
@@ -50,6 +52,7 @@ const ProgressPage = () => {
   const [blocs, setBlocs] = useState<BlocExamen[]>([]);
   const [completions, setCompletions] = useState<CompletionRow[]>([]);
   const [examDate, setExamDate] = useState<string | null>(null);
+  const { trophies, stats: trophyStats, loading: trophyLoading } = useTrophies();
 
   useEffect(() => {
     if (!user) { navigate("/login"); return; }
