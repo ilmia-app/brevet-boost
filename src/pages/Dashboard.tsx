@@ -624,7 +624,7 @@ const Dashboard = () => {
           </Card>
 
           {/* CARTE 2 — Sprint QCM (bonus quotidien IA) — grisé par défaut */}
-          <Card className="rounded-2xl flex flex-col opacity-60">
+          <Card className={`rounded-2xl flex flex-col ${!allDone ? "opacity-60" : ""}`}>
             <CardContent className="p-5 flex flex-col flex-1 space-y-4">
               <div className="flex items-center gap-2">
                 <span className="text-xl">📝</span>
@@ -636,6 +636,7 @@ const Dashboard = () => {
 
               {(() => {
                 const qcmDone = completedTasks.has("QCM-DAILY");
+                const qcmLocked = !allDone;
                 return (
                   <div className="flex-1 flex flex-col justify-center space-y-4">
                     <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
@@ -659,12 +660,18 @@ const Dashboard = () => {
                       </div>
                       <Button
                         onClick={() => navigate("/qcm")}
-                        variant="secondary"
-                        className="w-full rounded-xl h-10 text-sm"
+                        disabled={qcmLocked}
+                        variant={qcmLocked ? "secondary" : "default"}
+                        className={`w-full rounded-xl h-10 text-sm ${!qcmLocked ? "sprint-gradient text-primary-foreground" : ""}`}
                       >
                         <Play className="w-4 h-4 mr-1.5" />
                         {qcmDone ? "Refaire un QCM" : "Lancer le QCM"}
                       </Button>
+                      {qcmLocked && (
+                        <p className="text-xs text-muted-foreground text-center">
+                          Termine tes 3 tâches pour débloquer le QCM du jour.
+                        </p>
+                      )}
                     </div>
                   </div>
                 );
