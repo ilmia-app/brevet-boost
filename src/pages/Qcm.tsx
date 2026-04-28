@@ -179,19 +179,16 @@ const Qcm = () => {
   }
 
   if (!questions || questions.length === 0) {
-    const isCredits = errorMsg?.toLowerCase().includes("crédit") || errorMsg?.toLowerCase().includes("credit");
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 p-6 text-center">
         <p className="text-base font-medium">
-          {isCredits ? "Crédits IA épuisés" : "QCM indisponible"}
+          Erreur !
         </p>
         <p className="text-sm text-muted-foreground max-w-sm">
-          {isCredits
-            ? "Le générateur IA n'a plus de crédits ce mois-ci. Recharge ton solde dans Settings → Workspace → Cloud & AI balance."
-            : errorMsg || "Réessaye dans un instant."}
+          Contacte-nous, nous réglerons le problème immédiatement !
         </p>
         <div className="flex gap-2">
-          <Button onClick={() => loadQcm(true)} disabled={isCredits}>
+          <Button onClick={() => loadQcm(true)}>
             Réessayer
           </Button>
           <Button variant="ghost" onClick={() => navigate("/dashboard")}>
