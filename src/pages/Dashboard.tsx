@@ -597,43 +597,6 @@ const Dashboard = () => {
                 </Button>
               )}
 
-              {/* Sprint QCM — bonus quotidien IA basé sur les matières faibles */}
-              {(() => {
-                const qcmDone = completedTasks.has("QCM-DAILY");
-                return (
-                  <div
-                    className={`rounded-xl border bg-gradient-to-br from-accent/40 to-background p-3 space-y-2 ${qcmDone ? "opacity-70" : ""}`}
-                  >
-                    <div className="flex items-start gap-2">
-                      <div className="w-8 h-8 rounded-lg sprint-gradient flex items-center justify-center shrink-0">
-                        <ListChecks className="w-4 h-4 text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-                          <p className="text-xs font-semibold">Sprint QCM</p>
-                          {qcmDone && (
-                            <Badge className="bg-secondary text-secondary-foreground text-[9px] px-1.5 py-0">
-                              Fait
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-muted-foreground leading-snug">
-                          5 questions rapides sur tes matières faibles
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      size="sm"
-                      onClick={() => navigate("/qcm")}
-                      className="w-full h-8 text-xs rounded-lg sprint-gradient text-primary-foreground"
-                    >
-                      <Play className="w-3 h-3 mr-1" />
-                      {qcmDone ? "Refaire un QCM" : "Lancer le QCM"}
-                    </Button>
-                  </div>
-                );
-              })()}
-
               <div className="pt-2 border-t space-y-2">
                 <p className="text-xs font-medium text-muted-foreground">Progression de la semaine</p>
                 <div className="flex justify-between">
@@ -660,7 +623,57 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* CARTE 2 — Annales */}
+          {/* CARTE 2 — Sprint QCM (bonus quotidien IA) */}
+          <Card className="rounded-2xl flex flex-col">
+            <CardContent className="p-5 flex flex-col flex-1 space-y-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📝</span>
+                <h2 className="text-base font-semibold">Sprint QCM</h2>
+              </div>
+              <p className="text-xs text-muted-foreground -mt-2">
+                5 questions rapides générées sur tes matières faibles
+              </p>
+
+              {(() => {
+                const qcmDone = completedTasks.has("QCM-DAILY");
+                return (
+                  <div className="flex-1 flex flex-col justify-center space-y-4">
+                    <div className="rounded-xl border bg-gradient-to-br from-accent/40 to-background p-4 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg sprint-gradient flex items-center justify-center shrink-0">
+                          <ListChecks className="w-5 h-5 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                            <p className="text-sm font-semibold">QCM du jour</p>
+                            {qcmDone && (
+                              <Badge className="bg-secondary text-secondary-foreground text-[10px] px-1.5 py-0">
+                                Fait
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground leading-snug">
+                            Un boost rapide pour ancrer tes connaissances et grimper au classement.
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => navigate("/qcm")}
+                        className="w-full rounded-xl h-10 text-sm sprint-gradient text-primary-foreground"
+                      >
+                        <Play className="w-4 h-4 mr-1.5" />
+                        {qcmDone ? "Refaire un QCM" : "Lancer le QCM"}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* CARTE Annales — pleine largeur, en bas */}
+        <div className="grid grid-cols-1 gap-4">
           <Card className="rounded-2xl flex flex-col">
             <CardContent className="p-5 flex flex-col flex-1 space-y-4">
               <div className="flex items-center gap-2">
@@ -669,7 +682,7 @@ const Dashboard = () => {
               </div>
               <p className="text-xs text-muted-foreground -mt-2">Entraîne toi sur un sujet officiel du DNB</p>
 
-              <div className="space-y-3 flex-1 flex flex-col justify-center">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
                 {[
                   { matiere: "Maths", border: "border-blue-200", bg: "bg-blue-50", hover: "hover:bg-blue-100", text: "text-blue-900", sub: "text-blue-700/80" },
                   { matiere: "Français", border: "border-purple-200", bg: "bg-purple-50", hover: "hover:bg-purple-100", text: "text-purple-900", sub: "text-purple-700/80" },
