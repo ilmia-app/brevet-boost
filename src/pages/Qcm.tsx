@@ -41,6 +41,7 @@ const Qcm = () => {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [questions, setQuestions] = useState<QcmQuestion[] | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [subjects, setSubjects] = useState<string[]>([]);
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]); // chosen index per question
@@ -52,6 +53,7 @@ const Qcm = () => {
     if (!user) return;
     setGenerating(true);
     setQuestions(null);
+    setErrorMsg(null);
     setCurrent(0);
     setAnswers([]);
     setFinished(false);
@@ -83,13 +85,26 @@ const Qcm = () => {
         body: { subjects: finalSubjects, themes, force_new: forceNew },
       });
 
-      if (error) throw error;
+      // Extraire un message lisible même quand l'edge function renvoie un statut d'erreur
+      // (FunctionsHttpError contient la réponse brute, dont le body JSON {error: "..."})
+      if (error) {
+        let serverMsg = error.message || "Erreur";
+        const ctx = (error as unknown as { context?: Response }).context;
+        if (ctx && typeof ctx.json === "function") {
+          try {
+            const body = await ctx.json();
+            if (body?.error) serverMsg = body.error;
+          } catch { /* ignore */ }
+        }
+        throw new Error(serverMsg);
+      }
       if (!data?.questions || !Array.isArray(data.questions)) {
         throw new Error("Réponse vide");
       }
       setQuestions(data.questions as QcmQuestion[]);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Erreur de génération";
+      setErrorMsg(msg);
       toast({ title: "Impossible de charger le QCM", description: msg, variant: "destructive" });
     } finally {
       setGenerating(false);
@@ -164,11 +179,25 @@ const Qcm = () => {
   }
 
   if (!questions || questions.length === 0) {
+    const isCredits = errorMsg?.toLowerCase().includes("crédit") || errorMsg?.toLowerCase().includes("credit");
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 p-6 text-center">
-        <p className="text-sm text-muted-foreground">QCM indisponible.</p>
-        <Button onClick={() => loadQcm(true)}>Réessayer</Button>
-        <Button variant="ghost" onClick={() => navigate("/dashboard")}>Retour</Button>
+        <p className="text-base font-medium">
+          {isCredits ? "Crédits IA épuisés" : "QCM indisponible"}
+        </p>
+        <p className="text-sm text-muted-foreground max-w-sm">
+          {isCredits
+            ? "Le générateur IA n'a plus de crédits ce mois-ci. Recharge ton solde dans Settings → Workspace → Cloud & AI balance."
+            : errorMsg || "Réessaye dans un instant."}
+        </p>
+        <div className="flex gap-2">
+          <Button onClick={() => loadQcm(true)} disabled={isCredits}>
+            Réessayer
+          </Button>
+          <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+            Retour
+          </Button>
+        </div>
       </div>
     );
   }
