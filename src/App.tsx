@@ -19,6 +19,7 @@ import History from "./pages/History";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 import Trophies from "./pages/Trophies";
+import Qcm from "./pages/Qcm";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
             <Route path="/trophees" element={<ProtectedRoute><Trophies /></ProtectedRoute>} />
+            <Route path="/qcm" element={<ProtectedRoute><Qcm /></ProtectedRoute>} />
             <Route path="/landing" element={<Navigate to="/" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

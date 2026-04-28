@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Play, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3, Sparkles, Settings, X, History as HistoryIcon, Trophy } from "lucide-react";
+import { Play, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3, Sparkles, Settings, X, History as HistoryIcon, Trophy, ListChecks } from "lucide-react";
 import EndOfDayModal from "@/components/dashboard/EndOfDayModal";
 import TrophyWatcher from "@/components/trophies/TrophyWatcher";
 
@@ -596,6 +596,43 @@ const Dashboard = () => {
                   Terminer ma journée
                 </Button>
               )}
+
+              {/* Sprint QCM — bonus quotidien IA basé sur les matières faibles */}
+              {(() => {
+                const qcmDone = completedTasks.has("QCM-DAILY");
+                return (
+                  <div
+                    className={`rounded-xl border bg-gradient-to-br from-accent/40 to-background p-3 space-y-2 ${qcmDone ? "opacity-70" : ""}`}
+                  >
+                    <div className="flex items-start gap-2">
+                      <div className="w-8 h-8 rounded-lg sprint-gradient flex items-center justify-center shrink-0">
+                        <ListChecks className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                          <p className="text-xs font-semibold">Sprint QCM</p>
+                          {qcmDone && (
+                            <Badge className="bg-secondary text-secondary-foreground text-[9px] px-1.5 py-0">
+                              Fait
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-snug">
+                          5 questions rapides sur tes matières faibles
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => navigate("/qcm")}
+                      className="w-full h-8 text-xs rounded-lg sprint-gradient text-primary-foreground"
+                    >
+                      <Play className="w-3 h-3 mr-1" />
+                      {qcmDone ? "Refaire un QCM" : "Lancer le QCM"}
+                    </Button>
+                  </div>
+                );
+              })()}
 
               <div className="pt-2 border-t space-y-2">
                 <p className="text-xs font-medium text-muted-foreground">Progression de la semaine</p>
