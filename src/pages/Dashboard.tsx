@@ -655,7 +655,7 @@ const Dashboard = () => {
                 <h2 className="text-base font-semibold">Sprint QCM</h2>
               </div>
               <p className="text-xs text-muted-foreground -mt-2">
-                5 questions rapides générées sur tes matières faibles
+                5 questions sur ce que tu viens d'apprendre aujourd'hui.
               </p>
 
               {(() => {

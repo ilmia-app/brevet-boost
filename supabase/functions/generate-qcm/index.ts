@@ -125,11 +125,14 @@ Deno.serve(async (req) => {
         ].filter(Boolean);
         return `- ${parts.join(" | ")}`;
       }).join("\n");
-      blocsBriefing = `Tu dois générer les 5 questions UNIQUEMENT à partir des 3 blocs ci-dessous (les 3 tâches du jour de l'élève) :
+      const repartition = blocs.length === 3
+        ? "Répartition imposée : 2 questions sur le Bloc 1, 2 questions sur le Bloc 2, 1 question sur le Bloc 3."
+        : `Répartis les 5 questions le plus équitablement possible entre les ${blocs.length} blocs ci-dessus.`;
+      blocsBriefing = `Tu dois générer les 5 questions UNIQUEMENT à partir des blocs ci-dessous (les tâches que l'élève vient de terminer aujourd'hui) :
 ${lines}
 
-Répartition imposée : 2 questions sur le Bloc 1, 2 questions sur le Bloc 2, 1 question sur le Bloc 3.
-N'invente PAS de questions hors de ces 3 thèmes/blocs.`;
+${repartition}
+N'invente PAS de questions hors de ces thèmes/blocs.`;
     } else {
       blocsBriefing = themes.length > 0
         ? `Thèmes prioritaires à couvrir : ${themes.slice(0, 8).join(" ; ")}.`
