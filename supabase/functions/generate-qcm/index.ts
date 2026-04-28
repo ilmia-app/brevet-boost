@@ -44,6 +44,8 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const subjects: string[] = Array.isArray(body.subjects) ? body.subjects : [];
     const themes: string[] = Array.isArray(body.themes) ? body.themes : [];
+    const blocs: Array<{ id?: string; matiere?: string; titre?: string; theme?: string }> =
+      Array.isArray(body.blocs) ? body.blocs : [];
     const force_new: boolean = !!body.force_new;
 
     if (subjects.length === 0) {
@@ -58,8 +60,12 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    // Pseudo-bloc_id pour mutualiser le pool : QCM-<matières triées>
-    const poolBlocId = `QCM-${[...subjects].sort().join("-").toUpperCase()}`;
+    // Pseudo-bloc_id pour mutualiser le pool :
+    // - si on a 3 blocs précis (tâches du jour) → pool basé sur ces ids triés
+    // - sinon fallback sur matières
+    const poolBlocId = blocs.length > 0
+      ? `QCM-BLOCS-${[...blocs.map((b) => b.id).filter(Boolean)].sort().join("-")}`
+      : `QCM-${[...subjects].sort().join("-").toUpperCase()}`;
 
     // 1) Tenter de piocher dans le pool partagé un QCM jamais vu
     if (!force_new) {
@@ -108,22 +114,40 @@ Deno.serve(async (req) => {
       });
     }
 
-    const themesText = themes.length > 0
-      ? `Thèmes prioritaires à couvrir : ${themes.slice(0, 8).join(" ; ")}.`
-      : "Couvre des notions classiques du programme de 3ème.";
+    let blocsBriefing = "";
+    if (blocs.length > 0) {
+      const lines = blocs.map((b, i) => {
+        const parts = [
+          `Bloc ${i + 1}`,
+          b.matiere ? `matière : ${b.matiere}` : null,
+          b.titre ? `titre : ${b.titre}` : null,
+          b.theme ? `thème : ${b.theme}` : null,
+        ].filter(Boolean);
+        return `- ${parts.join(" | ")}`;
+      }).join("\n");
+      blocsBriefing = `Tu dois générer les 5 questions UNIQUEMENT à partir des 3 blocs ci-dessous (les 3 tâches du jour de l'élève) :
+${lines}
+
+Répartition imposée : 2 questions sur le Bloc 1, 2 questions sur le Bloc 2, 1 question sur le Bloc 3.
+N'invente PAS de questions hors de ces 3 thèmes/blocs.`;
+    } else {
+      blocsBriefing = themes.length > 0
+        ? `Thèmes prioritaires à couvrir : ${themes.slice(0, 8).join(" ; ")}.`
+        : "Couvre des notions classiques du programme de 3ème.";
+    }
 
     const systemPrompt = `Tu es un professeur expert du Brevet des collèges (DNB) niveau 3ème.
 Tu génères un QCM rapide de 5 questions pour réviser. Niveau : élève de 3ème.
 
 Matières concernées : ${subjects.join(", ")}.
-${themesText}
+
+${blocsBriefing}
 
 CONTRAINTES STRICTES :
-- 5 questions au total, réparties sur les matières indiquées si possible.
-- Chaque question a EXACTEMENT 4 choix (A, B, C, D) dont UNE SEULE bonne réponse.
+- EXACTEMENT 5 questions au total.
+- Chaque question a EXACTEMENT 4 options de réponse (A, B, C, D) dont UNE SEULE bonne réponse.
+- Pour chaque question, fournis : le texte de la question, les 4 options, l'index de la bonne réponse (0..3), et une explication COURTE de 2 lignes maximum expliquant pourquoi c'est la bonne réponse.
 - Questions courtes, claires, sans piège tordu. Pas de double négation.
-- L'index "bonne_reponse" est un entier 0..3 (0 = premier choix).
-- "explication" : 1-2 phrases expliquant pourquoi c'est la bonne réponse.
 - Pas de markdown, pas de LaTeX, du texte brut.`;
 
     // Anthropic tool use pour forcer une sortie JSON structurée
