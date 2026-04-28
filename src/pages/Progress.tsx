@@ -274,6 +274,32 @@ const ProgressPage = () => {
           </section>
         )}
 
+        {/* SECTION — Trophées */}
+        {!trophyLoading && trophies.length > 0 && (
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Trophées</h2>
+              <button
+                onClick={() => navigate("/trophees")}
+                className="text-sm text-primary hover:underline"
+              >
+                Voir tout ({trophyStats.unlocked}/{trophyStats.total})
+              </button>
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+              {[...trophies]
+                .sort((a, b) => {
+                  if (a.unlocked !== b.unlocked) return a.unlocked ? -1 : 1;
+                  return b.progress - a.progress;
+                })
+                .slice(0, 6)
+                .map((t) => (
+                  <TrophyCard key={t.id} trophy={t} compact />
+                ))}
+            </div>
+          </section>
+        )}
+
         {/* SECTION 4 — Blocs maîtrisés */}
         {masteredBlocs.length > 0 && (
           <section className="space-y-3">
