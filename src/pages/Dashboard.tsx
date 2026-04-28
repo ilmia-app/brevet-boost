@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Play, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3, Sparkles, Settings, X, History as HistoryIcon } from "lucide-react";
+import { Play, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3, Sparkles, Settings, X, History as HistoryIcon, Trophy } from "lucide-react";
 import EndOfDayModal from "@/components/dashboard/EndOfDayModal";
+import TrophyWatcher from "@/components/trophies/TrophyWatcher";
 
 interface ProfileData {
   id: string;
@@ -442,6 +443,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background pb-8">
+      <TrophyWatcher />
       <div className="max-w-6xl mx-auto px-4 pt-6 space-y-6">
         {/* HEADER */}
         <section className="space-y-3">
@@ -450,6 +452,9 @@ const Dashboard = () => {
             <div className="flex items-center gap-1">
               <Button variant="ghost" size="icon" onClick={() => navigate("/progress")} aria-label="Progression">
                 <BarChart3 className="w-5 h-5 text-primary" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => navigate("/trophees")} aria-label="Trophées">
+                <Trophy className="w-5 h-5 text-primary" />
               </Button>
               <Button variant="ghost" size="icon" onClick={() => navigate("/history")} aria-label="Historique">
                 <HistoryIcon className="w-5 h-5 text-primary" />

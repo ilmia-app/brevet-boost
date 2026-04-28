@@ -18,6 +18,7 @@ import Profile from "./pages/Profile";
 import History from "./pages/History";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
+import Trophies from "./pages/Trophies";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/annales/:annaleSource" element={<ProtectedRoute><Annales /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
+            <Route path="/trophees" element={<ProtectedRoute><Trophies /></ProtectedRoute>} />
             <Route path="/landing" element={<Navigate to="/" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

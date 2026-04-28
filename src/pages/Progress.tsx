@@ -8,6 +8,8 @@ import { Progress as ProgressBar } from "@/components/ui/progress";
 import { Loader2, ArrowLeft, Calendar, CheckCircle2, Flame, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useTrophies } from "@/hooks/useTrophies";
+import TrophyCard from "@/components/trophies/TrophyCard";
 
 const SUBJECT_COLORS: Record<string, string> = {
   Maths: "bg-blue-500",
@@ -50,6 +52,7 @@ const ProgressPage = () => {
   const [blocs, setBlocs] = useState<BlocExamen[]>([]);
   const [completions, setCompletions] = useState<CompletionRow[]>([]);
   const [examDate, setExamDate] = useState<string | null>(null);
+  const { trophies, stats: trophyStats, loading: trophyLoading } = useTrophies();
 
   useEffect(() => {
     if (!user) { navigate("/login"); return; }
@@ -267,6 +270,32 @@ const ProgressPage = () => {
                   </Tooltip>
                 );
               })}
+            </div>
+          </section>
+        )}
+
+        {/* SECTION — Trophées */}
+        {!trophyLoading && trophies.length > 0 && (
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Trophées</h2>
+              <button
+                onClick={() => navigate("/trophees")}
+                className="text-sm text-primary hover:underline"
+              >
+                Voir tout ({trophyStats.unlocked}/{trophyStats.total})
+              </button>
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+              {[...trophies]
+                .sort((a, b) => {
+                  if (a.unlocked !== b.unlocked) return a.unlocked ? -1 : 1;
+                  return b.progress - a.progress;
+                })
+                .slice(0, 6)
+                .map((t) => (
+                  <TrophyCard key={t.id} trophy={t} compact />
+                ))}
             </div>
           </section>
         )}
