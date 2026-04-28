@@ -520,8 +520,8 @@ const Dashboard = () => {
           </Card>
         )}
 
-        {/* 3 CARTES */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+        {/* CARTES — 1 colonne pleine largeur */}
+        <div className="space-y-4">
           {/* CARTE 1 — Sprint du jour */}
           <Card className="rounded-2xl flex flex-col">
             <CardContent className="p-5 flex flex-col flex-1 space-y-4">
@@ -623,8 +623,8 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* CARTE 2 — Sprint QCM (bonus quotidien IA) */}
-          <Card className="rounded-2xl flex flex-col">
+          {/* CARTE 2 — Sprint QCM (bonus quotidien IA) — grisé par défaut */}
+          <Card className="rounded-2xl flex flex-col opacity-60">
             <CardContent className="p-5 flex flex-col flex-1 space-y-4">
               <div className="flex items-center gap-2">
                 <span className="text-xl">📝</span>
@@ -638,10 +638,10 @@ const Dashboard = () => {
                 const qcmDone = completedTasks.has("QCM-DAILY");
                 return (
                   <div className="flex-1 flex flex-col justify-center space-y-4">
-                    <div className="rounded-xl border bg-gradient-to-br from-accent/40 to-background p-4 space-y-3">
+                    <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
                       <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-lg sprint-gradient flex items-center justify-center shrink-0">
-                          <ListChecks className="w-5 h-5 text-white" />
+                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                          <ListChecks className="w-5 h-5 text-muted-foreground" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap mb-1">
@@ -659,7 +659,8 @@ const Dashboard = () => {
                       </div>
                       <Button
                         onClick={() => navigate("/qcm")}
-                        className="w-full rounded-xl h-10 text-sm sprint-gradient text-primary-foreground"
+                        variant="secondary"
+                        className="w-full rounded-xl h-10 text-sm"
                       >
                         <Play className="w-4 h-4 mr-1.5" />
                         {qcmDone ? "Refaire un QCM" : "Lancer le QCM"}
@@ -670,10 +671,8 @@ const Dashboard = () => {
               })()}
             </CardContent>
           </Card>
-        </div>
 
-        {/* CARTE Annales — pleine largeur, en bas */}
-        <div className="grid grid-cols-1 gap-4">
+          {/* CARTE 3 — Annales pleine largeur */}
           <Card className="rounded-2xl flex flex-col">
             <CardContent className="p-5 flex flex-col flex-1 space-y-4">
               <div className="flex items-center gap-2">
