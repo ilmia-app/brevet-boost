@@ -1,142 +1,98 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, Loader2, RefreshCw, Sparkles, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
-interface QcmQuestion {
+interface QcmRow {
+  id: string;
+  bloc_id: string;
   question: string;
-  choix: string[];
-  bonne_reponse: number;
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  option_d: string;
+  reponse_correcte: string; // "A" | "B" | "C" | "D"
   explication: string;
 }
 
-interface BlocLite {
-  id?: string;
-  matiere: string;
-  titre?: string;
-  theme: string | null;
+interface QcmQuestion {
+  id: string;
+  bloc_id: string;
+  question: string;
+  choix: string[];
+  bonne_reponse: number; // 0..3
+  reponse_correcte_lettre: string; // "A".."D"
+  explication: string;
 }
 
-const SUBJECT_BADGE: Record<string, string> = {
-  Maths: "bg-blue-500 text-white",
-  Français: "bg-purple-500 text-white",
-  Histoire: "bg-orange-500 text-white",
-  Géographie: "bg-emerald-500 text-white",
-  EMC: "bg-yellow-500 text-white",
-  Physique: "bg-red-500 text-white",
-  SVT: "bg-green-700 text-white",
-  Techno: "bg-gray-500 text-white",
+const LETTERS = ["A", "B", "C", "D"];
+
+const shuffle = <T,>(arr: T[]): T[] => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 };
 
 const Qcm = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
   const [questions, setQuestions] = useState<QcmQuestion[] | null>(null);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [subjects, setSubjects] = useState<string[]>([]);
   const [current, setCurrent] = useState(0);
-  const [answers, setAnswers] = useState<number[]>([]); // chosen index per question
+  const [answers, setAnswers] = useState<number[]>([]);
   const [finished, setFinished] = useState(false);
   const [completionWritten, setCompletionWritten] = useState(false);
 
-  // Charge les 3 bloc_id complétés aujourd'hui par l'utilisateur, puis génère le QCM
-  const loadQcm = async (forceNew = false) => {
+  const loadQcm = async () => {
     if (!user) return;
-    setGenerating(true);
+    setLoading(true);
     setQuestions(null);
-    setErrorMsg(null);
     setCurrent(0);
     setAnswers([]);
     setFinished(false);
     setCompletionWritten(false);
 
     try {
-      // Source unique : les bloc_id complétés aujourd'hui par l'utilisateur connecté
-      const today = new Date().toISOString().split("T")[0];
-      const { data: completionsRows, error: completionsErr } = await supabase
-        .from("completions")
-        .select("bloc_id")
-        .eq("user_id", user.id)
-        .eq("date_completion", today)
-        .eq("completed", true);
-      if (completionsErr) throw new Error(completionsErr.message);
+      const { data, error } = await supabase
+        .from("qcm")
+        .select("id, bloc_id, question, option_a, option_b, option_c, option_d, reponse_correcte, explication");
+      if (error) throw new Error(error.message);
 
-      const blocIds = Array.from(
-        new Set(
-          (completionsRows || [])
-            .map((c) => c.bloc_id)
-            .filter((id): id is string => !!id && id !== "QCM-DAILY"),
-        ),
-      );
-
-      if (blocIds.length === 0) {
-        throw new Error(
-          "Tu dois d'abord terminer tes 3 tâches du jour avant de lancer le QCM.",
-        );
+      const rows = (data as QcmRow[] | null) || [];
+      if (rows.length === 0) {
+        throw new Error("Aucune question disponible pour le moment.");
       }
 
-      const { data: blocsRows, error: blocsErr } = await supabase
-        .from("blocs_examen")
-        .select("id, matiere, titre, theme")
-        .in("id", blocIds);
-      if (blocsErr) throw new Error(blocsErr.message);
-      const dailyBlocs: BlocLite[] = (blocsRows as BlocLite[] | null) || [];
-
-      if (dailyBlocs.length === 0) {
-        throw new Error("Impossible de retrouver les blocs complétés aujourd'hui.");
-      }
-
-      const finalSubjects = Array.from(new Set(dailyBlocs.map((b) => b.matiere))).slice(0, 3);
-      setSubjects(finalSubjects);
-
-      const { data, error } = await supabase.functions.invoke("generate-qcm", {
-        body: {
-          subjects: finalSubjects,
-          blocs: dailyBlocs.map((b) => ({
-            id: b.id,
-            matiere: b.matiere,
-            titre: b.titre || "",
-            theme: b.theme || "",
-          })),
-          force_new: forceNew,
-        },
+      const picked = shuffle(rows).slice(0, 5).map<QcmQuestion>((r) => {
+        const lettre = (r.reponse_correcte || "A").trim().toUpperCase();
+        const idx = Math.max(0, LETTERS.indexOf(lettre));
+        return {
+          id: r.id,
+          bloc_id: r.bloc_id,
+          question: r.question,
+          choix: [r.option_a, r.option_b, r.option_c, r.option_d],
+          bonne_reponse: idx,
+          reponse_correcte_lettre: LETTERS[idx],
+          explication: r.explication,
+        };
       });
 
-      // Extraire un message lisible même quand l'edge function renvoie un statut d'erreur
-      // (FunctionsHttpError contient la réponse brute, dont le body JSON {error: "..."})
-      if (error) {
-        let serverMsg = error.message || "Erreur";
-        const ctx = (error as unknown as { context?: Response }).context;
-        if (ctx && typeof ctx.json === "function") {
-          try {
-            const body = await ctx.json();
-            if (body?.error) serverMsg = body.error;
-          } catch { /* ignore */ }
-        }
-        throw new Error(serverMsg);
-      }
-      if (!data?.questions || !Array.isArray(data.questions)) {
-        throw new Error("Réponse vide");
-      }
-      setQuestions(data.questions as QcmQuestion[]);
+      setQuestions(picked);
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Erreur de génération";
-      setErrorMsg(msg);
+      const msg = e instanceof Error ? e.message : "Erreur de chargement";
       toast({ title: "Impossible de charger le QCM", description: msg, variant: "destructive" });
     } finally {
-      setGenerating(false);
       setLoading(false);
     }
   };
@@ -146,7 +102,7 @@ const Qcm = () => {
       navigate("/login");
       return;
     }
-    loadQcm(false);
+    loadQcm();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
@@ -162,25 +118,34 @@ const Qcm = () => {
   const total = questions?.length || 0;
   const progressPct = total > 0 ? Math.round((current / total) * 100) : 0;
 
-  const handleSelect = (idx: number) => {
-    if (!questions) return;
-    if (answers[current] !== undefined) return; // déjà répondu
-    const next = [...answers];
-    next[current] = idx;
-    setAnswers(next);
-  };
-
-  const handleNext = () => {
-    if (!questions) return;
-    if (current + 1 < questions.length) {
-      setCurrent(current + 1);
-    } else {
-      setFinished(true);
-      writeCompletion();
+  const saveAnswer = async (q: QcmQuestion, chosenIdx: number) => {
+    if (!user) return;
+    try {
+      const reponse_choisie = LETTERS[chosenIdx];
+      const est_correcte = chosenIdx === q.bonne_reponse;
+      await supabase.from("qcm_results").insert({
+        user_id: user.id,
+        bloc_id: q.bloc_id,
+        question: q.question,
+        reponse_correcte: q.reponse_correcte_lettre,
+        reponse_choisie,
+        est_correcte,
+        date_reponse: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.error("[Qcm] saveAnswer failed:", e);
     }
   };
 
-  // Marque la tâche QCM comme complétée pour aujourd'hui
+  const handleSelect = (idx: number) => {
+    if (!questions) return;
+    if (answers[current] !== undefined) return;
+    const next = [...answers];
+    next[current] = idx;
+    setAnswers(next);
+    saveAnswer(questions[current], idx);
+  };
+
   const writeCompletion = async () => {
     if (!user || completionWritten) return;
     try {
@@ -195,14 +160,21 @@ const Qcm = () => {
     }
   };
 
-  if (loading || generating) {
+  const handleNext = () => {
+    if (!questions) return;
+    if (current + 1 < questions.length) {
+      setCurrent(current + 1);
+    } else {
+      setFinished(true);
+      writeCompletion();
+    }
+  };
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3 p-6 text-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">
-          Je prépare ton Sprint QCM
-          {subjects.length > 0 && ` (${subjects.join(", ")})`}…
-        </p>
+        <p className="text-sm text-muted-foreground">Je prépare ton Sprint QCM…</p>
       </div>
     );
   }
@@ -210,25 +182,18 @@ const Qcm = () => {
   if (!questions || questions.length === 0) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 p-6 text-center">
-        <p className="text-base font-medium">
-          Erreur !
-        </p>
+        <p className="text-base font-medium">Erreur !</p>
         <p className="text-sm text-muted-foreground max-w-sm">
           Contacte-nous, nous réglerons le problème immédiatement !
         </p>
         <div className="flex gap-2">
-          <Button onClick={() => loadQcm(true)}>
-            Réessayer
-          </Button>
-          <Button variant="ghost" onClick={() => navigate("/dashboard")}>
-            Retour
-          </Button>
+          <Button onClick={() => loadQcm()}>Réessayer</Button>
+          <Button variant="ghost" onClick={() => navigate("/dashboard")}>Retour</Button>
         </div>
       </div>
     );
   }
 
-  // Écran final
   if (finished) {
     const ratio = total > 0 ? score / total : 0;
     const message =
@@ -289,11 +254,7 @@ const Qcm = () => {
           </div>
 
           <div className="flex gap-3">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => loadQcm(true)}
-            >
+            <Button variant="outline" className="flex-1" onClick={() => loadQcm()}>
               <RefreshCw className="w-4 h-4 mr-2" /> Nouveau QCM
             </Button>
             <Button className="flex-1 sprint-gradient text-primary-foreground" onClick={() => navigate("/dashboard")}>
@@ -305,7 +266,6 @@ const Qcm = () => {
     );
   }
 
-  // Écran question
   const q = questions[current];
   const chosen = answers[current];
   const answered = chosen !== undefined;
@@ -322,14 +282,6 @@ const Qcm = () => {
         </div>
 
         <Progress value={progressPct} className="h-2 rounded-full" />
-
-        <div className="flex flex-wrap gap-1.5">
-          {subjects.map((s) => (
-            <Badge key={s} className={cn(SUBJECT_BADGE[s] || "bg-muted text-foreground", "text-[10px]")}>
-              {s}
-            </Badge>
-          ))}
-        </div>
 
         <Card className="rounded-2xl">
           <CardContent className="p-5 space-y-4">
@@ -357,7 +309,7 @@ const Qcm = () => {
                     )}
                   >
                     <span className="w-6 h-6 rounded-full bg-muted text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">
-                      {String.fromCharCode(65 + idx)}
+                      {LETTERS[idx]}
                     </span>
                     <span className="text-sm flex-1">{c}</span>
                     {answered && isCorrect && (
