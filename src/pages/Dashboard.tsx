@@ -283,7 +283,9 @@ const Dashboard = () => {
       const candidates = (data || []).filter(
         (e) =>
           e.bloc_id &&
-          !completedBlocIdsAll.has(e.bloc_id) &&
+          // Exclure les blocs déjà complétés AVANT aujourd'hui,
+          // mais garder ceux complétés aujourd'hui pour qu'ils s'affichent cochés.
+          (!completedBlocIdsAll.has(e.bloc_id) || completedTasks.has(e.bloc_id)) &&
           !usedBlocIds.has(e.bloc_id) &&
           !usedExoIds.has(e.id) &&
           blocsById.has(e.bloc_id),
