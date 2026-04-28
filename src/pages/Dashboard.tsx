@@ -670,7 +670,16 @@ const Dashboard = () => {
                         </div>
                       </div>
                       <Button
-                        onClick={() => navigate("/qcm")}
+                       onClick={() => navigate("/qcm", {
+                         state: {
+                           blocs: dailyTasks.map((t) => ({
+                             id: t.bloc.id,
+                             matiere: t.bloc.matiere,
+                             titre: t.bloc.titre,
+                             theme: t.bloc.theme,
+                           })),
+                         },
+                       })}
                         disabled={qcmLocked}
                         variant={qcmLocked ? "secondary" : "default"}
                         className={`w-full rounded-xl h-10 text-sm ${!qcmLocked ? "sprint-gradient text-primary-foreground" : ""}`}
