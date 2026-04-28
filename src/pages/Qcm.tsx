@@ -126,6 +126,9 @@ const Qcm = () => {
     try {
       const reponse_choisie = LETTERS[chosenIdx];
       const est_correcte = reponse_choisie === q.reponse_correcte_lettre;
+      const prochaine = new Date();
+      prochaine.setDate(prochaine.getDate() + (est_correcte ? 7 : 1));
+      const prochaine_revision = prochaine.toISOString().split("T")[0];
       await supabase.from("qcm_results").insert({
         user_id: user.id,
         bloc_id: q.bloc_id,
@@ -134,6 +137,7 @@ const Qcm = () => {
         reponse_choisie,
         est_correcte,
         date_reponse: new Date().toISOString(),
+        prochaine_revision,
       });
     } catch (e) {
       console.error("[Qcm] saveAnswer failed:", e);
