@@ -146,20 +146,31 @@ const Dashboard = () => {
     })();
   }, [user, navigate]);
 
-  // Today's completions
-  useEffect(() => {
+  // Today's completions — refetch au focus/visibilité pour déverrouiller le QCM sans reload
+  const refetchTodayCompletions = useCallback(async () => {
     if (!user) return;
-    (async () => {
-      const today = new Date().toISOString().split("T")[0];
-      const { data } = await supabase
-        .from("completions")
-        .select("bloc_id")
-        .eq("user_id", user.id)
-        .eq("date_completion", today)
-        .eq("completed", true);
-      if (data) setCompletedTasks(new Set(data.map((c) => c.bloc_id)));
-    })();
+    const today = new Date().toISOString().split("T")[0];
+    const { data } = await supabase
+      .from("completions")
+      .select("bloc_id")
+      .eq("user_id", user.id)
+      .eq("date_completion", today)
+      .eq("completed", true);
+    if (data) setCompletedTasks(new Set(data.map((c) => c.bloc_id)));
   }, [user]);
+
+  useEffect(() => {
+    refetchTodayCompletions();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refetchTodayCompletions();
+    };
+    window.addEventListener("focus", refetchTodayCompletions);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("focus", refetchTodayCompletions);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [refetchTodayCompletions]);
 
   // Yesterday's completions
   useEffect(() => {
