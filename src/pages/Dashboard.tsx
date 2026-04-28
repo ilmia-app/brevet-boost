@@ -654,7 +654,7 @@ const Dashboard = () => {
                             )}
                           </div>
                           <p className="text-xs text-muted-foreground leading-snug">
-                            Un boost rapide pour ancrer tes connaissances et grimper au classement.
+                            Un boost rapide pour ancrer tes connaissances.
                           </p>
                         </div>
                       </div>
