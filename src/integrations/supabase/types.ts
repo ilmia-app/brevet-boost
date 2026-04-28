@@ -348,6 +348,42 @@ export type Database = {
         }
         Relationships: []
       }
+      qcm_results: {
+        Row: {
+          bloc_id: string | null
+          date_reponse: string | null
+          est_correcte: boolean | null
+          id: string
+          prochaine_revision: string | null
+          question: string | null
+          reponse_choisie: string | null
+          reponse_correcte: string | null
+          user_id: string | null
+        }
+        Insert: {
+          bloc_id?: string | null
+          date_reponse?: string | null
+          est_correcte?: boolean | null
+          id?: string
+          prochaine_revision?: string | null
+          question?: string | null
+          reponse_choisie?: string | null
+          reponse_correcte?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          bloc_id?: string | null
+          date_reponse?: string | null
+          est_correcte?: boolean | null
+          id?: string
+          prochaine_revision?: string | null
+          question?: string | null
+          reponse_choisie?: string | null
+          reponse_correcte?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       sessions_travail: {
         Row: {
           answers: Json | null
