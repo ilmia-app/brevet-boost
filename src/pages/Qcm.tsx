@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, Loader2, RefreshCw, Sparkles, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,7 +18,9 @@ interface QcmQuestion {
 }
 
 interface BlocLite {
+  id?: string;
   matiere: string;
+  titre?: string;
   theme: string | null;
 }
 
@@ -35,6 +37,7 @@ const SUBJECT_BADGE: Record<string, string> = {
 
 const Qcm = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -60,29 +63,41 @@ const Qcm = () => {
     setCompletionWritten(false);
 
     try {
-      const { data: profileRow } = await supabase
-        .from("users")
-        .select("matieres_faibles")
-        .eq("id", user.id)
-        .maybeSingle();
+      // Priorité : 3 blocs des tâches du jour passés depuis le Dashboard
+      const stateBlocs = (location.state as { blocs?: BlocLite[] } | null)?.blocs || [];
+      let dailyBlocs: BlocLite[] = stateBlocs;
 
-      const faibles: string[] = profileRow?.matieres_faibles || [];
-      const finalSubjects = faibles.length > 0 ? faibles.slice(0, 3) : ["Maths", "Français"];
+      // Fallback : si pas de state (rechargement direct), retomber sur matières faibles
+      if (dailyBlocs.length === 0) {
+        const { data: profileRow } = await supabase
+          .from("users")
+          .select("matieres_faibles")
+          .eq("id", user.id)
+          .maybeSingle();
+        const faibles: string[] = profileRow?.matieres_faibles || [];
+        const finalSubjects = faibles.length > 0 ? faibles.slice(0, 3) : ["Maths", "Français"];
+        const { data: blocsRows } = await supabase
+          .from("blocs_examen")
+          .select("id, matiere, titre, theme")
+          .in("matiere", finalSubjects)
+          .limit(3);
+        dailyBlocs = (blocsRows as BlocLite[] | null) || [];
+      }
+
+      const finalSubjects = Array.from(new Set(dailyBlocs.map((b) => b.matiere))).slice(0, 3);
       setSubjects(finalSubjects);
 
-      // Récupérer quelques thèmes représentatifs
-      const { data: blocs } = await supabase
-        .from("blocs_examen")
-        .select("matiere, theme")
-        .in("matiere", finalSubjects);
-      const themesSet = new Set<string>();
-      (blocs as BlocLite[] | null)?.forEach((b) => {
-        if (b.theme) themesSet.add(`${b.matiere} – ${b.theme}`);
-      });
-      const themes = Array.from(themesSet).slice(0, 8);
-
       const { data, error } = await supabase.functions.invoke("generate-qcm", {
-        body: { subjects: finalSubjects, themes, force_new: forceNew },
+        body: {
+          subjects: finalSubjects,
+          blocs: dailyBlocs.map((b) => ({
+            id: b.id,
+            matiere: b.matiere,
+            titre: b.titre || "",
+            theme: b.theme || "",
+          })),
+          force_new: forceNew,
+        },
       });
 
       // Extraire un message lisible même quand l'edge function renvoie un statut d'erreur
