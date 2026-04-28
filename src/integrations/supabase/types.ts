@@ -348,6 +348,48 @@ export type Database = {
         }
         Relationships: []
       }
+      qcm: {
+        Row: {
+          bloc_id: string
+          created_at: string | null
+          difficulte: string | null
+          explication: string
+          id: string
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          question: string
+          reponse_correcte: string
+        }
+        Insert: {
+          bloc_id: string
+          created_at?: string | null
+          difficulte?: string | null
+          explication: string
+          id?: string
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          question: string
+          reponse_correcte: string
+        }
+        Update: {
+          bloc_id?: string
+          created_at?: string | null
+          difficulte?: string | null
+          explication?: string
+          id?: string
+          option_a?: string
+          option_b?: string
+          option_c?: string
+          option_d?: string
+          question?: string
+          reponse_correcte?: string
+        }
+        Relationships: []
+      }
       qcm_results: {
         Row: {
           bloc_id: string | null
