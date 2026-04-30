@@ -667,9 +667,16 @@ const WorkSession = () => {
                       rehypePlugins={[rehypeKatex]}
                     >
                       {exercise.enonce
+                        // Supprime les marqueurs techniques type "sélection questions MAT-01", "QCM Partie B", "(MAT-01)" etc.
                         .replace(/^\s*s[ée]lection\s+questions?\s+[A-Z]{2,}-?\d+.*$/gim, "")
                         .replace(/\[?\s*s[ée]lection\s+questions?\s+[A-Z]{2,}-?\d+[^\]\n]*\]?/gi, "")
+                        .replace(/^\s*QCM\s+Partie\s+[A-Z0-9]+.*$/gim, "")
+                        .replace(/\(\s*[A-Z]{2,}-\d+\s*\)/g, "")
+                        .replace(/\[\s*[A-Z]{2,}-\d+\s*\]/g, "")
+                        // Force chaque option QCM (A. B. C. D.) sur sa propre ligne
+                        .replace(/\s*(?=\b[A-D]\.\s)/g, "\n")
                         .replace(/\n[ \t]+\n/g, "\n\n")
+                        .replace(/\n{3,}/g, "\n\n")
                         .replace(/\n/g, "  \n")
                         .trim()}
                     </ReactMarkdown>
