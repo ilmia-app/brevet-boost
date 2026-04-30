@@ -881,23 +881,37 @@ const WorkSession = () => {
             )}
           </div>
 
-          <DialogFooter className="flex flex-row gap-2 sm:gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setCorrigeOpen(false)}
-              className="flex-1"
-              disabled={corrigeLoading}
-            >
-              Fermer
-            </Button>
-            <Button
-              onClick={handleCloseAndReturn}
-              className="flex-1 sprint-gradient text-primary-foreground"
-              disabled={corrigeLoading}
-            >
-              Retour au planning
-            </Button>
-          </DialogFooter>
+          {!corrigeLoading && (
+            <div className="mt-4 pt-4 border-t space-y-3">
+              <h3 className="text-sm font-semibold text-foreground">Ma notation</h3>
+              {bloc?.bareme_points_estimes && (
+                <p className="text-xs text-muted-foreground">
+                  Ce type d'exercice vaut <span className="font-semibold text-foreground">{bloc.bareme_points_estimes}</span> points au brevet.
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground">Comment as-tu réussi cet exercice ?</p>
+              <div className="flex flex-col gap-2">
+                <Button
+                  onClick={() => handleAutoEvaluation("compris")}
+                  className="w-full justify-start bg-emerald-500 hover:bg-emerald-600 text-white"
+                >
+                  ✅ J'ai tout compris
+                </Button>
+                <Button
+                  onClick={() => handleAutoEvaluation("partiel")}
+                  className="w-full justify-start bg-amber-500 hover:bg-amber-600 text-white"
+                >
+                  ⚠️ J'ai partiellement réussi
+                </Button>
+                <Button
+                  onClick={() => handleAutoEvaluation("echec")}
+                  className="w-full justify-start bg-red-500 hover:bg-red-600 text-white"
+                >
+                  ❌ Je n'ai pas réussi
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
