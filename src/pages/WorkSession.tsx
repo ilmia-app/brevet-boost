@@ -79,6 +79,7 @@ const WorkSession = () => {
   const [questionAnswers, setQuestionAnswers] = useState<Record<number, string>>({});
   const [validatedQuestions, setValidatedQuestions] = useState<Record<number, boolean>>({});
   const [completed, setCompleted] = useState(false);
+  const [completionEvaluation, setCompletionEvaluation] = useState<"reussi" | "partiel" | "echec" | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiCorrigeCache, setAiCorrigeCache] = useState<string>("");
   const [regenLoading, setRegenLoading] = useState(false);
@@ -456,6 +457,7 @@ const WorkSession = () => {
         );
       }
       setCorrigeOpen(false);
+      setCompletionEvaluation(evaluation);
       setCompleted(true);
       setTimeout(() => navigate(`/dashboard?task_completed=${blocId}`), 600);
     },
@@ -565,7 +567,12 @@ const WorkSession = () => {
         <div className="w-16 h-16 rounded-full sprint-gradient flex items-center justify-center">
           <CheckCircle2 className="w-8 h-8 text-primary-foreground" />
         </div>
-        <h2 className="text-xl font-bold text-center">Bravo, séance terminée ! 🎉</h2>
+        <h2 className="text-xl font-bold text-center px-4">
+          {completionEvaluation === "reussi" && "Bravo ! Continue comme ça 💪"}
+          {completionEvaluation === "partiel" && "C'est bien, relis le corrigé et retente ce type d'exercice demain 📖"}
+          {completionEvaluation === "echec" && "Pas de panique, ce bloc reviendra dans ton planning. Relis bien la méthode 🔁"}
+          {!completionEvaluation && "Bravo, séance terminée ! 🎉"}
+        </h2>
         <p className="text-muted-foreground text-sm text-center">Retour au tableau de bord…</p>
       </div>
     );
