@@ -42,8 +42,9 @@ const Landing = () => {
           to="/login"
           className="w-full inline-block rounded-2xl px-5 py-4 mb-8 shadow-xl bg-gradient-to-br from-blue-500 to-emerald-500 text-white text-base font-bold text-center hover:opacity-95 transition-opacity"
         >
-          Commencer gratuitement
+          Commencer — c'est gratuit
         </Link>
+        <p className="text-xs text-slate-500 -mt-6 mb-8">Gratuit · Sans engagement</p>
 
         {/* Aperçu du sprint */}
         <div className="w-full mb-6">
@@ -120,27 +121,6 @@ const Landing = () => {
           })}
         </div>
 
-        {/* Orange CTA */}
-        <div className="w-full rounded-2xl px-5 py-4 mb-3 shadow-xl bg-gradient-to-br from-orange-400 to-orange-600 text-white">
-          <div className="text-base font-bold leading-snug">
-            🎁 Gratuit jusqu'au 30 avril 2026
-          </div>
-          <div className="text-xs font-normal text-white/95 mt-1">
-            Inscription sans carte bancaire
-          </div>
-          <div className="text-sm font-semibold mt-1.5">
-            puis 9,90€ jusqu'au brevet !
-          </div>
-        </div>
-
-        {/* Primary CTA button */}
-        <Link
-          to="/login?tab=register"
-          className="w-full rounded-2xl px-5 py-4 mb-3 shadow-xl bg-gradient-to-br from-blue-500 to-emerald-500 text-white text-base font-bold text-center hover:opacity-95 transition-opacity"
-        >
-          Je m'inscris maintenant — gratuit jusqu'au 30 avril
-        </Link>
-
         {/* Secondary login button */}
         <Link
           to="/login"
@@ -149,18 +129,8 @@ const Landing = () => {
           J'ai déjà un compte
         </Link>
 
-        {/* Discrete payment info */}
-        <p className="w-full text-xs text-slate-500 mb-3 leading-relaxed">
-          Paiement unique de 9,90€ · Accès jusqu'au 01 juillet 2026
-        </p>
-
-        {/* Green highlight */}
-        <div className="text-emerald-600 font-bold text-sm mb-6">
-          ⭐ -20% pour les 20 premiers inscrits
-        </div>
-
         {/* Footer mention */}
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-500 mt-6">
           Créé par une maman concernée 💙
         </p>
       </div>
