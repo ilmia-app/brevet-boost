@@ -115,7 +115,7 @@ const WorkSession = () => {
       // 1. Bloc
       const { data: blocData, error: blocErr } = await supabase
         .from("blocs_examen")
-        .select("id, matiere, titre, consigne_eleve, objectifs_pedagogiques, methode_id")
+        .select("id, matiere, titre, consigne_eleve, objectifs_pedagogiques, methode_id, bareme_points_estimes")
         .eq("id", blocId)
         .maybeSingle();
       if (blocErr) console.error("[WorkSession] bloc error:", blocErr);
