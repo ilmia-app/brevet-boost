@@ -145,6 +145,45 @@ const WorkSession = () => {
 
       // 3. Exercice
       if (isAiMode && blocData) {
+        // Vérifier d'abord s'il existe déjà une session du jour pour ce user+bloc
+        // → on réutilise le même exercice plutôt que d'en regénérer un nouveau
+        if (user && !initialSessionId) {
+          const startOfDay = new Date();
+          startOfDay.setHours(0, 0, 0, 0);
+          const { data: todaySessions } = await supabase
+            .from("sessions_travail")
+            .select("id, enonce, questions, answers, validated, duration_seconds")
+            .eq("user_id", user.id)
+            .eq("bloc_id", blocData.id)
+            .eq("is_ai_generated", true)
+            .gte("created_at", startOfDay.toISOString())
+            .order("created_at", { ascending: false })
+            .limit(1);
+          if (cancelled) return;
+          const existing = todaySessions?.[0];
+          if (existing?.enonce) {
+            // On a déjà un exercice IA aujourd'hui pour ce bloc → on le recharge
+            skipNextAutosaveRef.current = true;
+            setSessionId(existing.id);
+            setExercise({
+              id: `ai-${blocData.id}-restored`,
+              enonce: existing.enonce,
+              corrige: null,
+              annale_source: null,
+              graphique: null,
+              questions: Array.isArray(existing.questions) ? (existing.questions as string[]) : null,
+            });
+            if (existing.answers && typeof existing.answers === "object") {
+              setQuestionAnswers(existing.answers as Record<number, string>);
+            }
+            if (existing.validated && typeof existing.validated === "object") {
+              setValidatedQuestions(existing.validated as Record<number, boolean>);
+            }
+            if (typeof existing.duration_seconds === "number") setElapsedSeconds(existing.duration_seconds);
+            sessionLoadedRef.current = true;
+            return;
+          }
+        }
         // Mode IA : générer un exo + corrigé via edge function
         setAiLoading(true);
         setAiError("");
@@ -211,7 +250,7 @@ const WorkSession = () => {
     return () => {
       cancelled = true;
     };
-  }, [blocId, isAiMode, annaleSource]);
+  }, [blocId, isAiMode, annaleSource, user, initialSessionId]);
 
   // Charger une session existante (reprise depuis l'historique)
   useEffect(() => {
