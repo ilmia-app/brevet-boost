@@ -37,6 +37,14 @@ const Landing = () => {
           Le coach digital qui organise ta révision jusqu'au brevet
         </p>
 
+        {/* Hero CTA */}
+        <Link
+          to="/login"
+          className="w-full inline-block rounded-2xl px-5 py-4 mb-8 shadow-xl bg-gradient-to-br from-blue-500 to-emerald-500 text-white text-base font-bold text-center hover:opacity-95 transition-opacity"
+        >
+          Commencer gratuitement — c'est gratuit
+        </Link>
+
         {/* Aperçu du sprint */}
         <div className="w-full mb-6">
           <h2 className="text-lg font-bold text-slate-900 mb-3 text-left">Aperçu du sprint</h2>
@@ -91,14 +99,6 @@ const Landing = () => {
               </div>
             </div>
           </div>
-
-          {/* CTA sous l'aperçu */}
-          <Link
-            to="/login"
-            className="mt-4 w-full inline-block rounded-2xl px-5 py-4 shadow-xl bg-gradient-to-br from-blue-500 to-emerald-500 text-white text-base font-bold text-center hover:opacity-95 transition-opacity"
-          >
-            Commencer gratuitement
-          </Link>
         </div>
 
         {/* Features grid 2x2 */}
