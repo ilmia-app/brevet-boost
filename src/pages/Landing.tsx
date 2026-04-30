@@ -42,7 +42,7 @@ const Landing = () => {
           to="/login"
           className="w-full inline-block rounded-2xl px-5 py-4 mb-8 shadow-xl bg-gradient-to-br from-blue-500 to-emerald-500 text-white text-base font-bold text-center hover:opacity-95 transition-opacity"
         >
-          Commencer gratuitement — c'est gratuit
+          Commencer gratuitement
         </Link>
 
         {/* Aperçu du sprint */}
