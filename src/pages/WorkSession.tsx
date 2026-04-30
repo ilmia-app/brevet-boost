@@ -402,11 +402,27 @@ const WorkSession = () => {
     }
   }, [user, blocId, exercise, bloc, methodeSteps, isAiMode, aiCorrigeCache, sessionId, elapsedSeconds]);
 
-  const handleCloseAndReturn = useCallback(() => {
-    setCorrigeOpen(false);
-    setCompleted(true);
-    setTimeout(() => navigate(`/dashboard?task_completed=${blocId}`), 800);
-  }, [blocId, navigate]);
+  const handleAutoEvaluation = useCallback(
+    async (evaluation: "compris" | "partiel" | "echec") => {
+      if (user && blocId) {
+        const today = new Date().toISOString().split("T")[0];
+        await supabase.from("completions").upsert(
+          {
+            user_id: user.id,
+            bloc_id: blocId,
+            date_completion: today,
+            completed: true,
+            auto_evaluation: evaluation,
+          } as any,
+          { onConflict: "user_id,bloc_id,date_completion" }
+        );
+      }
+      setCorrigeOpen(false);
+      setCompleted(true);
+      setTimeout(() => navigate(`/dashboard?task_completed=${blocId}`), 600);
+    },
+    [blocId, navigate, user]
+  );
 
   const handleGenerateAlternative = useCallback(async () => {
     if (!bloc) return;
