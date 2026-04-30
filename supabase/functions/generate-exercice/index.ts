@@ -176,7 +176,7 @@ Dans le corrigé uniquement, le markdown peut utiliser : ### titres, **gras**, l
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5",
-        max_tokens: 1536,
+        max_tokens: 4096,
         system: systemPrompt,
         messages: [
           { role: "user", content: `Génère l'exercice + corrigé pour : ${titre}. Réponds UNIQUEMENT avec un objet JSON strict {"enonce": "...", "corrige": "..."} sans aucun texte autour.` },
@@ -227,7 +227,13 @@ Dans le corrigé uniquement, le markdown peut utiliser : ### titres, **gras**, l
     }
 
     const data = await response!.json();
-    const raw = data.content?.[0]?.text || "{}";
+    const rawText = data.content?.[0]?.text || "{}";
+    const stopReason = data.stop_reason;
+    // Strip markdown fences (```json ... ``` or ``` ... ```)
+    let raw = rawText.trim();
+    const fenceMatch = raw.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
+    if (fenceMatch) raw = fenceMatch[1].trim();
+    else raw = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
     let parsed: {
       enonce?: string;
       corrige?: string;
@@ -246,7 +252,7 @@ Dans le corrigé uniquement, le markdown peut utiliser : ### titres, **gras**, l
     // Si l'IA n'a pas renvoyé d'énoncé exploitable, on renvoie une erreur 502
     // pour que le client puisse réessayer plutôt que d'afficher un texte de fallback.
     if (!parsed.enonce || !parsed.corrige) {
-      console.error("[generate-exercice] parsing failed, raw:", raw.slice(0, 500));
+      console.error("[generate-exercice] parsing failed. stop_reason:", stopReason, "raw:", raw.slice(0, 500));
       return new Response(JSON.stringify({ error: "Réponse IA invalide, réessaye." }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
