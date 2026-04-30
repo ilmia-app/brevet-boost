@@ -75,7 +75,7 @@ const WorkSession = () => {
   const [methodeExplications, setMethodeExplications] = useState<Record<string, string>>({});
   const [currentStep, setCurrentStep] = useState(0);
   const [exercise, setExercise] = useState<Exercise | null>(null);
-  const [notes, setNotes] = useState("");
+  // notes removed
   const [questionAnswers, setQuestionAnswers] = useState<Record<number, string>>({});
   const [validatedQuestions, setValidatedQuestions] = useState<Record<number, boolean>>({});
   const [completed, setCompleted] = useState(false);
@@ -235,7 +235,7 @@ const WorkSession = () => {
       }
       skipNextAutosaveRef.current = true;
       setSessionId(data.id);
-      if (data.notes) setNotes(data.notes);
+      // notes removed
       if (data.answers && typeof data.answers === "object") {
         setQuestionAnswers(data.answers as Record<number, string>);
       }
@@ -277,7 +277,6 @@ const WorkSession = () => {
         questions: exercise?.questions ?? null,
         answers: questionAnswers,
         validated: validatedQuestions,
-        notes,
         duration_seconds: elapsedSeconds,
         is_ai_generated: isAiMode || (exercise?.id?.startsWith("ai-") ?? false),
       };
@@ -298,7 +297,7 @@ const WorkSession = () => {
       }
     }, 1200);
     return () => clearTimeout(t);
-  }, [user, blocId, bloc, exercise, questionAnswers, validatedQuestions, notes, elapsedSeconds, sessionId, isAiMode]);
+  }, [user, blocId, bloc, exercise, questionAnswers, validatedQuestions, elapsedSeconds, sessionId, isAiMode]);
 
   // Timer tick
   useEffect(() => {
@@ -572,8 +571,7 @@ const WorkSession = () => {
           </div>
         </section>
 
-        {/* Exercise + Notes côte à côte sur desktop */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] gap-6 items-start">
+        {/* Exercise */}
         <div className="space-y-6 min-w-0">
         {aiLoading ? (
           <section className="space-y-3">
@@ -745,23 +743,6 @@ const WorkSession = () => {
             </Card>
           </section>
         )}
-        </div>
-
-        {/* Tes notes — à droite de l'énoncé sur desktop, en dessous sur mobile */}
-        <aside className="lg:sticky lg:top-4 space-y-1.5">
-          <label className="text-sm font-medium flex items-center gap-1.5">
-            📝 Tes notes
-          </label>
-          <Textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Écris ici tes réponses, brouillons ou notes — sauvegarde automatique."
-            className="min-h-[260px] lg:min-h-[420px] bg-background"
-          />
-          <p className="text-[11px] text-muted-foreground italic">
-            Tes notes sont enregistrées automatiquement.
-          </p>
-        </aside>
         </div>
 
         {/* Méthode */}
