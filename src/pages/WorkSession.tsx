@@ -661,12 +661,17 @@ const WorkSession = () => {
             {exercise.enonce && (
               <Card className="border-l-4 border-l-primary">
                 <CardContent className="p-4 bg-accent/30 rounded-r-lg">
-                  <div className="text-sm leading-relaxed prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-foreground prose-strong:text-foreground">
+                  <div className="text-sm leading-relaxed whitespace-pre-wrap prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-foreground prose-strong:text-foreground prose-p:whitespace-pre-wrap">
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm, remarkMath]}
                       rehypePlugins={[rehypeKatex]}
                     >
-                      {exercise.enonce}
+                      {exercise.enonce
+                        .replace(/^\s*s[ée]lection\s+questions?\s+[A-Z]{2,}-?\d+.*$/gim, "")
+                        .replace(/\[?\s*s[ée]lection\s+questions?\s+[A-Z]{2,}-?\d+[^\]\n]*\]?/gi, "")
+                        .replace(/\n[ \t]+\n/g, "\n\n")
+                        .replace(/\n/g, "  \n")
+                        .trim()}
                     </ReactMarkdown>
                   </div>
                   {exercise.graphique && exercise.graphique.labels?.length > 0 && (
