@@ -23,9 +23,9 @@ const Landing = () => {
   return (
     <main
       className="min-h-screen w-full flex items-center justify-center px-6 py-10"
-      style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)" }}
+      style={{ background: "linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%)" }}
     >
-      <div className="w-full max-w-md mx-auto flex flex-col items-center text-center text-white">
+      <div className="w-full max-w-md mx-auto flex flex-col items-center text-center text-slate-900">
         {/* Logo */}
         <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-500 to-emerald-500 flex items-center justify-center shadow-2xl mb-5">
           <Target className="w-11 h-11 text-white" strokeWidth={2.5} />
@@ -33,13 +33,13 @@ const Landing = () => {
 
         {/* Title */}
         <h1 className="text-5xl font-extrabold tracking-tight mb-2">Sprint DNB</h1>
-        <p className="text-base text-blue-100/90 mb-8">
+        <p className="text-base text-slate-600 mb-8">
           Le coach digital qui organise ta révision jusqu'au brevet
         </p>
 
         {/* Aperçu du sprint */}
         <div className="w-full mb-6">
-          <h2 className="text-lg font-bold text-white mb-3 text-left">Aperçu du sprint</h2>
+          <h2 className="text-lg font-bold text-slate-900 mb-3 text-left">Aperçu du sprint</h2>
           <div className="flex flex-col gap-3">
             {/* Carte 1 — Sprint du jour */}
             <div className="rounded-2xl bg-white border border-slate-200 shadow-md p-4 text-left">
@@ -108,13 +108,13 @@ const Landing = () => {
             return (
               <div
                 key={f.title}
-                className="rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm p-4 flex flex-col items-center text-center"
+                className="rounded-2xl bg-white border border-slate-200 shadow-sm p-4 flex flex-col items-center text-center"
               >
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/30 to-emerald-500/30 flex items-center justify-center mb-2">
-                  <Icon className="w-5 h-5 text-emerald-300" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-emerald-500 flex items-center justify-center mb-2">
+                  <Icon className="w-5 h-5 text-white" />
                 </div>
-                <div className="text-sm font-semibold leading-tight">{f.title}</div>
-                <div className="text-xs text-blue-100/70 leading-tight mt-1">{f.desc}</div>
+                <div className="text-sm font-semibold leading-tight text-slate-900">{f.title}</div>
+                <div className="text-xs text-slate-500 leading-tight mt-1">{f.desc}</div>
               </div>
             );
           })}
@@ -144,23 +144,23 @@ const Landing = () => {
         {/* Secondary login button */}
         <Link
           to="/login"
-          className="w-full rounded-2xl px-5 py-4 mb-3 border border-white/30 bg-white/5 text-white text-base font-semibold text-center hover:bg-white/10 transition-colors"
+          className="w-full rounded-2xl px-5 py-4 mb-3 border border-slate-300 bg-white text-slate-900 text-base font-semibold text-center hover:bg-slate-50 transition-colors"
         >
           J'ai déjà un compte
         </Link>
 
         {/* Discrete payment info */}
-        <p className="w-full text-xs text-white/80 mb-3 leading-relaxed">
+        <p className="w-full text-xs text-slate-500 mb-3 leading-relaxed">
           Paiement unique de 9,90€ · Accès jusqu'au 01 juillet 2026
         </p>
 
         {/* Green highlight */}
-        <div className="text-emerald-300 font-bold text-sm mb-6">
+        <div className="text-emerald-600 font-bold text-sm mb-6">
           ⭐ -20% pour les 20 premiers inscrits
         </div>
 
         {/* Footer mention */}
-        <p className="text-xs text-blue-100/70">
+        <p className="text-xs text-slate-500">
           Créé par une maman concernée 💙
         </p>
       </div>
