@@ -232,10 +232,8 @@ const Dashboard = () => {
   }, [totalSprintDays, daysUntilExam]);
 
   const progressPercent = useMemo(() => {
-    const total = blocs.length;
-    if (total === 0) return 0;
-    return Math.min(100, Math.round((completedBlocIdsAll.size / total) * 100));
-  }, [blocs, completedBlocIdsAll]);
+    return Math.min(100, Math.round((completedTasks.size / 3) * 100));
+  }, [completedTasks]);
 
   useEffect(() => {
     (async () => {
