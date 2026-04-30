@@ -250,7 +250,7 @@ const WorkSession = () => {
     return () => {
       cancelled = true;
     };
-  }, [blocId, isAiMode, annaleSource]);
+  }, [blocId, isAiMode, annaleSource, user, initialSessionId]);
 
   // Charger une session existante (reprise depuis l'historique)
   useEffect(() => {
