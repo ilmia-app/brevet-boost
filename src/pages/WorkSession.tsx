@@ -47,6 +47,7 @@ interface BlocData {
   consigne_eleve: string | null;
   objectifs_pedagogiques: string | null;
   methode_id: string | null;
+  bareme_points_estimes: string | null;
 }
 
 interface Exercise {

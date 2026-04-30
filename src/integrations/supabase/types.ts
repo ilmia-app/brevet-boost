@@ -103,6 +103,7 @@ export type Database = {
       }
       completions: {
         Row: {
+          auto_evaluation: string | null
           bloc_id: string
           completed: boolean
           created_at: string
@@ -111,6 +112,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          auto_evaluation?: string | null
           bloc_id: string
           completed?: boolean
           created_at?: string
@@ -119,6 +121,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          auto_evaluation?: string | null
           bloc_id?: string
           completed?: boolean
           created_at?: string
