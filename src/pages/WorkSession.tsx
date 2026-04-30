@@ -441,7 +441,7 @@ const WorkSession = () => {
   }, [user, blocId, exercise, bloc, methodeSteps, isAiMode, aiCorrigeCache, sessionId, elapsedSeconds]);
 
   const handleAutoEvaluation = useCallback(
-    async (evaluation: "compris" | "partiel" | "echec") => {
+    async (evaluation: "reussi" | "partiel" | "echec") => {
       if (user && blocId) {
         const today = new Date().toISOString().split("T")[0];
         await supabase.from("completions").upsert(
@@ -914,10 +914,10 @@ const WorkSession = () => {
               <p className="text-xs text-muted-foreground">Comment as-tu réussi cet exercice ?</p>
               <div className="flex flex-col gap-2">
                 <Button
-                  onClick={() => handleAutoEvaluation("compris")}
+                  onClick={() => handleAutoEvaluation("reussi")}
                   className="w-full justify-start bg-emerald-500 hover:bg-emerald-600 text-white"
                 >
-                  ✅ J'ai tout compris
+                  ✅ J'ai réussi
                 </Button>
                 <Button
                   onClick={() => handleAutoEvaluation("partiel")}
