@@ -571,7 +571,8 @@ const WorkSession = () => {
           </div>
         </section>
 
-        {/* Exercise */}
+        {/* Exercise + Méthode côte à côte sur desktop */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] gap-6 items-start">
         <div className="space-y-6 min-w-0">
         {aiLoading ? (
           <section className="space-y-3">
@@ -747,7 +748,7 @@ const WorkSession = () => {
 
         {/* Méthode */}
         {methodeSteps.length > 0 && (
-          <section className="space-y-3 max-w-lg mx-auto">
+          <aside className="lg:sticky lg:top-4 space-y-3">
             <h2 className="text-lg font-semibold">Ta méthode</h2>
             <p className="text-xs text-muted-foreground">
               Clique sur une étape pour comprendre son but.
@@ -802,8 +803,9 @@ const WorkSession = () => {
                 </Card>
               ))}
             </div>
-          </section>
+          </aside>
         )}
+        </div>
 
         {/* Consigne élève */}
         {bloc.consigne_eleve && (
