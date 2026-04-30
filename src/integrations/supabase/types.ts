@@ -154,6 +154,7 @@ export type Database = {
           enonce: string | null
           explication_ia: string | null
           id: string
+          piege_classique: string | null
           session: string | null
           titre: string | null
         }
@@ -167,6 +168,7 @@ export type Database = {
           enonce?: string | null
           explication_ia?: string | null
           id: string
+          piege_classique?: string | null
           session?: string | null
           titre?: string | null
         }
@@ -180,6 +182,7 @@ export type Database = {
           enonce?: string | null
           explication_ia?: string | null
           id?: string
+          piege_classique?: string | null
           session?: string | null
           titre?: string | null
         }
