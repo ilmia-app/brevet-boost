@@ -882,7 +882,7 @@ const WorkSession = () => {
             onClick={handleComplete}
             className="w-full h-12 text-base font-semibold sprint-gradient text-primary-foreground rounded-xl gap-2"
           >
-            <CheckCircle2 className="w-5 h-5" /> J'ai terminé cet exercice ✓
+            <CheckCircle2 className="w-5 h-5" /> J'ai fini ! Je m'auto-corrige !
           </Button>
         </section>
       </div>
