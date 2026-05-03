@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -6,20 +7,21 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ContactButton from "@/components/ContactButton";
-import Index from "./pages/Index";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import Dashboard from "./pages/Dashboard";
-import Onboarding from "./pages/Onboarding";
-import WorkSession from "./pages/WorkSession";
-import Progress from "./pages/Progress";
-import Annales from "./pages/Annales";
-import Profile from "./pages/Profile";
-import History from "./pages/History";
 import Landing from "./pages/Landing";
-import NotFound from "./pages/NotFound";
-import Trophies from "./pages/Trophies";
-import Qcm from "./pages/Qcm";
+
+const Index = lazy(() => import("./pages/Index"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
+const WorkSession = lazy(() => import("./pages/WorkSession"));
+const Progress = lazy(() => import("./pages/Progress"));
+const Annales = lazy(() => import("./pages/Annales"));
+const Profile = lazy(() => import("./pages/Profile"));
+const History = lazy(() => import("./pages/History"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Trophies = lazy(() => import("./pages/Trophies"));
+const Qcm = lazy(() => import("./pages/Qcm"));
 
 const queryClient = new QueryClient();
 
@@ -31,6 +33,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter basename={import.meta.env.BASE_URL}>
           <ContactButton />
+          <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Index />} />
@@ -50,6 +53,7 @@ const App = () => (
             <Route path="/landing" element={<Navigate to="/" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
