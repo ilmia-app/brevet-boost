@@ -122,27 +122,17 @@ const Annales = () => {
       setExercices((exData || []) as Exercice[]);
 
       // Charger les métadonnées PDF de l'annale
-      if (annaleSource && matiereFilter) {
+      if (annaleSource && matiereFilter && exData && exData.length > 0) {
+        const firstEx = exData[0];
         const { data: annData } = await supabase
           .from("annales")
           .select("*")
-          .eq("titre", annaleSource)
+          .eq("matiere", matiereFilter)
+          .eq("annee", firstEx.annee || 0)
+          .eq("session", firstEx.session || "")
+          .limit(1)
           .maybeSingle();
-
-        // Si pas trouvé par titre exact, chercher par matiere + annee + session
-        if (!annData && exData && exData.length > 0) {
-          const firstEx = exData[0];
-          const { data: annData2 } = await supabase
-            .from("annales")
-            .select("*")
-            .eq("matiere", matiereFilter)
-            .eq("annee", firstEx.annee || 0)
-            .eq("session", firstEx.session || "")
-            .maybeSingle();
-          setAnnaleData(annData2 as Annale | null);
-        } else {
-          setAnnaleData(annData as Annale | null);
-        }
+        setAnnaleData(annData as Annale | null);
       }
 
       if (user) {
