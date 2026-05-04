@@ -25,7 +25,7 @@ export type Database = {
         }
         Insert: {
           annee: number
-          id: string
+          id?: string
           matiere: string
           pdf_url: string
           session: string
