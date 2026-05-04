@@ -262,15 +262,10 @@ const Annales = () => {
             <div className="space-y-3">
               <Button
                 className="w-full h-12 text-base font-semibold sprint-gradient text-primary-foreground"
-                onClick={() => annaleData?.pdf_url ? setExamStep("pdf") : setExamStep("exercices")}
+                onClick={() => setExamStep("pdf")}
               >
-                {annaleData?.pdf_url ? "Voir le sujet complet →" : "Commencer les exercices →"}
+                Voir le sujet complet →
               </Button>
-              {!annaleData?.pdf_url && (
-                <p className="text-center text-xs text-muted-foreground">
-                  PDF non disponible pour cette session
-                </p>
-              )}
             </div>
           </div>
         </div>
@@ -279,7 +274,7 @@ const Annales = () => {
   }
 
   // ─── ÉCRAN 2 : PDF ────────────────────────────────────────────────────────
-  if (annaleSource && examStep === "pdf" && annaleData?.pdf_url) {
+  if (annaleSource && examStep === "pdf") {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <div className="max-w-lg mx-auto px-4 pt-6 w-full flex-1 flex flex-col">
@@ -295,27 +290,21 @@ const Annales = () => {
             </div>
           </div>
 
-          {/* PDF iframe */}
-          <div className="flex-1 rounded-xl overflow-hidden border mb-4" style={{ minHeight: "60vh" }}>
-            <iframe
-              src={annaleData.pdf_url}
-              className="w-full h-full"
-              style={{ minHeight: "60vh" }}
-              title="Sujet officiel"
-            />
-          </div>
-
-          {/* Lien ouvrir dans nouvel onglet */}
-          <div className="text-center mb-4">
-            <a
-              href={annaleData.pdf_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-primary flex items-center justify-center gap-1"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Ouvrir en plein écran
-            </a>
+          {/* Bouton ouvrir le sujet officiel */}
+          <div className="flex-1 flex items-center justify-center mb-4">
+            {annaleData?.pdf_url ? (
+              <Button
+                variant="outline"
+                className="w-full h-12 text-base font-semibold"
+                onClick={() => window.open(annaleData.pdf_url, "_blank", "noopener,noreferrer")}
+              >
+                📄 Ouvrir le sujet officiel
+              </Button>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center">
+                PDF non disponible pour cette session
+              </p>
+            )}
           </div>
 
           {/* CTA */}
