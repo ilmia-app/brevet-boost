@@ -295,28 +295,14 @@ const Annales = () => {
             </div>
           </div>
 
-          {/* PDF iframe */}
-          <div className="flex-1 rounded-xl overflow-hidden border mb-4" style={{ minHeight: "60vh" }}>
-            <iframe
-              src={annaleData.pdf_url}
-              className="w-full h-full"
-              style={{ minHeight: "60vh" }}
-              title="Sujet officiel"
-            />
-          </div>
-
-          {/* Lien ouvrir dans nouvel onglet */}
-          <div className="text-center mb-4">
-            <a
-              href={annaleData.pdf_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-primary flex items-center justify-center gap-1"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Ouvrir en plein écran
-            </a>
-          </div>
+          {/* Bouton ouverture PDF */}
+          <Button
+            variant="outline"
+            className="w-full h-16 text-base font-semibold mb-4"
+            onClick={() => window.open(annaleData.pdf_url, "_blank", "noopener,noreferrer")}
+          >
+            📄 Ouvrir le sujet officiel
+          </Button>
 
           {/* CTA */}
           <Button
