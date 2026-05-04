@@ -7,7 +7,23 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Play, MessageCircle, Loader2, LogOut, CheckCircle2, BarChart3, Sparkles, Settings, X, History as HistoryIcon, Trophy, ListChecks } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Play,
+  MessageCircle,
+  Loader2,
+  LogOut,
+  CheckCircle2,
+  BarChart3,
+  Sparkles,
+  Settings,
+  X,
+  History as HistoryIcon,
+  Trophy,
+  ListChecks,
+  FileText,
+  ChevronRight,
+} from "lucide-react";
 import EndOfDayModal from "@/components/dashboard/EndOfDayModal";
 import TrophyWatcher from "@/components/trophies/TrophyWatcher";
 
@@ -38,29 +54,42 @@ interface MessageFeedback {
   phase: number | null;
 }
 
+interface AnnaleItem {
+  id: string;
+  matiere: string;
+  annee: number;
+  session: string;
+  titre: string;
+  pdf_url: string;
+}
+
 const SUBJECT_COLORS: Record<string, string> = {
   Maths: "bg-blue-500 text-white",
   Français: "bg-purple-500 text-white",
   Histoire: "bg-orange-500 text-white",
+  "Histoire-Géo": "bg-orange-500 text-white",
   Géographie: "bg-emerald-500 text-white",
   EMC: "bg-yellow-500 text-white",
   Physique: "bg-red-500 text-white",
+  Sciences: "bg-red-500 text-white",
   SVT: "bg-green-700 text-white",
   Techno: "bg-gray-500 text-white",
 };
 
-const TASK_ICONS: Record<string, string> = {
-  heavy: "🎯",
-  medium: "⚡",
-  light: "🚀",
+const MATIERE_STYLES: Record<string, { border: string; bg: string; hover: string; text: string }> = {
+  Maths: { border: "border-blue-200", bg: "bg-blue-50", hover: "hover:bg-blue-100", text: "text-blue-900" },
+  Français: { border: "border-purple-200", bg: "bg-purple-50", hover: "hover:bg-purple-100", text: "text-purple-900" },
+  "Histoire-Géo": {
+    border: "border-orange-200",
+    bg: "bg-orange-50",
+    hover: "hover:bg-orange-100",
+    text: "text-orange-900",
+  },
+  Sciences: { border: "border-red-200", bg: "bg-red-50", hover: "hover:bg-red-100", text: "text-red-900" },
 };
 
-const TASK_LABELS: Record<string, string> = {
-  heavy: "Défi du jour",
-  medium: "Entraînement",
-  light: "Sprint final",
-};
-
+const TASK_ICONS: Record<string, string> = { heavy: "🎯", medium: "⚡", light: "🚀" };
+const TASK_LABELS: Record<string, string> = { heavy: "Défi du jour", medium: "Entraînement", light: "Sprint final" };
 const DAYS = ["L", "M", "M", "J", "V", "S", "D"];
 
 const SUBJECT_TO_PREFIX: Record<string, string> = {
@@ -79,8 +108,10 @@ const SUBJECT_TO_PREFIX: Record<string, string> = {
   technologie: "TEC-",
 };
 
-const subjectToPrefix = (subject: string): string | null =>
-  SUBJECT_TO_PREFIX[subject.trim().toLowerCase()] || null;
+const subjectToPrefix = (subject: string): string | null => SUBJECT_TO_PREFIX[subject.trim().toLowerCase()] || null;
+
+// Matières affichées dans la section Annales (regroupées)
+const ANNALES_MATIERES = ["Maths", "Français", "Histoire-Géo", "Sciences"];
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -99,7 +130,16 @@ const Dashboard = () => {
   const [yesterdayBlocIds, setYesterdayBlocIds] = useState<Set<string>>(new Set());
   const [showWeeklyBanner, setShowWeeklyBanner] = useState(false);
   const [completedBlocIdsAll, setCompletedBlocIdsAll] = useState<Set<string>>(new Set());
-  const [dailyTasks, setDailyTasks] = useState<Array<{ bloc: BlocExamen; weight: "heavy" | "medium" | "light"; exerciceId: string }>>([]);
+  const [dailyTasks, setDailyTasks] = useState<
+    Array<{ bloc: BlocExamen; weight: "heavy" | "medium" | "light"; exerciceId: string }>
+  >([]);
+
+  // Annales
+  const [annales, setAnnales] = useState<AnnaleItem[]>([]);
+  const [selectedMatiere, setSelectedMatiere] = useState<string | null>(null);
+
+  // QCM popup (après EndOfDayModal)
+  const [qcmPopupOpen, setQcmPopupOpen] = useState(false);
 
   // Profile
   useEffect(() => {
@@ -110,7 +150,9 @@ const Dashboard = () => {
     (async () => {
       const { data } = await supabase
         .from("users")
-        .select("id, prenom, date_examen, volume_quotidien, retard_initial, matieres_faibles, mode_actuel, phase_actuelle, derniere_modif_priorites")
+        .select(
+          "id, prenom, date_examen, volume_quotidien, retard_initial, matieres_faibles, mode_actuel, phase_actuelle, derniere_modif_priorites",
+        )
         .eq("id", user.id)
         .maybeSingle();
       if (!data) {
@@ -127,8 +169,6 @@ const Dashboard = () => {
         modeActuel: data.mode_actuel || "normal",
         phaseActuelle: data.phase_actuelle || 1,
       });
-
-      // Bandeau hebdo phase 2 : lundi + non modifié cette semaine + non dismissé aujourd'hui
       const lastModif = (data as any).derniere_modif_priorites as string | null;
       const phase = data.phase_actuelle || 1;
       const today = new Date();
@@ -138,15 +178,33 @@ const Dashboard = () => {
       const modifiedThisWeek = lastModif ? new Date(lastModif) >= monday : false;
       const dismissedKey = `weekly-banner-dismissed-${today.toISOString().split("T")[0]}`;
       const dismissed = localStorage.getItem(dismissedKey) === "1";
-      if (phase === 2 && isMonday && !modifiedThisWeek && !dismissed) {
-        setShowWeeklyBanner(true);
-      }
-
+      if (phase === 2 && isMonday && !modifiedThisWeek && !dismissed) setShowWeeklyBanner(true);
       setLoading(false);
     })();
   }, [user, navigate]);
 
-  // Today's completions — refetch au focus/visibilité pour déverrouiller le QCM sans reload
+  // Annales 2023-2025
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("annales")
+        .select("id, matiere, annee, session, titre, pdf_url")
+        .in("annee", [2023, 2024, 2025])
+        .order("annee", { ascending: false });
+      if (data) setAnnales(data as AnnaleItem[]);
+    })();
+  }, []);
+
+  const annalesParMatiere = useMemo(() => {
+    const map = new Map<string, AnnaleItem[]>();
+    for (const a of annales) {
+      if (!map.has(a.matiere)) map.set(a.matiere, []);
+      map.get(a.matiere)!.push(a);
+    }
+    return map;
+  }, [annales]);
+
+  // Today completions
   const refetchTodayCompletions = useCallback(async () => {
     if (!user) return;
     const today = new Date().toISOString().split("T")[0];
@@ -172,7 +230,6 @@ const Dashboard = () => {
     };
   }, [refetchTodayCompletions]);
 
-  // Yesterday's completions
   useEffect(() => {
     if (!user) return;
     (async () => {
@@ -188,7 +245,6 @@ const Dashboard = () => {
     })();
   }, [user]);
 
-  // All completed bloc_ids (toutes dates) — pour exclure les exos déjà faits
   useEffect(() => {
     if (!user) return;
     (async () => {
@@ -201,7 +257,6 @@ const Dashboard = () => {
     })();
   }, [user]);
 
-  // All blocs
   useEffect(() => {
     (async () => {
       const { data } = await supabase
@@ -231,9 +286,7 @@ const Dashboard = () => {
     return Math.max(1, Math.ceil(elapsed / 7));
   }, [totalSprintDays, daysUntilExam]);
 
-  const progressPercent = useMemo(() => {
-    return Math.min(100, Math.round((completedTasks.size / 3) * 100));
-  }, [completedTasks]);
+  const progressPercent = useMemo(() => Math.min(100, Math.round((completedTasks.size / 3) * 100)), [completedTasks]);
 
   useEffect(() => {
     (async () => {
@@ -246,55 +299,34 @@ const Dashboard = () => {
     })();
   }, [profile, currentPhase]);
 
-  // Daily tasks — sélection d'EXERCICES via préfixe bloc_id et matieres_faibles
-  // Tâche 1 : exercice aléatoire dont bloc_id commence par le préfixe de la 1re matière faible
-  // Tâches 2 & 3 : rotation HIS/GEO/EMC et PHY/SVT/TEC selon dayOfYear % 3
-  // Exclut les bloc_id déjà complétés (table completions)
+  // Daily tasks
   useEffect(() => {
     if (!profile || blocs.length === 0) return;
     const blocsById = new Map(blocs.map((b) => [b.id, b]));
     const mode = profile.modeActuel || "normal";
     const faibles = profile.subjects || [];
-
     const start = new Date(new Date().getFullYear(), 0, 0);
     const dayOfYear = Math.floor((Date.now() - start.getTime()) / (1000 * 60 * 60 * 24));
-
     const rotationHGE = ["HIS-", "GEO-", "EMC-"];
     const rotationSci = ["PHY-", "SVT-", "TEC-"];
-
-    // Sélection déterministe par jour + user pour que les tâches du jour restent stables
-    // (et donc qu'un bloc complété aujourd'hui réapparaisse coché au lieu d'être remplacé).
     const todayStr = new Date().toISOString().split("T")[0];
     const seedStr = `${todayStr}-${profile?.id ?? ""}`;
     let seedHash = 0;
-    for (let i = 0; i < seedStr.length; i++) {
-      seedHash = (seedHash * 31 + seedStr.charCodeAt(i)) >>> 0;
-    }
+    for (let i = 0; i < seedStr.length; i++) seedHash = (seedHash * 31 + seedStr.charCodeAt(i)) >>> 0;
     const pickRandom = <T,>(arr: T[]): T | null => {
       if (arr.length === 0) return null;
       seedHash = (seedHash * 1103515245 + 12345) >>> 0;
       return arr[seedHash % arr.length];
     };
-
-    const fetchExoForPrefix = async (
-      prefix: string,
-      usedExoIds: Set<string>,
-      usedBlocIds: Set<string>,
-    ) => {
-      const { data, error } = await supabase
+    const fetchExoForPrefix = async (prefix: string, usedExoIds: Set<string>, usedBlocIds: Set<string>) => {
+      const { data } = await supabase
         .from("exercices")
         .select("id, bloc_id")
         .like("bloc_id", `${prefix}%`)
         .not("bloc_id", "is", null);
-      if (error) {
-        console.error("[Dashboard] erreur fetch exercices", prefix, error);
-        return null;
-      }
       const candidates = (data || []).filter(
         (e) =>
           e.bloc_id &&
-          // Exclure les blocs déjà complétés AVANT aujourd'hui,
-          // mais garder ceux complétés aujourd'hui pour qu'ils s'affichent cochés.
           (!completedBlocIdsAll.has(e.bloc_id) || completedTasks.has(e.bloc_id)) &&
           !usedBlocIds.has(e.bloc_id) &&
           !usedExoIds.has(e.id) &&
@@ -302,42 +334,32 @@ const Dashboard = () => {
       );
       return pickRandom(candidates);
     };
-
     const pickRotationExo = async (
       rotation: string[],
       usedExoIds: Set<string>,
       usedBlocIds: Set<string>,
       faiblesPrefixes: Set<string>,
     ) => {
-      // Décale d'un cran si la matière du jour est dans les faibles (déjà couvert par tâche 1)
       for (let offset = 0; offset < rotation.length; offset++) {
         const prefix = rotation[(dayOfYear + offset) % rotation.length];
         if (faiblesPrefixes.has(prefix)) continue;
         const exo = await fetchExoForPrefix(prefix, usedExoIds, usedBlocIds);
         if (exo) return exo;
       }
-      // fallback : n'importe quel préfixe de la rotation
       for (const prefix of rotation) {
         const exo = await fetchExoForPrefix(prefix, usedExoIds, usedBlocIds);
         if (exo) return exo;
       }
       return null;
     };
-
     let cancelled = false;
     (async () => {
       const usedExoIds = new Set<string>();
       const usedBlocIds = new Set<string>();
       const slots: Array<{ bloc: BlocExamen; weight: "heavy" | "medium" | "light"; exerciceId: string }> = [];
-
-      const faiblesPrefixes = new Set(
-        faibles.map((s) => subjectToPrefix(s)).filter((p): p is string => !!p),
-      );
-
-      // TÂCHE 1 — Défi du jour : 1re matière faible
+      const faiblesPrefixes = new Set(faibles.map((s) => subjectToPrefix(s)).filter((p): p is string => !!p));
       const firstFaible = faibles[0];
       const firstPrefix = firstFaible ? subjectToPrefix(firstFaible) : null;
-      console.log("[Dashboard] matieres_faibles:", faibles, "→ prefix tâche 1:", firstPrefix);
       if (firstPrefix) {
         const exo = await fetchExoForPrefix(firstPrefix, usedExoIds, usedBlocIds);
         if (exo && exo.bloc_id) {
@@ -345,13 +367,9 @@ const Dashboard = () => {
           usedExoIds.add(exo.id);
           usedBlocIds.add(exo.bloc_id);
           slots.push({ bloc, weight: "heavy", exerciceId: exo.id });
-        } else {
-          console.warn("[Dashboard] aucun exercice dispo pour préfixe", firstPrefix);
         }
       }
-
       if (mode !== "reset_doux") {
-        // TÂCHE 2 — Entraînement HIS/GEO/EMC
         const exo2 = await pickRotationExo(rotationHGE, usedExoIds, usedBlocIds, faiblesPrefixes);
         if (exo2 && exo2.bloc_id) {
           const bloc = blocsById.get(exo2.bloc_id)!;
@@ -359,9 +377,7 @@ const Dashboard = () => {
           usedBlocIds.add(exo2.bloc_id);
           slots.push({ bloc, weight: "medium", exerciceId: exo2.id });
         }
-
         if (mode !== "allegement") {
-          // TÂCHE 3 — Sprint final PHY/SVT/TEC
           const exo3 = await pickRotationExo(rotationSci, usedExoIds, usedBlocIds, faiblesPrefixes);
           if (exo3 && exo3.bloc_id) {
             const bloc = blocsById.get(exo3.bloc_id)!;
@@ -371,13 +387,8 @@ const Dashboard = () => {
           }
         }
       }
-
-      if (!cancelled) {
-        console.log("[Dashboard] sprint généré:", slots.map((s) => `${s.bloc.matiere}/${s.exerciceId}`));
-        setDailyTasks(slots);
-      }
+      if (!cancelled) setDailyTasks(slots);
     })();
-
     return () => {
       cancelled = true;
     };
@@ -389,11 +400,9 @@ const Dashboard = () => {
   const handleEndDay = useCallback(async () => {
     if (!user || !profile) return;
     setEndingDay(true);
-
     const total = dailyTasks.length;
     const completed = dailyTasks.filter((t) => completedTasks.has(t.bloc.id)).length;
     const taux = total > 0 ? completed / total : 0;
-
     let newMode = "normal";
     if (taux >= 0.8) newMode = "normal";
     else if (taux >= 0.6) newMode = "maintien";
@@ -406,7 +415,6 @@ const Dashboard = () => {
         .eq("user_id", user.id)
         .gte("date_completion", threeDaysAgo.toISOString().split("T")[0])
         .order("date_completion", { ascending: true });
-
       const dayMap = new Map<string, { total: number; done: number }>();
       if (recentCompletions) {
         for (const c of recentCompletions) {
@@ -421,9 +429,7 @@ const Dashboard = () => {
       const consecutiveLow = days.filter((d) => d.total > 0 && d.done / d.total < 0.6).length;
       newMode = consecutiveLow >= 3 ? "reset_doux" : "allegement";
     }
-
     await supabase.from("users").update({ mode_actuel: newMode }).eq("id", user.id);
-
     const niveauTaux = taux >= 0.8 ? "validation" : taux >= 0.6 ? "encouragement" : "alerte";
     const { data: fbData } = await supabase
       .from("messages_feedback")
@@ -431,16 +437,14 @@ const Dashboard = () => {
       .eq("phase", profile.phaseActuelle || currentPhase)
       .eq("niveau_taux", niveauTaux)
       .limit(1);
-
     const msg =
       fbData && fbData.length > 0 && fbData[0].message
         ? fbData[0].message
         : taux >= 0.8
-        ? "Excellente journée ! Continue comme ça 💪"
-        : taux >= 0.6
-        ? "Pas mal ! Encore un petit effort demain 🔥"
-        : "C'est pas grave, on reprend doucement demain 🌱";
-
+          ? "Excellente journée ! Continue comme ça 💪"
+          : taux >= 0.6
+            ? "Pas mal ! Encore un petit effort demain 🔥"
+            : "C'est pas grave, on reprend doucement demain 🌱";
     setEndOfDayTaux(taux);
     setEndOfDayMode(newMode);
     setEndOfDayMessage(msg);
@@ -451,6 +455,7 @@ const Dashboard = () => {
   }, [user, profile, dailyTasks, completedTasks, currentPhase]);
 
   const allDone = dailyTasks.length > 0 && dailyTasks.every((t) => completedTasks.has(t.bloc.id));
+  const completedCount = dailyTasks.filter((t) => completedTasks.has(t.bloc.id)).length;
 
   if (!profile || loading)
     return (
@@ -462,8 +467,6 @@ const Dashboard = () => {
       </div>
     );
 
-  const completedCount = dailyTasks.filter((t) => completedTasks.has(t.bloc.id)).length;
-
   return (
     <div className="min-h-screen bg-background pb-8">
       <TrophyWatcher />
@@ -473,16 +476,16 @@ const Dashboard = () => {
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">Bonjour {profile.name} 👋</h1>
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/progress")} aria-label="Progression">
+              <Button variant="ghost" size="icon" onClick={() => navigate("/progress")}>
                 <BarChart3 className="w-5 h-5 text-primary" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => navigate("/trophees")} aria-label="Trophées">
+              <Button variant="ghost" size="icon" onClick={() => navigate("/trophees")}>
                 <Trophy className="w-5 h-5 text-primary" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => navigate("/history")} aria-label="Historique">
+              <Button variant="ghost" size="icon" onClick={() => navigate("/history")}>
                 <HistoryIcon className="w-5 h-5 text-primary" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => navigate("/profile")} aria-label="Profil">
+              <Button variant="ghost" size="icon" onClick={() => navigate("/profile")}>
                 <Settings className="w-5 h-5 text-primary" />
               </Button>
             </div>
@@ -499,7 +502,7 @@ const Dashboard = () => {
           </div>
         </section>
 
-        {/* Bandeau de phase selon jours restants */}
+        {/* Bandeaux phase */}
         {currentPhase === 2 && (
           <div className="rounded-xl border border-orange-300 bg-orange-50 dark:bg-orange-950/30 dark:border-orange-800 px-4 py-3 text-sm text-orange-900 dark:text-orange-200">
             ⚡ Mode entraînement intensif — ton planning est accéléré
@@ -511,13 +514,11 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Bandeau hebdomadaire phase 2 (lundi) */}
+        {/* Bandeau hebdo */}
         {showWeeklyBanner && (
           <Card className="border-primary/30 bg-accent/30 rounded-xl">
             <CardContent className="p-3 flex items-center gap-3 flex-wrap">
-              <p className="text-sm flex-1 min-w-[200px]">
-                Nouvelle semaine — veux-tu ajuster tes priorités ?
-              </p>
+              <p className="text-sm flex-1 min-w-[200px]">Nouvelle semaine — veux-tu ajuster tes priorités ?</p>
               <div className="flex gap-2">
                 <Button
                   size="sm"
@@ -531,8 +532,7 @@ const Dashboard = () => {
                   variant="ghost"
                   className="rounded-lg h-8"
                   onClick={() => {
-                    const key = `weekly-banner-dismissed-${new Date().toISOString().split("T")[0]}`;
-                    localStorage.setItem(key, "1");
+                    localStorage.setItem(`weekly-banner-dismissed-${new Date().toISOString().split("T")[0]}`, "1");
                     setShowWeeklyBanner(false);
                   }}
                 >
@@ -543,9 +543,9 @@ const Dashboard = () => {
           </Card>
         )}
 
-        {/* CARTES — 1 colonne pleine largeur */}
-        <div className="space-y-4">
-          {/* CARTE 1 — Sprint du jour */}
+        {/* LAYOUT 2 COLONNES */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          {/* COLONNE GAUCHE — Sprint du jour */}
           <Card className="rounded-2xl flex flex-col">
             <CardContent className="p-5 flex flex-col flex-1 space-y-4">
               <div className="flex items-center gap-2">
@@ -565,31 +565,30 @@ const Dashboard = () => {
                         <Checkbox checked={done} disabled className="mt-0.5" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                            <Badge className={`${SUBJECT_COLORS[bloc.matiere] || "bg-muted text-foreground"} text-[10px] px-1.5 py-0`}>
+                            <Badge
+                              className={`${SUBJECT_COLORS[bloc.matiere] || "bg-muted text-foreground"} text-[10px] px-1.5 py-0`}
+                            >
                               {bloc.matiere}
                             </Badge>
-                            <span className="text-[10px] text-muted-foreground">
-                              {TASK_ICONS[weight]}
-                            </span>
+                            <span className="text-[10px] text-muted-foreground">{TASK_ICONS[weight]}</span>
                           </div>
-                          <p className={`text-xs leading-snug ${done ? "line-through text-muted-foreground" : "font-medium"}`}>
+                          <p
+                            className={`text-xs leading-snug ${done ? "line-through text-muted-foreground" : "font-medium"}`}
+                          >
                             {bloc.titre}
                           </p>
                           <p className="text-[10px] uppercase tracking-wide text-primary font-semibold mt-1">
                             {TASK_LABELS[weight]}
                           </p>
                           <p className="text-[10px] text-muted-foreground/80 mt-1 flex items-center gap-1">
-                            <Sparkles className="w-2.5 h-2.5 text-primary shrink-0" />
-                            Je prépare ton exercice.
+                            <Sparkles className="w-2.5 h-2.5 text-primary shrink-0" /> Je prépare ton exercice.
                           </p>
                         </div>
                       </div>
                       {!done && (
                         <Button
                           size="sm"
-                          onClick={() =>
-                            navigate(`/work?bloc_id=${encodeURIComponent(bloc.id)}&mode=ai`)
-                          }
+                          onClick={() => navigate(`/work?bloc_id=${encodeURIComponent(bloc.id)}&mode=ai`)}
                           className="w-full h-8 text-xs rounded-lg sprint-gradient text-primary-foreground"
                         >
                           <Play className="w-3 h-3 mr-1" /> Commencer
@@ -615,7 +614,11 @@ const Dashboard = () => {
                   disabled={endingDay}
                   className="w-full rounded-xl h-10 text-sm font-medium sprint-gradient text-primary-foreground animate-in fade-in duration-500"
                 >
-                  {endingDay ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                  {endingDay ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                  )}
                   Terminer ma journée
                 </Button>
               )}
@@ -629,13 +632,7 @@ const Dashboard = () => {
                     return (
                       <div
                         key={i}
-                        className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold transition-all ${
-                          isPast
-                            ? "sprint-gradient text-primary-foreground"
-                            : isToday
-                            ? "border-2 border-primary text-primary bg-transparent"
-                            : "bg-muted text-muted-foreground"
-                        }`}
+                        className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold transition-all ${isPast ? "sprint-gradient text-primary-foreground" : isToday ? "border-2 border-primary text-primary bg-transparent" : "bg-muted text-muted-foreground"}`}
                       >
                         {day}
                       </div>
@@ -646,106 +643,64 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* CARTE 2 — Sprint QCM (bonus quotidien IA) — grisé par défaut */}
-          <Card className={`rounded-2xl flex flex-col ${!allDone ? "opacity-60" : ""}`}>
-            <CardContent className="p-5 flex flex-col flex-1 space-y-4">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">📝</span>
-                <h2 className="text-base font-semibold">Sprint QCM</h2>
-              </div>
-              <p className="text-xs text-muted-foreground -mt-2">
-                5 questions de mémorisation — notions clés du brevet.
-              </p>
-
-              {(() => {
-                const qcmDone = completedTasks.has("QCM-DAILY");
-                const qcmLocked = !allDone;
-                return (
-                  <div className="flex-1 flex flex-col justify-center space-y-4">
-                    <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                          <ListChecks className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                            <p className="text-sm font-semibold">QCM du jour</p>
-                            {qcmDone && (
-                              <Badge className="bg-secondary text-secondary-foreground text-[10px] px-1.5 py-0">
-                                Fait
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground leading-snug">
-                            Un boost rapide pour ancrer tes connaissances.
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                       onClick={() => navigate("/qcm", {
-                         state: {
-                           blocs: dailyTasks.map((t) => ({
-                             id: t.bloc.id,
-                             matiere: t.bloc.matiere,
-                             titre: t.bloc.titre,
-                             theme: t.bloc.theme,
-                           })),
-                         },
-                       })}
-                        disabled={qcmLocked}
-                        variant={qcmLocked ? "secondary" : "default"}
-                        className={`w-full rounded-xl h-10 text-sm ${!qcmLocked ? "sprint-gradient text-primary-foreground" : ""}`}
-                      >
-                        <Play className="w-4 h-4 mr-1.5" />
-                        {qcmDone ? "Refaire un QCM" : "Lancer le QCM"}
-                      </Button>
-                      {qcmLocked && (
-                        <p className="text-xs text-muted-foreground text-center">
-                          Termine tes 3 tâches pour débloquer le QCM du jour.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })()}
-            </CardContent>
-          </Card>
-
-          {/* CARTE 3 — Annales pleine largeur */}
+          {/* COLONNE DROITE — Annales */}
           <Card className="rounded-2xl flex flex-col">
             <CardContent className="p-5 flex flex-col flex-1 space-y-4">
               <div className="flex items-center gap-2">
                 <span className="text-xl">📄</span>
                 <h2 className="text-base font-semibold">Passe un vrai sujet</h2>
               </div>
-              <p className="text-xs text-muted-foreground -mt-2">Entraîne toi sur un sujet officiel du DNB</p>
+              <p className="text-xs text-muted-foreground -mt-2">Annales officielles DNB 2023 · 2024 · 2025</p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
-                {[
-                  { matiere: "Maths", border: "border-blue-200", bg: "bg-blue-50", hover: "hover:bg-blue-100", text: "text-blue-900", sub: "text-blue-700/80" },
-                  { matiere: "Français", border: "border-purple-200", bg: "bg-purple-50", hover: "hover:bg-purple-100", text: "text-purple-900", sub: "text-purple-700/80" },
-                  { matiere: "Histoire", border: "border-orange-200", bg: "bg-orange-50", hover: "hover:bg-orange-100", text: "text-orange-900", sub: "text-orange-700/80" },
-                  { matiere: "Géographie", border: "border-emerald-200", bg: "bg-emerald-50", hover: "hover:bg-emerald-100", text: "text-emerald-900", sub: "text-emerald-700/80" },
-                  { matiere: "EMC", border: "border-yellow-200", bg: "bg-yellow-50", hover: "hover:bg-yellow-100", text: "text-yellow-900", sub: "text-yellow-700/80" },
-                  { matiere: "Physique", border: "border-red-200", bg: "bg-red-50", hover: "hover:bg-red-100", text: "text-red-900", sub: "text-red-700/80" },
-                  { matiere: "SVT", border: "border-green-200", bg: "bg-green-50", hover: "hover:bg-green-100", text: "text-green-900", sub: "text-green-700/80" },
-                  { matiere: "Techno", border: "border-gray-200", bg: "bg-gray-50", hover: "hover:bg-gray-100", text: "text-gray-900", sub: "text-gray-700/80" },
-                ].map((m) => (
-                  <button
-                    key={m.matiere}
-                    onClick={() => navigate(`/annales?matiere=${encodeURIComponent(m.matiere)}`)}
-                    className={`w-full text-left rounded-xl border ${m.border} ${m.bg} p-4 ${m.hover} transition-colors`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className={`font-semibold ${m.text}`}>Annales {m.matiere}</p>
-                        <p className={`text-xs ${m.sub} mt-0.5`}>Sujets officiels DNB</p>
-                      </div>
-                      <Badge className={SUBJECT_COLORS[m.matiere]}>{m.matiere}</Badge>
-                    </div>
-                  </button>
-                ))}
+              {/* Sélecteur matière */}
+              <div className="grid grid-cols-2 gap-2">
+                {ANNALES_MATIERES.map((matiere) => {
+                  const style = MATIERE_STYLES[matiere] || MATIERE_STYLES["Maths"];
+                  const count = annalesParMatiere.get(matiere)?.length || 0;
+                  const isSelected = selectedMatiere === matiere;
+                  return (
+                    <button
+                      key={matiere}
+                      onClick={() => setSelectedMatiere(isSelected ? null : matiere)}
+                      className={`w-full text-left rounded-xl border p-3 transition-all ${isSelected ? "border-primary bg-primary/10" : `${style.border} ${style.bg} ${style.hover}`}`}
+                    >
+                      <p className={`font-semibold text-sm ${isSelected ? "text-primary" : style.text}`}>{matiere}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{count} sujets</p>
+                    </button>
+                  );
+                })}
               </div>
+
+              {/* Liste des annales pour la matière sélectionnée */}
+              {selectedMatiere && (
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                  <p className="text-xs font-medium text-muted-foreground">Sujets disponibles — {selectedMatiere}</p>
+                  {(annalesParMatiere.get(selectedMatiere) || [])
+                    .sort((a, b) => b.annee - a.annee || a.session.localeCompare(b.session))
+                    .map((annale) => (
+                      <button
+                        key={annale.id}
+                        onClick={() =>
+                          navigate(
+                            `/annales/${encodeURIComponent(annale.titre)}?matiere=${encodeURIComponent(selectedMatiere)}`,
+                          )
+                        }
+                        className="w-full text-left rounded-xl border bg-card hover:bg-accent/50 p-3 transition-colors flex items-center justify-between gap-2"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">
+                              {annale.annee} · {annale.session}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">{annale.titre}</p>
+                          </div>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                      </button>
+                    ))}
+                </div>
+              )}
 
               {currentPhase === 3 && (
                 <p className="text-xs text-primary/80 text-center italic">
@@ -758,14 +713,12 @@ const Dashboard = () => {
 
         {/* Feedback */}
         {showFeedback && feedback?.message && (
-          <section>
-            <Card className="border-primary/20 bg-accent/30">
-              <CardContent className="p-4 flex items-start gap-3">
-                <MessageCircle className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                <p className="text-sm text-foreground/80 leading-relaxed">{feedback.message}</p>
-              </CardContent>
-            </Card>
-          </section>
+          <Card className="border-primary/20 bg-accent/30">
+            <CardContent className="p-4 flex items-start gap-3">
+              <MessageCircle className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+              <p className="text-sm text-foreground/80 leading-relaxed">{feedback.message}</p>
+            </CardContent>
+          </Card>
         )}
 
         {/* Déconnexion */}
@@ -783,13 +736,58 @@ const Dashboard = () => {
         </section>
       </div>
 
+      {/* EndOfDay Modal */}
       <EndOfDayModal
         open={endOfDayOpen}
-        onClose={() => setEndOfDayOpen(false)}
+        onClose={() => {
+          setEndOfDayOpen(false);
+          // Ouvrir le QCM popup après fermeture du modal
+          setTimeout(() => setQcmPopupOpen(true), 300);
+        }}
         message={endOfDayMessage}
         taux={endOfDayTaux}
         mode={endOfDayMode}
       />
+
+      {/* QCM Popup */}
+      <Dialog open={qcmPopupOpen} onOpenChange={setQcmPopupOpen}>
+        <DialogContent className="max-w-sm rounded-2xl p-6 space-y-4">
+          <div className="text-center space-y-2">
+            <div className="text-4xl">📝</div>
+            <h3 className="text-lg font-bold">Sprint QCM</h3>
+            <p className="text-sm text-muted-foreground">
+              5 questions de mémorisation pour ancrer ce que tu viens d'apprendre.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Button
+              className="w-full sprint-gradient text-primary-foreground rounded-xl h-11"
+              onClick={() => {
+                setQcmPopupOpen(false);
+                navigate("/qcm", {
+                  state: {
+                    blocs: dailyTasks.map((t) => ({
+                      id: t.bloc.id,
+                      matiere: t.bloc.matiere,
+                      titre: t.bloc.titre,
+                      theme: t.bloc.theme,
+                    })),
+                  },
+                });
+              }}
+            >
+              <Play className="w-4 h-4 mr-2" /> Lancer le QCM
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full rounded-xl h-10 text-sm text-muted-foreground"
+              onClick={() => setQcmPopupOpen(false)}
+            >
+              Pas maintenant
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
