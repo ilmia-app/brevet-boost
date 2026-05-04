@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Target, Calendar, BookOpen, ClipboardList, Sparkles, Zap, HelpCircle, FileText } from "lucide-react";
+import { Target, Calendar, BookOpen, ClipboardList, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const features = [
@@ -46,64 +46,8 @@ const Landing = () => {
         </Link>
         <p className="text-xs text-slate-500 -mt-6 mb-8">Gratuit · Sans engagement</p>
 
-        {/* Aperçu du sprint */}
-        <div className="w-full mb-6">
-          <h2 className="text-lg font-bold text-slate-900 mb-3 text-left">Aperçu du sprint</h2>
-          <div className="flex flex-col gap-3">
-            {/* Carte 1 — Sprint du jour */}
-            <div className="rounded-2xl bg-white border border-slate-200 shadow-md p-4 text-left">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-emerald-500 flex items-center justify-center">
-                  <Zap className="w-4 h-4 text-white" />
-                </div>
-                <div className="text-sm font-bold text-slate-900">Sprint du jour</div>
-              </div>
-              <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
-                <div className="text-[11px] uppercase tracking-wide text-emerald-600 font-semibold mb-1">Maths · 20 min</div>
-                <div className="text-sm text-slate-900 font-medium leading-snug">Théorème de Pythagore — calculer une longueur</div>
-                <div className="text-xs text-slate-500 mt-1">Méthode pas-à-pas + exercice corrigé</div>
-              </div>
-            </div>
-
-            {/* Carte 2 — Sprint QCM */}
-            <div className="rounded-2xl bg-white border border-slate-200 shadow-md p-4 text-left">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-emerald-500 flex items-center justify-center">
-                  <HelpCircle className="w-4 h-4 text-white" />
-                </div>
-                <div className="text-sm font-bold text-slate-900">Sprint QCM</div>
-              </div>
-              <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
-                <div className="text-[11px] uppercase tracking-wide text-emerald-600 font-semibold mb-1">Question 1 / 5</div>
-                <div className="text-sm text-slate-900 font-medium leading-snug mb-2">Quelle est la formule de l'aire d'un disque ?</div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  <div className="text-xs text-slate-700 bg-white border border-slate-200 rounded-md px-2 py-1">A. 2πr</div>
-                  <div className="text-xs text-slate-700 bg-white border border-slate-200 rounded-md px-2 py-1">B. πr²</div>
-                  <div className="text-xs text-slate-700 bg-white border border-slate-200 rounded-md px-2 py-1">C. πd</div>
-                  <div className="text-xs text-slate-700 bg-white border border-slate-200 rounded-md px-2 py-1">D. 4πr²</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Carte 3 — Passe un vrai sujet */}
-            <div className="rounded-2xl bg-white border border-slate-200 shadow-md p-4 text-left">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-emerald-500 flex items-center justify-center">
-                  <FileText className="w-4 h-4 text-white" />
-                </div>
-                <div className="text-sm font-bold text-slate-900">Passe un vrai sujet</div>
-              </div>
-              <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
-                <div className="text-[11px] uppercase tracking-wide text-emerald-600 font-semibold mb-1">Annales</div>
-                <div className="text-sm text-slate-900 font-medium leading-snug">Mathématiques — Brevet 2024</div>
-                <div className="text-xs text-slate-500 mt-1">Sujet complet + corrigé détaillé</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Features grid 2x2 */}
-        <div className="grid grid-cols-2 gap-3 w-full mb-7 mt-2">
+        <div className="grid grid-cols-2 gap-3 w-full mb-7">
           {features.map((f) => {
             const Icon = f.icon;
             return (
