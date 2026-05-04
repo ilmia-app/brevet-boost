@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Play, CheckCircle2, Loader2, FileText } from "lucide-react";
+import { ArrowLeft, Play, CheckCircle2, Loader2, FileText, Clock, BookOpen, ChevronRight, ExternalLink } from "lucide-react";
 import { getBlocIdLikePattern } from "@/lib/annales";
 
 interface Exercice {
@@ -23,8 +23,17 @@ interface Bloc {
   matiere: string;
 }
 
+interface Annale {
+  id: string;
+  matiere: string;
+  annee: number;
+  session: string;
+  titre: string;
+  pdf_url: string;
+}
+
 interface SubjectGroup {
-  key: string; // annale_source|annee|session
+  key: string;
   annale_source: string;
   annee: number;
   session: string;
@@ -32,6 +41,8 @@ interface SubjectGroup {
   count: number;
   exercices: Exercice[];
 }
+
+type ExamStep = "briefing" | "pdf" | "exercices";
 
 const SUBJECT_COLORS: Record<string, string> = {
   Maths: "bg-blue-500 text-white",
@@ -42,6 +53,13 @@ const SUBJECT_COLORS: Record<string, string> = {
   Physique: "bg-red-500 text-white",
   SVT: "bg-green-700 text-white",
   Techno: "bg-gray-500 text-white",
+};
+
+const DUREES: Record<string, string> = {
+  Maths: "2h",
+  Français: "3h",
+  "Histoire-Géo": "2h",
+  Sciences: "1h30",
 };
 
 const inferMatiere = (blocId: string | null, blocsMap: Map<string, Bloc>): string => {
@@ -65,6 +83,15 @@ const Annales = () => {
   const [exercices, setExercices] = useState<Exercice[]>([]);
   const [blocsMap, setBlocsMap] = useState<Map<string, Bloc>>(new Map());
   const [completedBlocs, setCompletedBlocs] = useState<Set<string>>(new Set());
+  const [annaleData, setAnnaleData] = useState<Annale | null>(null);
+
+  // Mode examen : briefing → pdf → exercices
+  const [examStep, setExamStep] = useState<ExamStep>("briefing");
+
+  useEffect(() => {
+    // Réinitialiser au briefing à chaque changement d'annale
+    if (annaleSource) setExamStep("briefing");
+  }, [annaleSource]);
 
   useEffect(() => {
     const load = async () => {
@@ -93,6 +120,30 @@ const Annales = () => {
       (blData || []).forEach((b) => map.set(b.id, b as Bloc));
       setBlocsMap(map);
       setExercices((exData || []) as Exercice[]);
+
+      // Charger les métadonnées PDF de l'annale
+      if (annaleSource && matiereFilter) {
+        const { data: annData } = await supabase
+          .from("annales")
+          .select("*")
+          .eq("titre", annaleSource)
+          .maybeSingle();
+
+        // Si pas trouvé par titre exact, chercher par matiere + annee + session
+        if (!annData && exData && exData.length > 0) {
+          const firstEx = exData[0];
+          const { data: annData2 } = await supabase
+            .from("annales")
+            .select("*")
+            .eq("matiere", matiereFilter)
+            .eq("annee", firstEx.annee || 0)
+            .eq("session", firstEx.session || "")
+            .maybeSingle();
+          setAnnaleData(annData2 as Annale | null);
+        } else {
+          setAnnaleData(annData as Annale | null);
+        }
+      }
 
       if (user) {
         const { data: comps } = await supabase
@@ -152,6 +203,134 @@ const Annales = () => {
     );
   }
 
+  // ─── ÉCRAN 1 : BRIEFING ───────────────────────────────────────────────────
+  if (annaleSource && examStep === "briefing") {
+    const duree = DUREES[matiereFilter || ""] || "2h";
+    const likePattern = getBlocIdLikePattern(matiereFilter);
+    const blocPrefix = likePattern?.replace("%", "");
+    const nbExercices = exercices.filter(
+      (e) => e.annale_source === annaleSource && (!blocPrefix || e.bloc_id?.startsWith(blocPrefix))
+    ).length;
+
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <div className="max-w-lg mx-auto px-4 pt-6 w-full flex-1 flex flex-col">
+
+          {/* Header */}
+          <div className="flex items-center gap-2 mb-8">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(`/annales${matiereFilter ? `?matiere=${matiereFilter}` : ""}`)}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          </div>
+
+          {/* Contenu centré */}
+          <div className="flex-1 flex flex-col justify-center space-y-8 pb-12">
+
+            {/* Badge matière */}
+            <div className="text-center space-y-3">
+              <Badge className={`${SUBJECT_COLORS[matiereFilter || ""] || "bg-muted"} text-sm px-3 py-1`}>
+                {matiereFilter || "Toutes matières"}
+              </Badge>
+              <h1 className="text-2xl font-bold leading-tight">{annaleSource}</h1>
+              <p className="text-muted-foreground text-sm">Mode Examen</p>
+            </div>
+
+            {/* Consignes */}
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 space-y-3">
+              <p className="font-semibold text-amber-900 text-sm">📋 Conditions d'examen</p>
+              <ul className="space-y-2 text-sm text-amber-800">
+                <li className="flex items-start gap-2">
+                  <Clock className="w-4 h-4 mt-0.5 shrink-0" />
+                  <span>Durée conseillée : <strong>{duree}</strong></span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <BookOpen className="w-4 h-4 mt-0.5 shrink-0" />
+                  <span><strong>{nbExercices} exercice{nbExercices > 1 ? "s" : ""}</strong> — travaille sur papier d'abord</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <ChevronRight className="w-4 h-4 mt-0.5 shrink-0" />
+                  <span>Les corrigés et méthodes sont disponibles <strong>après</strong> chaque exercice</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* CTA */}
+            <div className="space-y-3">
+              <Button
+                className="w-full h-12 text-base font-semibold sprint-gradient text-primary-foreground"
+                onClick={() => annaleData?.pdf_url ? setExamStep("pdf") : setExamStep("exercices")}
+              >
+                {annaleData?.pdf_url ? "Voir le sujet complet →" : "Commencer les exercices →"}
+              </Button>
+              {!annaleData?.pdf_url && (
+                <p className="text-center text-xs text-muted-foreground">
+                  PDF non disponible pour cette session
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── ÉCRAN 2 : PDF ────────────────────────────────────────────────────────
+  if (annaleSource && examStep === "pdf" && annaleData?.pdf_url) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <div className="max-w-lg mx-auto px-4 pt-6 w-full flex-1 flex flex-col">
+
+          {/* Header */}
+          <div className="flex items-center gap-2 mb-4">
+            <Button variant="ghost" size="icon" onClick={() => setExamStep("briefing")}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div className="flex-1">
+              <h1 className="text-lg font-bold">{annaleSource}</h1>
+              <p className="text-xs text-muted-foreground">Lis le sujet, travaille sur papier</p>
+            </div>
+          </div>
+
+          {/* PDF iframe */}
+          <div className="flex-1 rounded-xl overflow-hidden border mb-4" style={{ minHeight: "60vh" }}>
+            <iframe
+              src={annaleData.pdf_url}
+              className="w-full h-full"
+              style={{ minHeight: "60vh" }}
+              title="Sujet officiel"
+            />
+          </div>
+
+          {/* Lien ouvrir dans nouvel onglet */}
+          <div className="text-center mb-4">
+            <a
+              href={annaleData.pdf_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-primary flex items-center justify-center gap-1"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Ouvrir en plein écran
+            </a>
+          </div>
+
+          {/* CTA */}
+          <Button
+            className="w-full h-12 text-base font-semibold sprint-gradient text-primary-foreground mb-8"
+            onClick={() => setExamStep("exercices")}
+          >
+            J'ai travaillé sur papier → Voir les corrections
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── ÉCRAN 3 : LISTE DES EXERCICES ────────────────────────────────────────
   return (
     <div className="min-h-screen bg-background pb-12">
       <div className="max-w-lg mx-auto px-4 pt-6 space-y-6">
@@ -159,8 +338,11 @@ const Annales = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(annaleSource ? "/annales" : "/dashboard")}
-            aria-label="Retour au tableau de bord"
+            onClick={() => {
+              if (annaleSource) setExamStep("briefing");
+              else navigate("/dashboard");
+            }}
+            aria-label="Retour"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
@@ -169,13 +351,12 @@ const Annales = () => {
               {annaleSource || (matiereFilter ? `Annales ${matiereFilter}` : "Annales du brevet")}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {annaleSource
-                ? "Exercices du sujet sélectionné"
-                : "Entraîne-toi sur de vrais sujets"}
+              {annaleSource ? "Corrections exercice par exercice" : "Entraîne-toi sur de vrais sujets"}
             </p>
           </div>
         </div>
 
+        {/* Liste matières (page principale) */}
         {!annaleSource && (
           <div className="space-y-6">
             {grouped.length === 0 && (
@@ -232,11 +413,9 @@ const Annales = () => {
           </div>
         )}
 
+        {/* Exercices (écran 3) */}
         {annaleSource && (
           <div className="space-y-3">
-            <p className="text-xs text-muted-foreground italic line-clamp-2">
-              {annaleSource}
-            </p>
             {(() => {
               const likePattern = getBlocIdLikePattern(matiereFilter);
               const blocPrefix = likePattern?.replace("%", "");
@@ -247,8 +426,7 @@ const Annales = () => {
                     (!blocPrefix || e.bloc_id?.startsWith(blocPrefix)),
                 )
                 .sort((a, b) => (a.bloc_id || "").localeCompare(b.bloc_id || ""));
-              console.log("Filtre annale:", annaleSource);
-              console.log("Nb exercices:", filtered.length);
+
               if (filtered.length === 0) {
                 return (
                   <p className="text-center text-muted-foreground text-sm py-12">
@@ -257,44 +435,44 @@ const Annales = () => {
                 );
               }
               return filtered.map((ex, idx) => {
-              const bloc = ex.bloc_id ? blocsMap.get(ex.bloc_id) : null;
-              const done = ex.bloc_id ? completedBlocs.has(ex.bloc_id) : false;
-              return (
-                <Card key={ex.id}>
-                  <CardContent className="p-4 space-y-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs text-muted-foreground mb-1">
-                          Exercice {idx + 1}
-                        </p>
-                        <p className="font-medium text-sm leading-snug">
-                          {ex.titre || bloc?.titre || ex.bloc_id || "Exercice"}
-                        </p>
+                const bloc = ex.bloc_id ? blocsMap.get(ex.bloc_id) : null;
+                const done = ex.bloc_id ? completedBlocs.has(ex.bloc_id) : false;
+                return (
+                  <Card key={ex.id}>
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-muted-foreground mb-1">
+                            Exercice {idx + 1}
+                          </p>
+                          <p className="font-medium text-sm leading-snug">
+                            {ex.titre || bloc?.titre || ex.bloc_id || "Exercice"}
+                          </p>
+                        </div>
+                        {done ? (
+                          <Badge className="bg-emerald-500 text-white shrink-0">
+                            <CheckCircle2 className="w-3 h-3 mr-1" /> Fait
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="shrink-0">À faire</Badge>
+                        )}
                       </div>
-                      {done ? (
-                        <Badge className="bg-emerald-500 text-white shrink-0">
-                          <CheckCircle2 className="w-3 h-3 mr-1" /> Fait
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="shrink-0">À faire</Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-end">
-                      {ex.bloc_id && (
-                        <Button
-                          size="sm"
-                          className="h-8 text-xs rounded-lg sprint-gradient text-primary-foreground"
-                          onClick={() =>
-                            navigate(`/work?bloc_id=${encodeURIComponent(ex.bloc_id!)}&annale_source=${encodeURIComponent(annaleSource)}`)
-                          }
-                        >
-                          <Play className="w-3 h-3 mr-1" /> Commencer
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
+                      <div className="flex items-center justify-end">
+                        {ex.bloc_id && (
+                          <Button
+                            size="sm"
+                            className="h-8 text-xs rounded-lg sprint-gradient text-primary-foreground"
+                            onClick={() =>
+                              navigate(`/work?bloc_id=${encodeURIComponent(ex.bloc_id!)}&annale_source=${encodeURIComponent(annaleSource)}`)
+                            }
+                          >
+                            <Play className="w-3 h-3 mr-1" /> Commencer
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
               });
             })()}
           </div>
