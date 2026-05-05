@@ -33,6 +33,11 @@ interface QcmQuestion {
 
 const LETTERS = ["A", "B", "C", "D"];
 
+const storageKey = (userId: string) => {
+  const today = new Date().toISOString().split("T")[0];
+  return `sprint-qcm:${userId}:${today}`;
+};
+
 const shuffle = <T,>(arr: T[]): T[] => {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -54,7 +59,18 @@ const Qcm = () => {
   const [finished, setFinished] = useState(false);
   const [completionWritten, setCompletionWritten] = useState(false);
 
-  const loadQcm = async () => {
+  const persist = (patch: Partial<{ questions: QcmQuestion[]; current: number; answers: number[]; finished: boolean; completionWritten: boolean }>) => {
+    if (!user) return;
+    try {
+      const key = storageKey(user.id);
+      const prev = JSON.parse(localStorage.getItem(key) || "{}");
+      localStorage.setItem(key, JSON.stringify({ ...prev, ...patch }));
+    } catch (e) {
+      console.error("[Qcm] persist failed:", e);
+    }
+  };
+
+  const loadQcm = async (force = false) => {
     if (!user) return;
     setLoading(true);
     setQuestions(null);
@@ -62,6 +78,9 @@ const Qcm = () => {
     setAnswers([]);
     setFinished(false);
     setCompletionWritten(false);
+    if (force) {
+      try { localStorage.removeItem(storageKey(user.id)); } catch { /* noop */ }
+    }
 
     try {
       const { data, error } = await supabase
@@ -92,6 +111,7 @@ const Qcm = () => {
       });
 
       setQuestions(picked);
+      persist({ questions: picked, current: 0, answers: [], finished: false, completionWritten: false });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Erreur de chargement";
       toast({ title: "Impossible de charger le QCM", description: msg, variant: "destructive" });
@@ -104,6 +124,29 @@ const Qcm = () => {
     if (!user) {
       navigate("/login");
       return;
+    }
+    try {
+      const raw = localStorage.getItem(storageKey(user.id));
+      if (raw) {
+        const saved = JSON.parse(raw) as {
+          questions?: QcmQuestion[];
+          current?: number;
+          answers?: number[];
+          finished?: boolean;
+          completionWritten?: boolean;
+        };
+        if (saved.questions && Array.isArray(saved.questions) && saved.questions.length > 0) {
+          setQuestions(saved.questions);
+          setCurrent(saved.current ?? 0);
+          setAnswers(saved.answers ?? []);
+          setFinished(!!saved.finished);
+          setCompletionWritten(!!saved.completionWritten);
+          setLoading(false);
+          return;
+        }
+      }
+    } catch (e) {
+      console.error("[Qcm] restore failed:", e);
     }
     loadQcm();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -151,6 +194,7 @@ const Qcm = () => {
     next[current] = idx;
     setAnswers(next);
     saveAnswer(questions[current], idx);
+    persist({ answers: next });
   };
 
   const writeCompletion = async () => {
@@ -162,6 +206,7 @@ const Qcm = () => {
         { onConflict: "user_id,bloc_id,date_completion" },
       );
       setCompletionWritten(true);
+      persist({ completionWritten: true });
     } catch (e) {
       console.error("[Qcm] completion write failed:", e);
     }
@@ -170,9 +215,12 @@ const Qcm = () => {
   const handleNext = () => {
     if (!questions) return;
     if (current + 1 < questions.length) {
-      setCurrent(current + 1);
+      const nextIdx = current + 1;
+      setCurrent(nextIdx);
+      persist({ current: nextIdx });
     } else {
       setFinished(true);
+      persist({ finished: true });
       writeCompletion();
     }
   };
@@ -261,7 +309,7 @@ const Qcm = () => {
           </div>
 
           <div className="flex gap-3">
-            <Button variant="outline" className="flex-1" onClick={() => loadQcm()}>
+            <Button variant="outline" className="flex-1" onClick={() => loadQcm(true)}>
               <RefreshCw className="w-4 h-4 mr-2" /> Nouveau QCM
             </Button>
             <Button className="flex-1 sprint-gradient text-primary-foreground" onClick={() => navigate("/dashboard")}>
