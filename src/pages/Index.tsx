@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2, Rocket } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, setRememberMe } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
@@ -17,6 +19,7 @@ const Index = () => {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
+  const [rememberMe, setRememberMeState] = useState(true);
 
   const [regEmail, setRegEmail] = useState("");
   const [regEmailConfirm, setRegEmailConfirm] = useState("");
@@ -35,6 +38,7 @@ const Index = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginLoading(true);
+    setRememberMe(rememberMe);
     const { error } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPassword });
     if (error) {
       toast.error("Erreur", { description: error.message });
@@ -126,6 +130,16 @@ const Index = () => {
                 className="h-12 rounded-xl"
                 required
               />
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="remember-me"
+                  checked={rememberMe}
+                  onCheckedChange={(v) => setRememberMeState(v === true)}
+                />
+                <Label htmlFor="remember-me" className="text-sm font-normal cursor-pointer">
+                  Rester connecté
+                </Label>
+              </div>
               <Button
                 type="submit"
                 disabled={loginLoading}
