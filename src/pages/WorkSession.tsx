@@ -421,29 +421,11 @@ const WorkSession = () => {
       // Déjà généré précédemment : on réutilise pour éviter de régénérer un autre énoncé
       setCorrigeIsAI(true);
     } else {
-      // Fallback : générer un corrigé générique via l'ancienne function
-      setCorrigeIsAI(true);
-      setCorrigeLoading(true);
-      try {
-        const { data, error } = await supabase.functions.invoke("generate-corrige", {
-          body: {
-            titre: bloc?.titre,
-            matiere: bloc?.matiere,
-            objectifs: bloc?.objectifs_pedagogiques,
-            etapes: methodeSteps.join("\n"),
-          },
-        });
-        if (error) throw error;
-        const generated = data?.corrige || "Impossible de générer le corrigé.";
-        setCorrigeContent(generated);
-        // Cache pour éviter qu'un second clic ne génère un nouvel exercice différent
-        if (data?.corrige) setAiCorrigeCache(generated);
-      } catch (e) {
-        console.error("[WorkSession] erreur génération corrigé:", e);
-        setCorrigeContent("Désolé, impossible de générer le corrigé pour le moment. Réessaye plus tard.");
-      } finally {
-        setCorrigeLoading(false);
-      }
+
+      setCorrigeContent("Le corrigé de cet exercice n'est pas encore disponible. Compare ta démarche avec la méthode pas-à-pas.");
+
+      setCorrigeIsAI(false);
+
     }
   }, [user, blocId, exercise, bloc, methodeSteps, isAiMode, aiCorrigeCache, corrigeContent, sessionId, elapsedSeconds]);
 
