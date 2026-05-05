@@ -648,12 +648,12 @@ const Dashboard = () => {
             <CardContent className="p-5 flex flex-col flex-1 space-y-4">
               <div className="flex items-center gap-2">
                 <span className="text-xl">📄</span>
-                <h2 className="text-base font-semibold">Passe un vrai sujet</h2>
+                <h2 className="text-base font-semibold">Entraîne toi sur un vrai sujet !</h2>
               </div>
               <p className="text-xs text-muted-foreground -mt-2">Annales officielles DNB 2023 · 2024 · 2025</p>
 
               {/* Sélecteur matière */}
-              <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-col gap-2">
                 {ANNALES_MATIERES.map((matiere) => {
                   const style = MATIERE_STYLES[matiere] || MATIERE_STYLES["Maths"];
                   const count = annalesParMatiere.get(matiere)?.length || 0;
@@ -662,10 +662,10 @@ const Dashboard = () => {
                     <button
                       key={matiere}
                       onClick={() => setSelectedMatiere(isSelected ? null : matiere)}
-                      className={`w-full text-left rounded-xl border p-3 transition-all ${isSelected ? "border-primary bg-primary/10" : `${style.border} ${style.bg} ${style.hover}`}`}
+                      className={`w-full text-left rounded-xl border p-3 transition-all flex items-center justify-between gap-2 ${isSelected ? "border-primary bg-primary/10" : `${style.border} ${style.bg} ${style.hover}`}`}
                     >
                       <p className={`font-semibold text-sm ${isSelected ? "text-primary" : style.text}`}>{matiere}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{count} sujets</p>
+                      <p className="text-xs text-muted-foreground">{count} sujets</p>
                     </button>
                   );
                 })}
