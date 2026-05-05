@@ -124,10 +124,23 @@ const Annales = () => {
       // Charger les métadonnées PDF de l'annale
       if (annaleSource && matiereFilter && exData && exData.length > 0) {
         const firstEx = exData[0];
+        const MATIERE_TO_ANNALE: Record<string, string> = {
+          maths: "Maths",
+          français: "Français",
+          francais: "Français",
+          histoire: "Histoire-Géo",
+          géographie: "Histoire-Géo",
+          geographie: "Histoire-Géo",
+          emc: "Histoire-Géo",
+          physique: "Sciences",
+          svt: "Sciences",
+          techno: "Sciences",
+        };
+        const annaleMatiere = MATIERE_TO_ANNALE[matiereFilter.toLowerCase()] ?? matiereFilter;
         const { data: annData } = await supabase
           .from("annales")
           .select("*")
-          .eq("matiere", matiereFilter)
+          .eq("matiere", annaleMatiere)
           .eq("annee", firstEx.annee || 0)
           .eq("session", firstEx.session || "")
           .limit(1)
