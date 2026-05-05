@@ -45,6 +45,12 @@ interface CompletionRow {
   completed: boolean;
 }
 
+interface QcmResultRow {
+  bloc_id: string | null;
+  est_correcte: boolean | null;
+  prochaine_revision: string | null;
+}
+
 const ProgressPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -52,19 +58,22 @@ const ProgressPage = () => {
   const [blocs, setBlocs] = useState<BlocExamen[]>([]);
   const [completions, setCompletions] = useState<CompletionRow[]>([]);
   const [examDate, setExamDate] = useState<string | null>(null);
+  const [qcmResults, setQcmResults] = useState<QcmResultRow[]>([]);
   const { trophies, stats: trophyStats, loading: trophyLoading } = useTrophies();
 
   useEffect(() => {
     if (!user) { navigate("/login"); return; }
     const load = async () => {
-      const [blocsRes, compRes, userRes] = await Promise.all([
+      const [blocsRes, compRes, userRes, qcmRes] = await Promise.all([
         supabase.from("blocs_examen").select("id, matiere, titre"),
         supabase.from("completions").select("bloc_id, date_completion, completed").eq("user_id", user.id).eq("completed", true),
         supabase.from("users").select("date_examen").eq("id", user.id).maybeSingle(),
+        supabase.from("qcm_results").select("bloc_id, est_correcte, prochaine_revision").eq("user_id", user.id),
       ]);
       if (blocsRes.data) setBlocs(blocsRes.data);
       if (compRes.data) setCompletions(compRes.data);
       if (userRes.data) setExamDate(userRes.data.date_examen);
+      if (qcmRes.data) setQcmResults(qcmRes.data as QcmResultRow[]);
       setLoading(false);
     };
     load();
@@ -117,6 +126,31 @@ const ProgressPage = () => {
       .map(([name, { total, done }]) => ({ name, total, done, percent: Math.round((done / total) * 100) }))
       .sort((a, b) => b.percent - a.percent);
   }, [blocs, completedBlocIds]);
+
+  // Top 5 blocs avec le plus d'erreurs au QCM
+  const blocsByIdMap = useMemo(() => {
+    const m = new Map<string, BlocExamen>();
+    for (const b of blocs) m.set(b.id, b);
+    return m;
+  }, [blocs]);
+
+  const blocsAretravailler = useMemo(() => {
+    const stats = new Map<string, { errors: number; nextRevision: string | null }>();
+    for (const r of qcmResults) {
+      if (!r.bloc_id || r.est_correcte !== false) continue;
+      const cur = stats.get(r.bloc_id) || { errors: 0, nextRevision: null };
+      cur.errors += 1;
+      if (r.prochaine_revision && (!cur.nextRevision || r.prochaine_revision > cur.nextRevision)) {
+        cur.nextRevision = r.prochaine_revision;
+      }
+      stats.set(r.bloc_id, cur);
+    }
+    return Array.from(stats.entries())
+      .map(([blocId, s]) => ({ bloc: blocsByIdMap.get(blocId), blocId, ...s }))
+      .filter((x) => x.bloc)
+      .sort((a, b) => b.errors - a.errors)
+      .slice(0, 5);
+  }, [qcmResults, blocsByIdMap]);
 
   // Calendar grid (8 weeks)
   const calendarData = useMemo(() => {
@@ -237,6 +271,35 @@ const ProgressPage = () => {
         </section>
 
         {/* SECTION 3 — Calendrier */}
+        {blocsAretravailler.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold">Points à retravailler 🎯</h2>
+            <div className="space-y-2">
+              {blocsAretravailler.map(({ blocId, bloc, errors, nextRevision }) => (
+                <Card key={blocId}>
+                  <CardContent className="p-3 flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${SUBJECT_COLORS[bloc!.matiere] || "bg-muted"}`} />
+                        <p className="text-sm font-medium truncate">{bloc!.titre}</p>
+                      </div>
+                      {nextRevision && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Prochaine révision : {new Date(nextRevision).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-lg font-bold text-red-600 leading-none">{errors}</p>
+                      <p className="text-[10px] text-muted-foreground">erreur{errors > 1 ? "s" : ""}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+        )}
+
         {calendarData.length > 0 && (
           <section className="space-y-3">
             <h2 className="text-lg font-semibold">Calendrier du sprint</h2>
