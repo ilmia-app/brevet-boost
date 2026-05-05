@@ -865,17 +865,6 @@ const WorkSession = () => {
         )}
         </div>
 
-        {/* Consigne élève */}
-        {bloc.consigne_eleve && (
-          <section className="space-y-3 max-w-lg mx-auto">
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-sm leading-relaxed">{bloc.consigne_eleve}</p>
-              </CardContent>
-            </Card>
-          </section>
-        )}
-
         {/* Validation */}
         <section className="pb-4 max-w-lg mx-auto">
           <Button
