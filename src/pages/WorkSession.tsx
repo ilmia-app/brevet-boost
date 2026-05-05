@@ -417,6 +417,9 @@ const WorkSession = () => {
       // Corrigé officiel
       setCorrigeContent(exercise.corrige);
       setCorrigeIsAI(false);
+    } else if (corrigeContent) {
+      // Déjà généré précédemment : on réutilise pour éviter de régénérer un autre énoncé
+      setCorrigeIsAI(true);
     } else {
       // Fallback : générer un corrigé générique via l'ancienne function
       setCorrigeIsAI(true);
@@ -431,7 +434,10 @@ const WorkSession = () => {
           },
         });
         if (error) throw error;
-        setCorrigeContent(data?.corrige || "Impossible de générer le corrigé.");
+        const generated = data?.corrige || "Impossible de générer le corrigé.";
+        setCorrigeContent(generated);
+        // Cache pour éviter qu'un second clic ne génère un nouvel exercice différent
+        if (data?.corrige) setAiCorrigeCache(generated);
       } catch (e) {
         console.error("[WorkSession] erreur génération corrigé:", e);
         setCorrigeContent("Désolé, impossible de générer le corrigé pour le moment. Réessaye plus tard.");
@@ -439,7 +445,7 @@ const WorkSession = () => {
         setCorrigeLoading(false);
       }
     }
-  }, [user, blocId, exercise, bloc, methodeSteps, isAiMode, aiCorrigeCache, sessionId, elapsedSeconds]);
+  }, [user, blocId, exercise, bloc, methodeSteps, isAiMode, aiCorrigeCache, corrigeContent, sessionId, elapsedSeconds]);
 
   const handleAutoEvaluation = useCallback(
     async (evaluation: "reussi" | "partiel" | "echec") => {
