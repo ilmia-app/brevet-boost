@@ -324,6 +324,47 @@ const ProgressPage = () => {
           </section>
         )}
 
+        {/* SECTION — À réviser aujourd'hui */}
+        {qcmResults.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold">À réviser aujourd'hui</h2>
+            {aReviserAujourdhui.length === 0 ? (
+              <Card>
+                <CardContent className="p-4 text-center text-sm text-muted-foreground">
+                  Aucune révision prévue aujourd'hui 🎉 Reviens demain.
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-2">
+                {aReviserAujourdhui.map((r, idx) => {
+                  const matCode = (r.bloc_id || "").slice(0, 3).toUpperCase();
+                  const badgeColor = SUBJECT_BADGE_COLORS[matCode] || "bg-muted text-foreground";
+                  return (
+                    <Card key={idx}>
+                      <CardContent className="p-3 space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm font-medium flex-1">{r.question}</p>
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${badgeColor}`}>
+                            {r.bloc_id}
+                          </span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => navigate(`/qcm?bloc=${r.bloc_id}`)}
+                        >
+                          Réviser ce bloc
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
+
         {calendarData.length > 0 && (
           <section className="space-y-3">
             <h2 className="text-lg font-semibold">Calendrier du sprint</h2>
