@@ -58,6 +58,7 @@ const Qcm = () => {
   const [answers, setAnswers] = useState<number[]>([]);
   const [finished, setFinished] = useState(false);
   const [completionWritten, setCompletionWritten] = useState(false);
+  const [pendingChoice, setPendingChoice] = useState<number | null>(null);
 
   const persist = (patch: Partial<{ questions: QcmQuestion[]; current: number; answers: number[]; finished: boolean; completionWritten: boolean }>) => {
     if (!user) return;
@@ -190,10 +191,16 @@ const Qcm = () => {
   const handleSelect = (idx: number) => {
     if (!questions) return;
     if (answers[current] !== undefined) return;
+    setPendingChoice(idx);
+  };
+
+  const handleValidate = () => {
+    if (!questions || pendingChoice === null) return;
+    if (answers[current] !== undefined) return;
     const next = [...answers];
-    next[current] = idx;
+    next[current] = pendingChoice;
     setAnswers(next);
-    saveAnswer(questions[current], idx);
+    saveAnswer(questions[current], pendingChoice);
     persist({ answers: next });
   };
 
@@ -223,6 +230,7 @@ const Qcm = () => {
       persist({ finished: true });
       writeCompletion();
     }
+    setPendingChoice(null);
   };
 
   if (loading) {
@@ -343,12 +351,12 @@ const Qcm = () => {
             <p className="text-base font-medium leading-snug">{q.question}</p>
             <div className="space-y-2">
               {q.choix.map((c, idx) => {
-                const isChosen = chosen === idx;
+                const isChosen = answered ? chosen === idx : pendingChoice === idx;
                 const isCorrect = idx === q.bonne_reponse;
                 let cls = "border-border bg-card hover:bg-accent/30";
                 if (answered) {
                   if (isCorrect) cls = "border-secondary/60 bg-secondary/10";
-                  else if (isChosen) cls = "border-destructive/60 bg-destructive/10";
+                  else if (chosen === idx) cls = "border-destructive/60 bg-destructive/10";
                   else cls = "border-border bg-card opacity-70";
                 } else if (isChosen) {
                   cls = "border-primary bg-accent/40";
@@ -370,7 +378,7 @@ const Qcm = () => {
                     {answered && isCorrect && (
                       <CheckCircle2 className="w-5 h-5 text-secondary shrink-0" />
                     )}
-                    {answered && isChosen && !isCorrect && (
+                    {answered && chosen === idx && !isCorrect && (
                       <XCircle className="w-5 h-5 text-destructive shrink-0" />
                     )}
                   </button>
@@ -386,13 +394,22 @@ const Qcm = () => {
           </CardContent>
         </Card>
 
-        <Button
-          className="w-full sprint-gradient text-primary-foreground"
-          disabled={!answered}
-          onClick={handleNext}
-        >
-          {current + 1 < total ? "Question suivante" : "Voir mon score"}
-        </Button>
+        {answered ? (
+          <Button
+            className="w-full sprint-gradient text-primary-foreground"
+            onClick={handleNext}
+          >
+            {current + 1 < total ? "Question suivante" : "Voir mon score"}
+          </Button>
+        ) : (
+          <Button
+            className="w-full sprint-gradient text-primary-foreground"
+            disabled={pendingChoice === null}
+            onClick={handleValidate}
+          >
+            Valider ma réponse
+          </Button>
+        )}
       </div>
     </div>
   );
