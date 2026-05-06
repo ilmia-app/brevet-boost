@@ -49,6 +49,7 @@ interface QcmResultRow {
   bloc_id: string | null;
   est_correcte: boolean | null;
   prochaine_revision: string | null;
+  question?: string | null;
 }
 
 const ProgressPage = () => {
@@ -68,7 +69,7 @@ const ProgressPage = () => {
         supabase.from("blocs_examen").select("id, matiere, titre"),
         supabase.from("completions").select("bloc_id, date_completion, completed").eq("user_id", user.id).eq("completed", true),
         supabase.from("users").select("date_examen").eq("id", user.id).maybeSingle(),
-        supabase.from("qcm_results").select("bloc_id, est_correcte, prochaine_revision").eq("user_id", user.id),
+        supabase.from("qcm_results").select("bloc_id, est_correcte, prochaine_revision, question").eq("user_id", user.id),
       ]);
       if (blocsRes.data) setBlocs(blocsRes.data);
       if (compRes.data) setCompletions(compRes.data);
@@ -151,6 +152,29 @@ const ProgressPage = () => {
       .sort((a, b) => b.errors - a.errors)
       .slice(0, 5);
   }, [qcmResults, blocsByIdMap]);
+
+  // Questions à réviser aujourd'hui
+  const SUBJECT_BADGE_COLORS: Record<string, string> = {
+    MAT: "bg-blue-500 text-white",
+    FRA: "bg-green-500 text-white",
+    HIS: "bg-orange-500 text-white",
+    GEO: "bg-orange-500 text-white",
+    EMC: "bg-red-500 text-white",
+    PHY: "bg-purple-500 text-white",
+    SVT: "bg-green-700 text-white",
+    TEC: "bg-gray-500 text-white",
+  };
+
+  const aReviserAujourdhui = useMemo(() => {
+    const today = new Date().toISOString().split("T")[0];
+    return qcmResults.filter(
+      (r) =>
+        r.est_correcte === false &&
+        r.prochaine_revision &&
+        r.prochaine_revision <= today &&
+        r.question
+    );
+  }, [qcmResults]);
 
   // Calendar grid (8 weeks)
   const calendarData = useMemo(() => {
@@ -297,6 +321,47 @@ const ProgressPage = () => {
                 </Card>
               ))}
             </div>
+          </section>
+        )}
+
+        {/* SECTION — À réviser aujourd'hui */}
+        {qcmResults.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold">À réviser aujourd'hui</h2>
+            {aReviserAujourdhui.length === 0 ? (
+              <Card>
+                <CardContent className="p-4 text-center text-sm text-muted-foreground">
+                  Aucune révision prévue aujourd'hui 🎉 Reviens demain.
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-2">
+                {aReviserAujourdhui.map((r, idx) => {
+                  const matCode = (r.bloc_id || "").slice(0, 3).toUpperCase();
+                  const badgeColor = SUBJECT_BADGE_COLORS[matCode] || "bg-muted text-foreground";
+                  return (
+                    <Card key={idx}>
+                      <CardContent className="p-3 space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm font-medium flex-1">{r.question}</p>
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${badgeColor}`}>
+                            {r.bloc_id}
+                          </span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => navigate(`/qcm?bloc=${r.bloc_id}`)}
+                        >
+                          Réviser ce bloc
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </section>
         )}
 
