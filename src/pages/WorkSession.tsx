@@ -56,6 +56,7 @@ interface Exercise {
   annale_source: string | null;
   graphique?: GraphiqueData | null;
   questions?: string[] | null;
+  piege_classique?: string | null;
 }
 
 const WorkSession = () => {
@@ -232,7 +233,7 @@ const WorkSession = () => {
       } else {
         let exerciseQuery = supabase
           .from("exercices")
-          .select("id, enonce, corrige, annale_source")
+          .select("id, enonce, corrige, annale_source, piege_classique")
           .eq("bloc_id", blocId);
 
         if (annaleSource) {
@@ -892,6 +893,19 @@ const WorkSession = () => {
                   <p className="mt-4 text-xs text-muted-foreground italic text-center border-t pt-3">
                     Exemple de corrigé type — compare ta démarche avec cet exemple
                   </p>
+                )}
+                {!corrigeLoading && exercise?.piege_classique && (
+                  <div
+                    className="mt-4 rounded-md p-4 border-l-4"
+                    style={{ backgroundColor: "#FFF7ED", borderLeftColor: "#F97316" }}
+                  >
+                    <p className="font-bold text-sm text-foreground flex items-center gap-2">
+                      <span>⚠️</span> Le piège classique
+                    </p>
+                    <p className="mt-2 text-sm text-foreground/90 leading-relaxed">
+                      {exercise.piege_classique}
+                    </p>
+                  </div>
                 )}
               </>
             )}
