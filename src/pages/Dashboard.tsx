@@ -21,6 +21,7 @@ import {
   ListChecks,
   FileText,
   ChevronRight,
+  BookOpen,
 } from "lucide-react";
 import EndOfDayModal from "@/components/dashboard/EndOfDayModal";
 import TrophyWatcher from "@/components/trophies/TrophyWatcher";
@@ -483,6 +484,9 @@ const Dashboard = () => {
             <div className="flex items-center gap-1">
               <Button variant="ghost" size="icon" onClick={() => navigate("/progress")}>
                 <BarChart3 className="w-5 h-5 text-primary" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => navigate("/bibliotheque")}>
+                <BookOpen className="w-5 h-5 text-primary" />
               </Button>
               <Button variant="ghost" size="icon" onClick={() => navigate("/trophees")}>
                 <Trophy className="w-5 h-5 text-primary" />

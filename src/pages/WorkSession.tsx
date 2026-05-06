@@ -65,6 +65,7 @@ const WorkSession = () => {
   const [searchParams] = useSearchParams();
   const blocId = searchParams.get("bloc_id") || searchParams.get("bloc") || "";
   const annaleSource = searchParams.get("annale_source") || "";
+  const exerciseId = searchParams.get("exercise_id") || "";
   const mode = searchParams.get("mode") || "";
   const initialSessionId = searchParams.get("session_id") || "";
   const isAiMode = mode === "ai";
@@ -236,7 +237,9 @@ const WorkSession = () => {
           .select("id, enonce, corrige, annale_source, piege_classique")
           .eq("bloc_id", blocId);
 
-        if (annaleSource) {
+        if (exerciseId) {
+          exerciseQuery = exerciseQuery.eq("id", exerciseId);
+        } else if (annaleSource) {
           exerciseQuery = exerciseQuery.eq("annale_source", annaleSource);
         }
 
