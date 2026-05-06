@@ -737,8 +737,19 @@ const Dashboard = () => {
         open={endOfDayOpen}
         onClose={() => {
           setEndOfDayOpen(false);
-          // Ouvrir le QCM popup après fermeture du modal
-          setTimeout(() => setQcmPopupOpen(true), 300);
+          // Lancer automatiquement le QCM après fermeture du modal
+          setTimeout(() => {
+            navigate("/qcm", {
+              state: {
+                blocs: dailyTasks.map((t) => ({
+                  id: t.bloc.id,
+                  matiere: t.bloc.matiere,
+                  titre: t.bloc.titre,
+                  theme: t.bloc.theme,
+                })),
+              },
+            });
+          }, 300);
         }}
         message={endOfDayMessage}
         taux={endOfDayTaux}
