@@ -12,7 +12,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft, Play, Pause, CheckCircle2, Sparkles, Loader2, RefreshCw } from "lucide-react";
@@ -799,7 +798,6 @@ const WorkSession = () => {
             <p className="text-xs text-muted-foreground">
               Clique sur une étape pour comprendre son but.
             </p>
-            <Progress value={((currentStep + 1) / methodeSteps.length) * 100} className="h-2 rounded-full" />
             <div className="space-y-2">
               {methodeSteps.map((step, i) => (
                 <Card

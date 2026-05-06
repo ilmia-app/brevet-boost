@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Progress as ProgressBar } from "@/components/ui/progress";
 import { useTrophies } from "@/hooks/useTrophies";
 import TrophyCard from "@/components/trophies/TrophyCard";
 
@@ -51,7 +50,6 @@ const TrophiesPage = () => {
               </p>
             </div>
           </div>
-          <ProgressBar value={pct} className="h-2.5 rounded-full" />
         </section>
 
         {CATEGORIES.map((cat) => {

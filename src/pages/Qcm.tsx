@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -285,7 +284,6 @@ const Qcm = () => {
                 <p className="text-4xl font-bold">{score} / {total}</p>
                 <p className="text-sm text-muted-foreground mt-1">{message}</p>
               </div>
-              <Progress value={ratio * 100} className="h-2.5 rounded-full" />
             </CardContent>
           </Card>
 
@@ -343,8 +341,6 @@ const Qcm = () => {
           <h1 className="text-xl font-bold flex-1">Sprint QCM</h1>
           <span className="text-sm text-muted-foreground">{current + 1} / {total}</span>
         </div>
-
-        <Progress value={progressPct} className="h-2 rounded-full" />
 
         <Card className="rounded-2xl">
           <CardContent className="p-5 space-y-4">

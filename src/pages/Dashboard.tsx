@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Progress } from "@/components/ui/progress";
 import {
   Play,
   MessageCircle,
@@ -499,13 +498,6 @@ const Dashboard = () => {
           <p className="text-muted-foreground text-sm">
             J-{daysUntilExam} · Phase {currentPhase} · Semaine {currentWeek} du sprint
           </p>
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Progression du sprint</span>
-              <span>{progressPercent}%</span>
-            </div>
-            <Progress value={progressPercent} className="h-2.5 rounded-full" />
-          </div>
         </section>
 
         {/* Bandeaux phase */}
