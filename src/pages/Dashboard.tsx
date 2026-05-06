@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   Play,
   MessageCircle,
@@ -137,9 +136,6 @@ const Dashboard = () => {
   // Annales
   const [annales, setAnnales] = useState<AnnaleItem[]>([]);
   const [selectedMatiere, setSelectedMatiere] = useState<string | null>(null);
-
-  // QCM popup (après EndOfDayModal)
-  const [qcmPopupOpen, setQcmPopupOpen] = useState(false);
 
   // Profile
   useEffect(() => {
@@ -457,6 +453,16 @@ const Dashboard = () => {
   const allDone = dailyTasks.length > 0 && dailyTasks.every((t) => completedTasks.has(t.bloc.id));
   const completedCount = dailyTasks.filter((t) => completedTasks.has(t.bloc.id)).length;
 
+  // Auto-déclenche la fin de journée quand toutes les tâches sont terminées
+  useEffect(() => {
+    if (!user || !allDone || endingDay) return;
+    const today = new Date().toISOString().split("T")[0];
+    const key = `end-of-day-triggered:${user.id}:${today}`;
+    if (localStorage.getItem(key) === "1") return;
+    localStorage.setItem(key, "1");
+    handleEndDay();
+  }, [allDone, endingDay, user, handleEndDay]);
+
   if (!profile || loading)
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -608,20 +614,6 @@ const Dashboard = () => {
                 </p>
               )}
 
-              {dailyTasks.length > 0 && allDone && (
-                <Button
-                  onClick={handleEndDay}
-                  disabled={endingDay}
-                  className="w-full rounded-xl h-10 text-sm font-medium sprint-gradient text-primary-foreground animate-in fade-in duration-500"
-                >
-                  {endingDay ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                  )}
-                  Terminer ma journée
-                </Button>
-              )}
 
               <div className="pt-2 border-t space-y-2">
                 <p className="text-xs font-medium text-muted-foreground">Progression de la semaine</p>
@@ -741,53 +733,25 @@ const Dashboard = () => {
         open={endOfDayOpen}
         onClose={() => {
           setEndOfDayOpen(false);
-          // Ouvrir le QCM popup après fermeture du modal
-          setTimeout(() => setQcmPopupOpen(true), 300);
+          // Lancer automatiquement le QCM après fermeture du modal
+          setTimeout(() => {
+            navigate("/qcm", {
+              state: {
+                blocs: dailyTasks.map((t) => ({
+                  id: t.bloc.id,
+                  matiere: t.bloc.matiere,
+                  titre: t.bloc.titre,
+                  theme: t.bloc.theme,
+                })),
+              },
+            });
+          }, 300);
         }}
         message={endOfDayMessage}
         taux={endOfDayTaux}
         mode={endOfDayMode}
       />
 
-      {/* QCM Popup */}
-      <Dialog open={qcmPopupOpen} onOpenChange={setQcmPopupOpen}>
-        <DialogContent className="max-w-sm rounded-2xl p-6 space-y-4">
-          <div className="text-center space-y-2">
-            <div className="text-4xl">📝</div>
-            <h3 className="text-lg font-bold">Sprint QCM</h3>
-            <p className="text-sm text-muted-foreground">
-              5 questions de mémorisation pour ancrer ce que tu viens d'apprendre.
-            </p>
-          </div>
-          <div className="space-y-2">
-            <Button
-              className="w-full sprint-gradient text-primary-foreground rounded-xl h-11"
-              onClick={() => {
-                setQcmPopupOpen(false);
-                navigate("/qcm", {
-                  state: {
-                    blocs: dailyTasks.map((t) => ({
-                      id: t.bloc.id,
-                      matiere: t.bloc.matiere,
-                      titre: t.bloc.titre,
-                      theme: t.bloc.theme,
-                    })),
-                  },
-                });
-              }}
-            >
-              <Play className="w-4 h-4 mr-2" /> Lancer le QCM
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full rounded-xl h-10 text-sm text-muted-foreground"
-              onClick={() => setQcmPopupOpen(false)}
-            >
-              Pas maintenant
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
