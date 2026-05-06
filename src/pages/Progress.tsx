@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress as ProgressBar } from "@/components/ui/progress";
 import { Loader2, ArrowLeft, Calendar, CheckCircle2, Flame, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -244,7 +243,6 @@ const ProgressPage = () => {
               <span>Progression globale</span>
               <span className="font-semibold text-foreground">{globalPercent}%</span>
             </div>
-            <ProgressBar value={globalPercent} className="h-3 rounded-full" />
           </div>
 
           <div className="grid grid-cols-3 gap-3">
@@ -283,12 +281,6 @@ const ProgressPage = () => {
                   <span className="text-sm font-medium">{name}</span>
                 </div>
                 <span className="text-xs text-muted-foreground">{done}/{total} · {percent}%</span>
-              </div>
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all ${SUBJECT_BAR_COLORS[name] || "bg-primary"}`}
-                  style={{ width: `${percent}%` }}
-                />
               </div>
             </div>
           ))}

@@ -10,7 +10,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import ProgressBar from "@/components/onboarding/ProgressBar";
 import SelectableCard from "@/components/onboarding/SelectableCard";
 import SubjectChip from "@/components/onboarding/SubjectChip";
 import { Rocket, ArrowRight, ArrowLeft, Sparkles, Mail, User, Calendar, Clock, GaugeCircle, BookOpen, AlertCircle, CheckCircle2 } from "lucide-react";
@@ -174,8 +173,6 @@ const Onboarding = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {step > 1 && <ProgressBar currentStep={step} totalSteps={TOTAL_STEPS} />}
-
       <div className="flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-md">
 
