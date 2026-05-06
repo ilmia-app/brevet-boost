@@ -22,6 +22,7 @@ const History = lazy(() => import("./pages/History"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Trophies = lazy(() => import("./pages/Trophies"));
 const Qcm = lazy(() => import("./pages/Qcm"));
+const Bibliotheque = lazy(() => import("./pages/Bibliotheque"));
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
             <Route path="/trophees" element={<ProtectedRoute><Trophies /></ProtectedRoute>} />
             <Route path="/qcm" element={<ProtectedRoute><Qcm /></ProtectedRoute>} />
+            <Route path="/bibliotheque" element={<ProtectedRoute><Bibliotheque /></ProtectedRoute>} />
             <Route path="/landing" element={<Navigate to="/" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
