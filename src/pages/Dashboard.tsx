@@ -457,6 +457,16 @@ const Dashboard = () => {
   const allDone = dailyTasks.length > 0 && dailyTasks.every((t) => completedTasks.has(t.bloc.id));
   const completedCount = dailyTasks.filter((t) => completedTasks.has(t.bloc.id)).length;
 
+  // Auto-déclenche la fin de journée quand toutes les tâches sont terminées
+  useEffect(() => {
+    if (!user || !allDone || endingDay) return;
+    const today = new Date().toISOString().split("T")[0];
+    const key = `end-of-day-triggered:${user.id}:${today}`;
+    if (localStorage.getItem(key) === "1") return;
+    localStorage.setItem(key, "1");
+    handleEndDay();
+  }, [allDone, endingDay, user, handleEndDay]);
+
   if (!profile || loading)
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -608,20 +618,6 @@ const Dashboard = () => {
                 </p>
               )}
 
-              {dailyTasks.length > 0 && allDone && (
-                <Button
-                  onClick={handleEndDay}
-                  disabled={endingDay}
-                  className="w-full rounded-xl h-10 text-sm font-medium sprint-gradient text-primary-foreground animate-in fade-in duration-500"
-                >
-                  {endingDay ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                  )}
-                  Terminer ma journée
-                </Button>
-              )}
 
               <div className="pt-2 border-t space-y-2">
                 <p className="text-xs font-medium text-muted-foreground">Progression de la semaine</p>
