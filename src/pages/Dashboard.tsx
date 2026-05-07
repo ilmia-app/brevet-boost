@@ -546,7 +546,7 @@ const Dashboard = () => {
         )}
 
         {/* LAYOUT 2 COLONNES */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           {/* COLONNE GAUCHE — Sprint du jour */}
           <Card className="rounded-2xl flex flex-col">
             <CardContent className="p-5 flex flex-col flex-1 space-y-4">
@@ -628,36 +628,6 @@ const Dashboard = () => {
                   })}
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* COLONNE MILIEU — Bibliothèque d'exercices */}
-          <Card className="rounded-2xl flex flex-col">
-            <CardContent className="p-5 flex flex-col flex-1 space-y-4">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">📚</span>
-                <h2 className="text-base font-semibold">Bibliothèque d'exercices</h2>
-              </div>
-              <p className="text-xs text-muted-foreground -mt-2">
-                Tous les blocs du brevet, classés par matière. Choisis un exercice et entraîne-toi à ton rythme.
-              </p>
-
-              <div className="flex flex-wrap gap-1.5">
-                {Object.entries(SUBJECT_COLORS).map(([matiere, cls]) => (
-                  <Badge key={matiere} className={`${cls} text-[10px] px-1.5 py-0`}>
-                    {matiere}
-                  </Badge>
-                ))}
-              </div>
-
-              <div className="flex-1" />
-
-              <Button
-                onClick={() => navigate("/bibliotheque")}
-                className="w-full h-9 text-xs rounded-lg sprint-gradient text-primary-foreground"
-              >
-                <BookOpen className="w-3.5 h-3.5 mr-1" /> Explorer la bibliothèque
-              </Button>
             </CardContent>
           </Card>
 
