@@ -37,6 +37,28 @@ const storageKey = (userId: string) => {
   return `sprint-qcm:${userId}:${today}`;
 };
 
+const seriesCountKey = (userId: string) => {
+  const today = new Date().toISOString().split("T")[0];
+  return `sprint-qcm-series:${userId}:${today}`;
+};
+
+const MAX_SERIES_PER_DAY = 5;
+
+const readSeriesCount = (userId: string): number => {
+  try {
+    const v = parseInt(localStorage.getItem(seriesCountKey(userId)) || "0", 10);
+    return Number.isFinite(v) ? v : 0;
+  } catch {
+    return 0;
+  }
+};
+
+const writeSeriesCount = (userId: string, n: number) => {
+  try {
+    localStorage.setItem(seriesCountKey(userId), String(n));
+  } catch { /* noop */ }
+};
+
 const shuffle = <T,>(arr: T[]): T[] => {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -58,6 +80,8 @@ const Qcm = () => {
   const [finished, setFinished] = useState(false);
   const [completionWritten, setCompletionWritten] = useState(false);
   const [pendingChoice, setPendingChoice] = useState<number | null>(null);
+  const [seriesCount, setSeriesCount] = useState(0);
+  const [completionCounted, setCompletionCounted] = useState(false);
 
   const persist = (patch: Partial<{ questions: QcmQuestion[]; current: number; answers: number[]; finished: boolean; completionWritten: boolean }>) => {
     if (!user) return;
@@ -72,12 +96,17 @@ const Qcm = () => {
 
   const loadQcm = async (force = false) => {
     if (!user) return;
+    if (readSeriesCount(user.id) >= MAX_SERIES_PER_DAY) {
+      toast({ title: "Limite atteinte", description: "Tu as fait tes 5 séries du jour, bravo ! 💪" });
+      return;
+    }
     setLoading(true);
     setQuestions(null);
     setCurrent(0);
     setAnswers([]);
     setFinished(false);
     setCompletionWritten(false);
+    setCompletionCounted(false);
     if (force) {
       try { localStorage.removeItem(storageKey(user.id)); } catch { /* noop */ }
     }
@@ -126,6 +155,7 @@ const Qcm = () => {
       return;
     }
     try {
+      setSeriesCount(readSeriesCount(user!.id));
       const raw = localStorage.getItem(storageKey(user.id));
       if (raw) {
         const saved = JSON.parse(raw) as {
@@ -141,6 +171,7 @@ const Qcm = () => {
           setAnswers(saved.answers ?? []);
           setFinished(!!saved.finished);
           setCompletionWritten(!!saved.completionWritten);
+          setCompletionCounted(!!saved.finished);
           setLoading(false);
           return;
         }
@@ -228,6 +259,12 @@ const Qcm = () => {
       setFinished(true);
       persist({ finished: true });
       writeCompletion();
+      if (user && !completionCounted) {
+        const next = readSeriesCount(user.id) + 1;
+        writeSeriesCount(user.id, next);
+        setSeriesCount(next);
+        setCompletionCounted(true);
+      }
     }
     setPendingChoice(null);
   };
@@ -264,6 +301,7 @@ const Qcm = () => {
       ratio >= 0.6 ? "Solide, continue comme ça !" :
       ratio >= 0.4 ? "Pas mal, encore un peu d'entraînement." :
       "Ne lâche rien, recommence !";
+    const limitReached = seriesCount >= MAX_SERIES_PER_DAY;
 
     return (
       <div className="min-h-screen bg-background pb-8">
@@ -315,13 +353,23 @@ const Qcm = () => {
           </div>
 
           <div className="flex gap-3">
-            <Button variant="outline" className="flex-1" onClick={() => loadQcm(true)}>
-              <RefreshCw className="w-4 h-4 mr-2" /> Nouveau QCM
+            <Button
+              variant="outline"
+              className="flex-1"
+              disabled={limitReached}
+              onClick={() => loadQcm(true)}
+            >
+              <RefreshCw className="w-4 h-4 mr-2" /> Nouvelle série
             </Button>
             <Button className="flex-1 sprint-gradient text-primary-foreground" onClick={() => navigate("/dashboard")}>
-              Retour
+              Terminer
             </Button>
           </div>
+          <p className="text-xs text-center text-muted-foreground">
+            {limitReached
+              ? "Tu as fait tes 5 séries du jour, bravo ! 💪"
+              : `Série ${seriesCount} / ${MAX_SERIES_PER_DAY} effectuée${seriesCount > 1 ? "s" : ""} aujourd'hui.`}
+          </p>
         </div>
       </div>
     );
