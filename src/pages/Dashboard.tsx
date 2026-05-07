@@ -87,8 +87,15 @@ const MATIERE_STYLES: Record<string, { border: string; bg: string; hover: string
   Sciences: { border: "border-red-200", bg: "bg-red-50", hover: "hover:bg-red-100", text: "text-red-900" },
 };
 
-const TASK_ICONS: Record<string, string> = { heavy: "🎯", medium: "⚡", light: "🚀" };
-const TASK_LABELS: Record<string, string> = { heavy: "Défi du jour", medium: "Entraînement", light: "Sprint final" };
+const TASK_ICONS: Record<string, string> = { heavy: "🎯", medium: "⚡", light: "🚀", matiere_jour: "🎯" };
+const TASK_LABELS: Record<string, string> = {
+  heavy: "Défi du jour",
+  medium: "Entraînement",
+  light: "Sprint final",
+  matiere_jour: "Matière du jour 🎯",
+};
+
+const ALL_PREFIXES = ["MAT-", "FRA-", "HIS-", "GEO-", "EMC-", "PHY-", "SVT-", "TEC-"];
 const DAYS = ["L", "M", "M", "J", "V", "S", "D"];
 
 const SUBJECT_TO_PREFIX: Record<string, string> = {
@@ -130,7 +137,7 @@ const Dashboard = () => {
   const [showWeeklyBanner, setShowWeeklyBanner] = useState(false);
   const [completedBlocIdsAll, setCompletedBlocIdsAll] = useState<Set<string>>(new Set());
   const [dailyTasks, setDailyTasks] = useState<
-    Array<{ bloc: BlocExamen; weight: "heavy" | "medium" | "light"; exerciceId: string }>
+    Array<{ bloc: BlocExamen; weight: "heavy" | "medium" | "light" | "matiere_jour"; exerciceId: string }>
   >([]);
 
   // Annales
@@ -352,7 +359,7 @@ const Dashboard = () => {
     (async () => {
       const usedExoIds = new Set<string>();
       const usedBlocIds = new Set<string>();
-      const slots: Array<{ bloc: BlocExamen; weight: "heavy" | "medium" | "light"; exerciceId: string }> = [];
+      const slots: Array<{ bloc: BlocExamen; weight: "heavy" | "medium" | "light" | "matiere_jour"; exerciceId: string }> = [];
       const faiblesPrefixes = new Set(faibles.map((s) => subjectToPrefix(s)).filter((p): p is string => !!p));
       const firstFaible = faibles[0];
       const firstPrefix = firstFaible ? subjectToPrefix(firstFaible) : null;
@@ -381,6 +388,34 @@ const Dashboard = () => {
             usedBlocIds.add(exo3.bloc_id);
             slots.push({ bloc, weight: "light", exerciceId: exo3.id });
           }
+        }
+      }
+      // Tâche 4 — Matière du jour : matière non présente dans matieres_faibles
+      // Si matieres_faibles est vide, on exclut les matières déjà utilisées par les tâches 1-3.
+      const usedPrefixes = new Set<string>();
+      for (const s of slots) {
+        const p = subjectToPrefix(s.bloc.matiere);
+        if (p) usedPrefixes.add(p);
+      }
+      let candidatePrefixes = ALL_PREFIXES.filter((p) => !faiblesPrefixes.has(p));
+      if (faibles.length === 0) {
+        candidatePrefixes = ALL_PREFIXES.filter((p) => !usedPrefixes.has(p));
+      }
+      // mélange aléatoire pour piocher une matière
+      const shuffled = [...candidatePrefixes];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        seedHash = (seedHash * 1103515245 + 12345) >>> 0;
+        const j = seedHash % (i + 1);
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      for (const prefix of shuffled) {
+        const exo4 = await fetchExoForPrefix(prefix, usedExoIds, usedBlocIds);
+        if (exo4 && exo4.bloc_id) {
+          const bloc = blocsById.get(exo4.bloc_id)!;
+          usedExoIds.add(exo4.id);
+          usedBlocIds.add(exo4.bloc_id);
+          slots.push({ bloc, weight: "matiere_jour", exerciceId: exo4.id });
+          break;
         }
       }
       if (!cancelled) setDailyTasks(slots);
