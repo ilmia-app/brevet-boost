@@ -132,6 +132,23 @@ RÈGLES :
 - Pas de markdown dans "enonce" ni dans "questions".
 - Le corrigé peut utiliser markdown : ### titres, **gras**, listes -, $...$ pour les formules.`;
 
+    const blocInstructions: Record<string, string> = {
+      "MAT-01": "ATTENTION MATHS : Vérifie TOUS tes calculs avant de répondre. Pose l'équation, résous-la étape par étape, vérifie le résultat dans l'énoncé. Ne jamais donner un résultat non entier si le contexte implique des personnes ou des objets.",
+      "MAT-02": "ATTENTION MATHS : Vérifie TOUS tes calculs. Utilise uniquement les 3 identités remarquables : (a+b)²=a²+2ab+b², (a-b)²=a²-2ab+b², (a+b)(a-b)=a²-b². Ne jamais inventer d'autres identités.",
+      "MAT-03": "ATTENTION MATHS : Vérifie TOUS tes calculs. Pour Pythagore : hypoténuse² = côté1² + côté2². Pour Thalès : les rapports sont égaux. Vérifier la configuration avant d'appliquer.",
+      "MAT-04": "ATTENTION MATHS : Vérifie TOUS tes calculs. Moyenne = somme des (valeur × effectif) DIVISÉ PAR l'effectif TOTAL. Médiane = valeur du milieu après rangement. Étendue = max - min. Ne jamais diviser par autre chose que l'effectif total.",
+      "MAT-05": "ATTENTION MATHS : Vérifie TOUS tes calculs. Pourcentage : multiplier par taux/100. Vitesse : v = d/t. Conversion km/h vers m/s : DIVISER par 3,6. Ne jamais additionner deux remises successives.",
+      "PHY-01": "ATTENTION PHYSIQUE : Loi d'Ohm : U = R × I. En série : I identique partout, tensions s'additionnent. En dérivation : U identique, intensités s'additionnent. Vérifier le type de circuit avant tout calcul.",
+      "PHY-02": "ATTENTION PHYSIQUE : v = d/t. Conversion km/h vers m/s : DIVISER par 3,6 (pas par 3). Énergie cinétique : Ec = ½ × m × v² avec v EN M/S obligatoirement. Vérifier les unités à chaque étape.",
+      "TEC-01": "ATTENTION TECHNO SCRATCH : Simule l'exécution du programme PAS À PAS sur papier avant de rédiger le corrigé. Pour une moyenne de N notes : diviser par N (pas par 2, pas par autre chose). Vérifier chaque boucle, chaque condition, chaque calcul de variable. Ne jamais inventer le comportement d'un bloc Scratch.",
+      "SVT-01": "ATTENTION SVT : Un humain a 46 chromosomes (23 paires). Allèle dominant : une seule copie suffit pour exprimer le caractère. Allèle récessif : deux copies nécessaires. Ne jamais inventer de pourcentages sans faire le tableau de croisement.",
+      "SVT-02": "ATTENTION SVT : Digestion = bouche → estomac → intestin grêle → côlon. Absorption dans l'intestin grêle. Respiration : O2 entre dans le sang, CO2 en sort. Immunité : phagocytes en premier, lymphocytes ensuite. Ne jamais confondre respiration cellulaire et pulmonaire.",
+      "FRA-04": "ATTENTION FRANÇAIS : Distinguer classe grammaticale (ce qu'est le mot) et fonction syntaxique (son rôle dans la phrase). Vérifier chaque analyse avec les questions canoniques : qui ? quoi ? comment ? où ? quand ?",
+      "FRA-05": "ATTENTION FRANÇAIS : Participe passé avec être : accord avec le sujet. Participe passé avec avoir : accord avec le COD uniquement si placé AVANT le verbe. Homophones : appliquer les tests de substitution (avait/à, était/et, etc.).",
+    };
+
+    const blocSpecific = blocInstructions[bloc_id] ? `\n\n${blocInstructions[bloc_id]}` : "";
+
     const standardPrompt = `Tu es le meilleur professeur de collège français, expert du Brevet (DNB) niveau 3ème.
 Tu vas générer **un exercice original** ET **son corrigé détaillé** sur la notion suivante :
 
@@ -139,13 +156,14 @@ Tu vas générer **un exercice original** ET **son corrigé détaillé** sur la 
 - Thème / bloc : ${titre || "non précisé"}
 ${theme ? `- Sous-thème : ${theme}` : ""}
 ${objectifs ? `- Objectifs pédagogiques : ${objectifs}` : ""}
-${etapes ? `- Méthode attendue : ${etapes}` : ""}
+${etapes ? `- Méthode attendue : ${etapes}` : ""}${blocSpecific}
 
 CONTRAINTES STRICTES :
 - Niveau 3ème (Brevet), réaliste et faisable en 10-15 min.
 - **Pas de tableau, pas de graphique, pas de figure géométrique complexe** : que du texte et des formules en LaTeX inline ($...$).
 - L'exercice doit comporter 2 à 4 questions progressives (a, b, c…).
 - Le corrigé doit être **détaillé étape par étape**, pédagogique, comme l'expliquerait le meilleur prof : rappels de cours brefs, calculs détaillés, justifications.
+- VÉRIFIE TOUS TES CALCULS AVANT DE RÉPONDRE. Un corrigé avec une erreur de calcul est inacceptable.
 
 RÈGLES ABSOLUES DE MISE EN FORME DE L'ÉNONCÉ :
 - Ne jamais mettre en gras les réponses attendues
