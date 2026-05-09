@@ -794,6 +794,29 @@ const Dashboard = () => {
         mode={endOfDayMode}
       />
 
+      {/* Popup d'accueil quotidien : rappel du QCM */}
+      <Dialog open={showQcmIntroPopup} onOpenChange={setShowQcmIntroPopup}>
+        <DialogContent className="max-w-sm rounded-2xl">
+          <DialogHeader>
+            <div className="w-14 h-14 mx-auto mb-2 rounded-full sprint-gradient flex items-center justify-center shadow-md">
+              <Sparkles className="w-7 h-7 text-white" />
+            </div>
+            <DialogTitle className="text-center">Finis ton Sprint pour déclencher ton QCM 🎯</DialogTitle>
+            <DialogDescription className="text-center">
+              Termine tes tâches du jour pour débloquer ton Sprint QCM bonus.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              className="w-full sprint-gradient text-primary-foreground"
+              onClick={() => setShowQcmIntroPopup(false)}
+            >
+              C'est parti !
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 };
