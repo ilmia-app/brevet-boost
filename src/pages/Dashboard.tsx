@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import EndOfDayModal from "@/components/dashboard/EndOfDayModal";
 import TrophyWatcher from "@/components/trophies/TrophyWatcher";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 interface ProfileData {
   id: string;
@@ -135,6 +136,7 @@ const Dashboard = () => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [yesterdayBlocIds, setYesterdayBlocIds] = useState<Set<string>>(new Set());
   const [showWeeklyBanner, setShowWeeklyBanner] = useState(false);
+  const [showQcmIntroPopup, setShowQcmIntroPopup] = useState(false);
   const [completedBlocIdsAll, setCompletedBlocIdsAll] = useState<Set<string>>(new Set());
   const [dailyTasks, setDailyTasks] = useState<
     Array<{ bloc: BlocExamen; weight: "heavy" | "medium" | "light" | "matiere_jour"; exerciceId: string }>
@@ -182,6 +184,15 @@ const Dashboard = () => {
       const dismissedKey = `weekly-banner-dismissed-${today.toISOString().split("T")[0]}`;
       const dismissed = localStorage.getItem(dismissedKey) === "1";
       if (phase === 2 && isMonday && !modifiedThisWeek && !dismissed) setShowWeeklyBanner(true);
+      // Popup quotidien : "Finis ton Sprint pour déclencher ton QCM"
+      try {
+        const todayStr = new Date().toISOString().split("T")[0];
+        const popupKey = `qcm-intro-popup-shown:${data.id}:${todayStr}`;
+        if (!localStorage.getItem(popupKey)) {
+          setShowQcmIntroPopup(true);
+          localStorage.setItem(popupKey, "1");
+        }
+      } catch { /* noop */ }
       setLoading(false);
     })();
   }, [user, navigate]);
