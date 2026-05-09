@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Authenticated can read annales" ON storage.objects;
