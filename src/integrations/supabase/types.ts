@@ -199,6 +199,36 @@ export type Database = {
           },
         ]
       }
+      exercices_bibliotheque: {
+        Row: {
+          bloc_id: string
+          corrige: string
+          created_at: string | null
+          enonce: string
+          formule_cible: string
+          id: string
+          titre: string
+        }
+        Insert: {
+          bloc_id: string
+          corrige: string
+          created_at?: string | null
+          enonce: string
+          formule_cible: string
+          id: string
+          titre: string
+        }
+        Update: {
+          bloc_id?: string
+          corrige?: string
+          created_at?: string | null
+          enonce?: string
+          formule_cible?: string
+          id?: string
+          titre?: string
+        }
+        Relationships: []
+      }
       exercices_generes: {
         Row: {
           bloc_id: string
