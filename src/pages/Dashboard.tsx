@@ -383,53 +383,44 @@ const Dashboard = () => {
           slots.push({ bloc, weight: "heavy", exerciceId: exo.id });
         }
       }
-      if (mode !== "reset_doux") {
-        const exo2 = await pickRotationExo(rotationHGE, usedExoIds, usedBlocIds, faiblesPrefixes);
-        if (exo2 && exo2.bloc_id) {
-          const bloc = blocsById.get(exo2.bloc_id)!;
-          usedExoIds.add(exo2.id);
-          usedBlocIds.add(exo2.bloc_id);
-          slots.push({ bloc, weight: "medium", exerciceId: exo2.id });
+      // Le sprint contient toujours 3 exercices (indépendamment du mode).
+      const exo2 = await pickRotationExo(rotationHGE, usedExoIds, usedBlocIds, faiblesPrefixes);
+      if (exo2 && exo2.bloc_id) {
+        const bloc = blocsById.get(exo2.bloc_id)!;
+        usedExoIds.add(exo2.id);
+        usedBlocIds.add(exo2.bloc_id);
+        slots.push({ bloc, weight: "medium", exerciceId: exo2.id });
+      }
+      const exo3 = await pickRotationExo(rotationSci, usedExoIds, usedBlocIds, faiblesPrefixes);
+      if (exo3 && exo3.bloc_id) {
+        const bloc = blocsById.get(exo3.bloc_id)!;
+        usedExoIds.add(exo3.id);
+        usedBlocIds.add(exo3.bloc_id);
+        slots.push({ bloc, weight: "light", exerciceId: exo3.id });
+      }
+      // Garantie : compléter jusqu'à 3 exercices avec n'importe quelle matière restante.
+      if (slots.length < 3) {
+        const usedPrefixes = new Set<string>();
+        for (const s of slots) {
+          const p = subjectToPrefix(s.bloc.matiere);
+          if (p) usedPrefixes.add(p);
         }
-        if (mode !== "allegement") {
-          const exo3 = await pickRotationExo(rotationSci, usedExoIds, usedBlocIds, faiblesPrefixes);
-          if (exo3 && exo3.bloc_id) {
-            const bloc = blocsById.get(exo3.bloc_id)!;
-            usedExoIds.add(exo3.id);
-            usedBlocIds.add(exo3.bloc_id);
-            slots.push({ bloc, weight: "light", exerciceId: exo3.id });
+        const fallback = [
+          ...ALL_PREFIXES.filter((p) => !usedPrefixes.has(p)),
+          ...ALL_PREFIXES.filter((p) => usedPrefixes.has(p)),
+        ];
+        for (const prefix of fallback) {
+          if (slots.length >= 3) break;
+          const exoFill = await fetchExoForPrefix(prefix, usedExoIds, usedBlocIds);
+          if (exoFill && exoFill.bloc_id) {
+            const bloc = blocsById.get(exoFill.bloc_id)!;
+            usedExoIds.add(exoFill.id);
+            usedBlocIds.add(exoFill.bloc_id);
+            slots.push({ bloc, weight: "medium", exerciceId: exoFill.id });
           }
         }
       }
-      // Tâche 4 — Matière du jour : matière non présente dans matieres_faibles
-      // Si matieres_faibles est vide, on exclut les matières déjà utilisées par les tâches 1-3.
-      const usedPrefixes = new Set<string>();
-      for (const s of slots) {
-        const p = subjectToPrefix(s.bloc.matiere);
-        if (p) usedPrefixes.add(p);
-      }
-      let candidatePrefixes = ALL_PREFIXES.filter((p) => !faiblesPrefixes.has(p));
-      if (faibles.length === 0) {
-        candidatePrefixes = ALL_PREFIXES.filter((p) => !usedPrefixes.has(p));
-      }
-      // mélange aléatoire pour piocher une matière
-      const shuffled = [...candidatePrefixes];
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        seedHash = (seedHash * 1103515245 + 12345) >>> 0;
-        const j = seedHash % (i + 1);
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-      for (const prefix of shuffled) {
-        const exo4 = await fetchExoForPrefix(prefix, usedExoIds, usedBlocIds);
-        if (exo4 && exo4.bloc_id) {
-          const bloc = blocsById.get(exo4.bloc_id)!;
-          usedExoIds.add(exo4.id);
-          usedBlocIds.add(exo4.bloc_id);
-          slots.push({ bloc, weight: "matiere_jour", exerciceId: exo4.id });
-          break;
-        }
-      }
-      if (!cancelled) setDailyTasks(slots);
+      if (!cancelled) setDailyTasks(slots.slice(0, 3));
     })();
     return () => {
       cancelled = true;
