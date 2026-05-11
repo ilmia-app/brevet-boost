@@ -51,7 +51,7 @@ const App = () => (
             <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
             <Route path="/trophees" element={<ProtectedRoute><Trophies /></ProtectedRoute>} />
             <Route path="/qcm" element={<ProtectedRoute><Qcm /></ProtectedRoute>} />
-            <Route path="/bibliotheque" element={<ProtectedRoute><Bibliotheque /></ProtectedRoute>} />
+            <Route path="/bibliotheque" element={<Bibliotheque />} />
             <Route path="/landing" element={<Navigate to="/" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

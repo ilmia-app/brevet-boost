@@ -2,179 +2,153 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
-import { ArrowLeft, Loader2, BookOpen, ChevronRight } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ArrowLeft, BookOpen, Eye, EyeOff, Loader2 } from "lucide-react";
 
-const SUBJECT_COLORS: Record<string, string> = {
-  Maths: "bg-blue-500 text-white hover:bg-blue-500",
-  Français: "bg-purple-500 text-white hover:bg-purple-500",
-  Histoire: "bg-orange-500 text-white hover:bg-orange-500",
-  Géographie: "bg-emerald-500 text-white hover:bg-emerald-500",
-  EMC: "bg-yellow-500 text-white hover:bg-yellow-500",
-  Physique: "bg-red-500 text-white hover:bg-red-500",
-  SVT: "bg-green-700 text-white hover:bg-green-700",
-  Techno: "bg-gray-500 text-white hover:bg-gray-500",
+interface Exo {
+  id: string;
+  bloc_id: string;
+  formule_cible: string;
+  titre: string;
+  enonce: string;
+  corrige: string;
+}
+
+type BlocDef = {
+  bloc_id: string;
+  label: string;
+  formules: string[];
 };
 
-const SUBJECT_ORDER = ["Maths", "Français", "Histoire", "Géographie", "EMC", "Physique", "SVT", "Techno"];
+const STRUCTURE: Record<"maths" | "physique", BlocDef[]> = {
+  maths: [
+    { bloc_id: "MAT-02", label: "Identités remarquables", formules: ["(a+b)²", "(a-b)²", "(a+b)(a-b)"] },
+    { bloc_id: "MAT-03", label: "Pythagore et Thalès", formules: ["Pythagore", "Réciproque de Pythagore", "Thalès"] },
+  ],
+  physique: [
+    { bloc_id: "PHY-01", label: "Loi d'Ohm", formules: ["U = R × I", "Circuit en série", "Circuit en dérivation"] },
+    { bloc_id: "PHY-02", label: "Vitesse et énergie", formules: ["v = d/t", "Ec = ½ × m × v²"] },
+  ],
+};
 
-interface Bloc {
-  id: string;
-  matiere: string;
-  titre: string;
-}
+const ExerciceCard = ({ exo }: { exo: Exo }) => {
+  const [show, setShow] = useState(false);
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">{exo.titre}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="whitespace-pre-wrap text-sm text-foreground leading-relaxed">{exo.enonce}</p>
+        <Button variant="outline" size="sm" onClick={() => setShow((s) => !s)}>
+          {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          {show ? "Masquer le corrigé" : "Voir le corrigé"}
+        </Button>
+        {show && (
+          <div className="rounded-md border bg-muted/40 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Corrigé</p>
+            <p className="whitespace-pre-wrap text-sm leading-relaxed">{exo.corrige}</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
 
-interface Exercise {
-  id: string;
-  titre: string | null;
-  bloc_id: string;
-}
+const BlocSection = ({ bloc, exosByFormule }: { bloc: BlocDef; exosByFormule: Record<string, Exo[]> }) => {
+  return (
+    <section className="space-y-3">
+      <h2 className="text-xl font-semibold">{bloc.label}</h2>
+      <Tabs defaultValue={bloc.formules[0]} className="w-full">
+        <TabsList className="flex w-full flex-wrap h-auto justify-start gap-1">
+          {bloc.formules.map((f) => (
+            <TabsTrigger key={f} value={f} className="text-xs sm:text-sm">
+              {f}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        {bloc.formules.map((f) => {
+          const exos = exosByFormule[f] ?? [];
+          return (
+            <TabsContent key={f} value={f} className="space-y-4 mt-4">
+              {exos.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Aucun exercice disponible.</p>
+              ) : (
+                exos.map((e) => <ExerciceCard key={e.id} exo={e} />)
+              )}
+            </TabsContent>
+          );
+        })}
+      </Tabs>
+    </section>
+  );
+};
 
 const Bibliotheque = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [blocs, setBlocs] = useState<Bloc[]>([]);
-  const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [openBloc, setOpenBloc] = useState<string | null>(null);
+  const [exos, setExos] = useState<Exo[]>([]);
 
   useEffect(() => {
     (async () => {
-      const [blocsRes, exRes] = await Promise.all([
-        supabase.from("blocs_examen").select("id, matiere, titre"),
-        supabase.from("exercices").select("id, titre, bloc_id"),
-      ]);
-      if (blocsRes.data) setBlocs(blocsRes.data as Bloc[]);
-      if (exRes.data) setExercises(exRes.data as Exercise[]);
+      const { data } = await supabase
+        .from("exercices_bibliotheque")
+        .select("id, bloc_id, formule_cible, titre, enonce, corrige")
+        .order("created_at", { ascending: true });
+      if (data) setExos(data as Exo[]);
       setLoading(false);
     })();
   }, []);
 
-  const exerciseCountByBloc = useMemo(() => {
-    const map: Record<string, number> = {};
-    exercises.forEach((e) => {
-      map[e.bloc_id] = (map[e.bloc_id] || 0) + 1;
-    });
+  const grouped = useMemo(() => {
+    const map: Record<string, Record<string, Exo[]>> = {};
+    for (const e of exos) {
+      (map[e.bloc_id] ||= {});
+      (map[e.bloc_id][e.formule_cible] ||= []).push(e);
+    }
     return map;
-  }, [exercises]);
-
-  const blocsByMatiere = useMemo(() => {
-    const map: Record<string, Bloc[]> = {};
-    blocs.forEach((b) => {
-      (map[b.matiere] ||= []).push(b);
-    });
-    Object.values(map).forEach((arr) => arr.sort((a, b) => a.titre.localeCompare(b.titre)));
-    return map;
-  }, [blocs]);
-
-  const orderedMatieres = useMemo(() => {
-    const present = Object.keys(blocsByMatiere);
-    return [
-      ...SUBJECT_ORDER.filter((s) => present.includes(s)),
-      ...present.filter((s) => !SUBJECT_ORDER.includes(s)),
-    ];
-  }, [blocsByMatiere]);
-
-  const exercisesForBloc = (blocId: string) =>
-    exercises.filter((e) => e.bloc_id === blocId).sort((a, b) => a.id.localeCompare(b.id));
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  }, [exos]);
 
   return (
     <div className="min-h-screen bg-background pb-12">
-      <div className="max-w-4xl mx-auto px-4 pt-6 space-y-6">
+      <div className="max-w-3xl mx-auto px-4 pt-6 space-y-6">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
-              <BookOpen className="w-6 h-6 text-primary" /> Bibliothèque
+              <BookOpen className="w-6 h-6 text-primary" /> Bibliothèque d'exercices
             </h1>
-            <p className="text-sm text-muted-foreground">
-              Tous les blocs du brevet et leurs exercices disponibles.
-            </p>
+            <p className="text-sm text-muted-foreground">Entraîne-toi sur les formules essentielles</p>
           </div>
         </div>
 
-        {orderedMatieres.map((matiere) => {
-          const items = blocsByMatiere[matiere];
-          const colorClass = SUBJECT_COLORS[matiere] ?? "bg-primary text-primary-foreground";
-          return (
-            <section key={matiere} className="space-y-3">
-              <div className="flex items-center gap-3">
-                <Badge className={colorClass}>{matiere}</Badge>
-                <span className="text-sm text-muted-foreground">{items.length} bloc{items.length > 1 ? "s" : ""}</span>
-              </div>
-              <Card>
-                <CardContent className="p-0">
-                  <Accordion
-                    type="single"
-                    collapsible
-                    value={openBloc ?? undefined}
-                    onValueChange={(v) => setOpenBloc(v || null)}
-                  >
-                    {items.map((bloc) => {
-                      const count = exerciseCountByBloc[bloc.id] || 0;
-                      const blocExercises = openBloc === bloc.id ? exercisesForBloc(bloc.id) : [];
-                      return (
-                        <AccordionItem key={bloc.id} value={bloc.id} className="px-4">
-                          <AccordionTrigger className="hover:no-underline">
-                            <div className="flex flex-1 items-center justify-between gap-3 pr-2">
-                              <div className="text-left">
-                                <div className="font-medium text-foreground">{bloc.titre}</div>
-                                <div className="text-xs text-muted-foreground">{bloc.id}</div>
-                              </div>
-                              <Badge variant="secondary" className="shrink-0">
-                                {count} exo{count > 1 ? "s" : ""}
-                              </Badge>
-                            </div>
-                          </AccordionTrigger>
-                          <AccordionContent>
-                            {blocExercises.length === 0 ? (
-                              <p className="text-sm text-muted-foreground py-2">
-                                Aucun exercice disponible pour ce bloc.
-                              </p>
-                            ) : (
-                              <ul className="divide-y">
-                                {blocExercises.map((ex) => (
-                                  <li key={ex.id}>
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        navigate(`/work?bloc_id=${encodeURIComponent(bloc.id)}&exercise_id=${encodeURIComponent(ex.id)}`)
-                                      }
-                                      className="w-full flex items-center justify-between gap-3 py-3 text-left hover:bg-accent/40 rounded-md px-2 transition-colors"
-                                    >
-                                      <div className="min-w-0">
-                                        <div className="text-sm font-medium text-foreground truncate">
-                                          {ex.titre || "Exercice sans titre"}
-                                        </div>
-                                        <div className="text-xs text-muted-foreground truncate">{ex.id}</div>
-                                      </div>
-                                      <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                                    </button>
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                          </AccordionContent>
-                        </AccordionItem>
-                      );
-                    })}
-                  </Accordion>
-                </CardContent>
-              </Card>
-            </section>
-          );
-        })}
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <Tabs defaultValue="maths" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="maths">Mathématiques</TabsTrigger>
+              <TabsTrigger value="physique">Physique</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="maths" className="space-y-8 mt-6">
+              {STRUCTURE.maths.map((bloc) => (
+                <BlocSection key={bloc.bloc_id} bloc={bloc} exosByFormule={grouped[bloc.bloc_id] ?? {}} />
+              ))}
+            </TabsContent>
+
+            <TabsContent value="physique" className="space-y-8 mt-6">
+              {STRUCTURE.physique.map((bloc) => (
+                <BlocSection key={bloc.bloc_id} bloc={bloc} exosByFormule={grouped[bloc.bloc_id] ?? {}} />
+              ))}
+            </TabsContent>
+          </Tabs>
+        )}
       </div>
     </div>
   );
