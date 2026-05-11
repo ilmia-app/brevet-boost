@@ -114,7 +114,9 @@ const Qcm = () => {
     try {
       const { data, error } = await supabase
         .from("qcm")
-        .select("id, bloc_id, question, option_a, option_b, option_c, option_d, reponse_correcte, explication");
+        .select("id, bloc_id, question, option_a, option_b, option_c, option_d, reponse_correcte, explication")
+        // Techno volontairement exclue du QCM
+        .not("bloc_id", "ilike", "TEC-%");
       if (error) throw new Error(error.message);
 
       const rows = (data as QcmRow[] | null) || [];
