@@ -521,7 +521,6 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background pb-8">
-      <TrophyWatcher />
       <div className="max-w-6xl mx-auto px-4 pt-6 space-y-6">
         {/* HEADER */}
         <section className="space-y-3">
