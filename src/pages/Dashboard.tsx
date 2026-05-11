@@ -735,6 +735,27 @@ const Dashboard = () => {
           </Card>
         </div>
 
+        {/* BIBLIOTHEQUE */}
+        <Card className="rounded-2xl">
+          <CardContent className="p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">📚</span>
+              <h2 className="text-base font-semibold">Bibliothèque d'exercices</h2>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Entraîne-toi sur les formules essentielles en mathématiques et physique — sans limite, sans tracking.
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full h-9 rounded-lg text-xs"
+              onClick={() => navigate("/bibliotheque")}
+            >
+              <BookOpen className="w-4 h-4 mr-1.5" /> Accéder à la bibliothèque
+            </Button>
+          </CardContent>
+        </Card>
+
         {/* Feedback */}
         {showFeedback && feedback?.message && (
           <Card className="border-primary/20 bg-accent/30">
