@@ -24,7 +24,6 @@ import {
   BookOpen,
 } from "lucide-react";
 import EndOfDayModal from "@/components/dashboard/EndOfDayModal";
-import TrophyWatcher from "@/components/trophies/TrophyWatcher";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 interface ProfileData {
