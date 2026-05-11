@@ -96,7 +96,8 @@ const TASK_LABELS: Record<string, string> = {
   matiere_jour: "Matière du jour 🎯",
 };
 
-const ALL_PREFIXES = ["MAT-", "FRA-", "HIS-", "GEO-", "EMC-", "PHY-", "SVT-", "TEC-"];
+// NOTE : la techno (TEC-) est volontairement exclue du sprint et du QCM.
+const ALL_PREFIXES = ["MAT-", "FRA-", "HIS-", "GEO-", "EMC-", "PHY-", "SVT-"];
 const DAYS = ["L", "M", "M", "J", "V", "S", "D"];
 
 const SUBJECT_TO_PREFIX: Record<string, string> = {
@@ -322,7 +323,7 @@ const Dashboard = () => {
     const start = new Date(new Date().getFullYear(), 0, 0);
     const dayOfYear = Math.floor((Date.now() - start.getTime()) / (1000 * 60 * 60 * 24));
     const rotationHGE = ["HIS-", "GEO-", "EMC-"];
-    const rotationSci = ["PHY-", "SVT-", "TEC-"];
+    const rotationSci = ["PHY-", "SVT-"];
     const todayStr = new Date().toISOString().split("T")[0];
     const seedStr = `${todayStr}-${profile?.id ?? ""}`;
     let seedHash = 0;
