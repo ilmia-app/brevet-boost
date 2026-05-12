@@ -332,7 +332,12 @@ const Dashboard = () => {
       seedHash = (seedHash * 1103515245 + 12345) >>> 0;
       return arr[seedHash % arr.length];
     };
-    const fetchExoForPrefix = async (prefix: string, usedExoIds: Set<string>, usedBlocIds: Set<string>) => {
+    const fetchExoForPrefix = async (
+      prefix: string,
+      usedExoIds: Set<string>,
+      usedBlocIds: Set<string>,
+      allowCompleted = false,
+    ) => {
       const { data } = await supabase
         .from("exercices")
         .select("id, bloc_id")
@@ -341,7 +346,7 @@ const Dashboard = () => {
       const candidates = (data || []).filter(
         (e) =>
           e.bloc_id &&
-          (!completedBlocIdsAll.has(e.bloc_id) || completedTasks.has(e.bloc_id)) &&
+          (allowCompleted || !completedBlocIdsAll.has(e.bloc_id) || completedTasks.has(e.bloc_id)) &&
           !usedBlocIds.has(e.bloc_id) &&
           !usedExoIds.has(e.id) &&
           blocsById.has(e.bloc_id),
@@ -412,6 +417,20 @@ const Dashboard = () => {
         for (const prefix of fallback) {
           if (slots.length >= 3) break;
           const exoFill = await fetchExoForPrefix(prefix, usedExoIds, usedBlocIds);
+          if (exoFill && exoFill.bloc_id) {
+            const bloc = blocsById.get(exoFill.bloc_id)!;
+            usedExoIds.add(exoFill.id);
+            usedBlocIds.add(exoFill.bloc_id);
+            slots.push({ bloc, weight: "medium", exerciceId: exoFill.id });
+          }
+        }
+      }
+      // Dernier recours : si l'élève a déjà tout complété, on autorise la révision
+      // d'exercices déjà faits pour garantir 3 tâches dans le sprint.
+      if (slots.length < 3) {
+        for (const prefix of ALL_PREFIXES) {
+          if (slots.length >= 3) break;
+          const exoFill = await fetchExoForPrefix(prefix, usedExoIds, usedBlocIds, true);
           if (exoFill && exoFill.bloc_id) {
             const bloc = blocsById.get(exoFill.bloc_id)!;
             usedExoIds.add(exoFill.id);
