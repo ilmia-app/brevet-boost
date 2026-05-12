@@ -1,0 +1,17 @@
+{
+  "name": "Sprint DNB — Prépare ton brevet",
+  "short_name": "Sprint DNB",
+  "description": "Le coach digital qui organise ta révision jusqu'au brevet",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8fafc",
+  "theme_color": "#2F6FDB",
+  "lang": "fr",
+  "icons": [
+    { "src": "/pwa-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/pwa-512x512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/pwa-maskable-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
