@@ -47,7 +47,7 @@ const Annales = () => {
     (async () => {
       let query = supabase
         .from("annales")
-        .select("id, matiere, annee, session, titre, pdf_url, corrige_url")
+        .select("id, matiere, annee, session, titre, pdf_url, corrige_url, sujet_dictee_url, sujet_redaction_url")
         .order("annee", { ascending: false });
       if (matiereFilter) query = query.eq("matiere", matiereFilter);
       const { data } = await query;
