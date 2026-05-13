@@ -102,22 +102,66 @@ const Annales = () => {
               </ul>
             </div>
             <div className="flex flex-col gap-3">
-              <Button
-                className="w-full h-12 text-base font-semibold sprint-gradient text-primary-foreground"
-                onClick={() => window.open(selectedAnnale.pdf_url, "_blank")}
-              >
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Ouvrir le sujet officiel
-              </Button>
-              {selectedAnnale.matiere === "Maths" && selectedAnnale.corrige_url && (
-                <Button
-                  variant="secondary"
-                  className="w-full h-12 text-base font-semibold bg-emerald-500 hover:bg-emerald-600 text-white"
-                  onClick={() => window.open(selectedAnnale.corrige_url!, "_blank")}
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Voir le corrigé officiel
-                </Button>
+              {selectedAnnale.matiere === "Français" ? (
+                <>
+                  <div className="flex flex-row gap-2">
+                    <Button
+                      className="flex-1 h-12 text-xs font-semibold sprint-gradient text-primary-foreground px-2"
+                      onClick={() => window.open(selectedAnnale.pdf_url, "_blank")}
+                    >
+                      <ExternalLink className="w-3 h-3 mr-1 shrink-0" />
+                      Grammaire & Compréhension
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      className="flex-1 h-12 text-xs font-semibold px-2"
+                      disabled={!selectedAnnale.sujet_dictee_url}
+                      onClick={() => selectedAnnale.sujet_dictee_url && window.open(selectedAnnale.sujet_dictee_url, "_blank")}
+                    >
+                      <ExternalLink className="w-3 h-3 mr-1 shrink-0" />
+                      Dictée
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      className="flex-1 h-12 text-xs font-semibold px-2"
+                      disabled={!selectedAnnale.sujet_redaction_url}
+                      onClick={() => selectedAnnale.sujet_redaction_url && window.open(selectedAnnale.sujet_redaction_url, "_blank")}
+                    >
+                      <ExternalLink className="w-3 h-3 mr-1 shrink-0" />
+                      Rédaction
+                    </Button>
+                  </div>
+                  {selectedAnnale.corrige_url && (
+                    <Button
+                      variant="secondary"
+                      className="w-full h-12 text-base font-semibold bg-emerald-500 hover:bg-emerald-600 text-white"
+                      onClick={() => window.open(selectedAnnale.corrige_url!, "_blank")}
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Voir le corrigé officiel
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Button
+                    className="w-full h-12 text-base font-semibold sprint-gradient text-primary-foreground"
+                    onClick={() => window.open(selectedAnnale.pdf_url, "_blank")}
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Ouvrir le sujet officiel
+                  </Button>
+                  {selectedAnnale.matiere === "Maths" && selectedAnnale.corrige_url && (
+                    <Button
+                      variant="secondary"
+                      className="w-full h-12 text-base font-semibold bg-emerald-500 hover:bg-emerald-600 text-white"
+                      onClick={() => window.open(selectedAnnale.corrige_url!, "_blank")}
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Voir le corrigé officiel
+                    </Button>
+                  )}
+                </>
               )}
             </div>
           </div>
