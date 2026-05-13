@@ -17,6 +17,7 @@ export type Database = {
       annales: {
         Row: {
           annee: number
+          corrige_url: string | null
           id: string
           matiere: string
           pdf_url: string
@@ -25,6 +26,7 @@ export type Database = {
         }
         Insert: {
           annee: number
+          corrige_url?: string | null
           id?: string
           matiere: string
           pdf_url: string
@@ -33,6 +35,7 @@ export type Database = {
         }
         Update: {
           annee?: number
+          corrige_url?: string | null
           id?: string
           matiere?: string
           pdf_url?: string
