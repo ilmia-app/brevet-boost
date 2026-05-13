@@ -25,10 +25,12 @@ const STRUCTURE: Record<"maths" | "physique", BlocDef[]> = {
   maths: [
     { bloc_id: "MAT-02", label: "Identités remarquables", formules: ["(a+b)²", "(a-b)²", "(a+b)(a-b)"] },
     { bloc_id: "MAT-03", label: "Pythagore et Thalès", formules: ["Pythagore", "Réciproque de Pythagore", "Thalès"] },
+    { bloc_id: "MAT-06", label: "Périmètres et Aires", formules: ["Périmètre rectangle", "Périmètre triangle", "Périmètre cercle", "Aire rectangle", "Aire triangle", "Aire disque", "Aire trapèze"] },
+    { bloc_id: "MAT-07", label: "Trigonométrie", formules: ["cos(angle) = adjacent / hypoténuse", "sin(angle) = opposé / hypoténuse", "tan(angle) = opposé / adjacent"] },
   ],
   physique: [
-    { bloc_id: "PHY-01", label: "Loi d'Ohm", formules: ["U = R × I", "Circuit en série", "Circuit en dérivation"] },
-    { bloc_id: "PHY-02", label: "Vitesse et énergie", formules: ["v = d/t", "Ec = ½ × m × v²"] },
+    { bloc_id: "PHY-01", label: "Loi d'Ohm et circuits", formules: ["U = R × I", "Circuit en série", "Circuit en dérivation"] },
+    { bloc_id: "PHY-02", label: "Vitesse et énergie cinétique", formules: ["v = d/t", "Ec = ½ × m × v²"] },
   ],
 };
 
