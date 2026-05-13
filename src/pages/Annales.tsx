@@ -13,6 +13,7 @@ interface AnnaleItem {
   session: string;
   titre: string;
   pdf_url: string;
+  corrige_url?: string;
 }
 
 const SUBJECT_COLORS: Record<string, string> = {
@@ -44,7 +45,7 @@ const Annales = () => {
     (async () => {
       let query = supabase
         .from("annales")
-        .select("id, matiere, annee, session, titre, pdf_url")
+        .select("id, matiere, annee, session, titre, pdf_url, corrige_url")
         .order("annee", { ascending: false });
       if (matiereFilter) query = query.eq("matiere", matiereFilter);
       const { data } = await query;
@@ -98,13 +99,25 @@ const Annales = () => {
                 </li>
               </ul>
             </div>
-            <Button
-              className="w-full h-12 text-base font-semibold sprint-gradient text-primary-foreground"
-              onClick={() => window.open(selectedAnnale.pdf_url, "_blank")}
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Ouvrir le sujet officiel
-            </Button>
+            <div className="flex flex-col gap-3">
+              <Button
+                className="w-full h-12 text-base font-semibold sprint-gradient text-primary-foreground"
+                onClick={() => window.open(selectedAnnale.pdf_url, "_blank")}
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Ouvrir le sujet officiel
+              </Button>
+              {selectedAnnale.matiere === "Maths" && selectedAnnale.corrige_url && (
+                <Button
+                  variant="secondary"
+                  className="w-full h-12 text-base font-semibold bg-emerald-500 hover:bg-emerald-600 text-white"
+                  onClick={() => window.open(selectedAnnale.corrige_url!, "_blank")}
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Voir le corrigé officiel
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
