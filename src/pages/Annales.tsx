@@ -14,6 +14,8 @@ interface AnnaleItem {
   titre: string;
   pdf_url: string;
   corrige_url?: string;
+  sujet_dictee_url?: string;
+  sujet_redaction_url?: string;
 }
 
 const SUBJECT_COLORS: Record<string, string> = {
