@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, FileText, ExternalLink, Clock, BookOpen, ChevronRight } from "lucide-react";
+import { ArrowLeft, FileText, ExternalLink, Clock, BookOpen, ChevronRight, CheckCircle } from "lucide-react";
 
 interface AnnaleItem {
   id: string;
