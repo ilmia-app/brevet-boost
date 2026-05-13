@@ -22,6 +22,8 @@ export type Database = {
           matiere: string
           pdf_url: string
           session: string
+          sujet_dictee_url: string | null
+          sujet_redaction_url: string | null
           titre: string
         }
         Insert: {
@@ -31,6 +33,8 @@ export type Database = {
           matiere: string
           pdf_url: string
           session: string
+          sujet_dictee_url?: string | null
+          sujet_redaction_url?: string | null
           titre: string
         }
         Update: {
@@ -40,6 +44,8 @@ export type Database = {
           matiere?: string
           pdf_url?: string
           session?: string
+          sujet_dictee_url?: string | null
+          sujet_redaction_url?: string | null
           titre?: string
         }
         Relationships: []
