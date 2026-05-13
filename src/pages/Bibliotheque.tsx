@@ -58,32 +58,48 @@ const ExerciceCard = ({ exo }: { exo: Exo }) => {
   );
 };
 
-const BlocSection = ({ bloc, exosByFormule }: { bloc: BlocDef; exosByFormule: Record<string, Exo[]> }) => {
+const FormulaTabs = ({ bloc, exosByFormule }: { bloc: BlocDef; exosByFormule: Record<string, Exo[]> }) => {
   return (
-    <section className="space-y-3">
-      <h2 className="text-xl font-semibold">{bloc.label}</h2>
-      <Tabs defaultValue={bloc.formules[0]} className="w-full">
-        <TabsList className="flex w-full flex-wrap h-auto justify-start gap-1">
-          {bloc.formules.map((f) => (
-            <TabsTrigger key={f} value={f} className="text-xs sm:text-sm">
-              {f}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        {bloc.formules.map((f) => {
-          const exos = exosByFormule[f] ?? [];
-          return (
-            <TabsContent key={f} value={f} className="space-y-4 mt-4">
-              {exos.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucun exercice disponible.</p>
-              ) : (
-                exos.map((e) => <ExerciceCard key={e.id} exo={e} />)
-              )}
-            </TabsContent>
-          );
-        })}
-      </Tabs>
-    </section>
+    <Tabs defaultValue={bloc.formules[0]} className="w-full">
+      <TabsList className="flex w-full flex-wrap h-auto justify-start gap-1">
+        {bloc.formules.map((f) => (
+          <TabsTrigger key={f} value={f} className="text-xs sm:text-sm">
+            {f}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+      {bloc.formules.map((f) => {
+        const exos = exosByFormule[f] ?? [];
+        return (
+          <TabsContent key={f} value={f} className="space-y-4 mt-4">
+            {exos.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aucun exercice disponible.</p>
+            ) : (
+              exos.map((e) => <ExerciceCard key={e.id} exo={e} />)
+            )}
+          </TabsContent>
+        );
+      })}
+    </Tabs>
+  );
+};
+
+const SubjectTab = ({ blocs, grouped }: { blocs: BlocDef[]; grouped: Record<string, Record<string, Exo[]>> }) => {
+  return (
+    <Tabs defaultValue={blocs[0]?.bloc_id} className="w-full">
+      <TabsList className="flex w-full flex-wrap h-auto justify-start gap-1 mb-4">
+        {blocs.map((bloc) => (
+          <TabsTrigger key={bloc.bloc_id} value={bloc.bloc_id} className="text-sm font-semibold">
+            {bloc.label}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+      {blocs.map((bloc) => (
+        <TabsContent key={bloc.bloc_id} value={bloc.bloc_id}>
+          <FormulaTabs bloc={bloc} exosByFormule={grouped[bloc.bloc_id] ?? {}} />
+        </TabsContent>
+      ))}
+    </Tabs>
   );
 };
 
@@ -138,16 +154,12 @@ const Bibliotheque = () => {
               <TabsTrigger value="physique">Physique</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="maths" className="space-y-8 mt-6">
-              {STRUCTURE.maths.map((bloc) => (
-                <BlocSection key={bloc.bloc_id} bloc={bloc} exosByFormule={grouped[bloc.bloc_id] ?? {}} />
-              ))}
+            <TabsContent value="maths" className="mt-6">
+              <SubjectTab blocs={STRUCTURE.maths} grouped={grouped} />
             </TabsContent>
 
-            <TabsContent value="physique" className="space-y-8 mt-6">
-              {STRUCTURE.physique.map((bloc) => (
-                <BlocSection key={bloc.bloc_id} bloc={bloc} exosByFormule={grouped[bloc.bloc_id] ?? {}} />
-              ))}
+            <TabsContent value="physique" className="mt-6">
+              <SubjectTab blocs={STRUCTURE.physique} grouped={grouped} />
             </TabsContent>
           </Tabs>
         )}
